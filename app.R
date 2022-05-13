@@ -3,6 +3,7 @@ library(DT)
 library(gdata)
 library(rstatix)
 library(multcomp)
+library(ggcorrplot)
 library(tidyverse)
 library(tools)
 library(ggpubr)
@@ -14,6 +15,7 @@ library(gridExtra)
 library(cowplot)
 library(DESeq2)
 library(EBSeq)
+library(ggnewscale)
 library(edgeR)
 library(IHW)
 library(qvalue)
@@ -34,13 +36,16 @@ library('shinyjs', verbose = FALSE)
 library('reactable', verbose = FALSE)
 library(future)
 plan(multisession)
+library(BiocManager)
+options(repos = BiocManager::repositories())
 
-ui<-navbarPage(
-  footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
-           p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
-           p(("Code available on Github:"),a("https://github.com/Kan-E/Automate_shiny",href="https://github.com/Kan-E/Automate_shiny"),align="center",width=4)),
-  
-  "RNAseqchef",
+ui<- fluidPage(
+  tags$head(includeHTML(("google-analytics.html"))),
+  navbarPage(
+    footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
+             p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
+             p(("Code available on Github:"),a("https://github.com/Kan-E/RNAseqChef",href="https://github.com/Kan-E/RNAseqChef"),align="center",width=4)),
+  "RNAseqChef",
   id='navBar',
   tabPanel("Pair-wise",
            # titlePanel(h5("Upload Files")),
@@ -104,8 +109,8 @@ ui<-navbarPage(
                  column(6, selectInput("Species", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
                h4("Cut-off conditions:"),
                fluidRow(
-                 column(4, numericInput("fc", "Fold Change", min   = 0, max   = NA, value = 2)),
-                 column(4, numericInput("fdr", "FDR", min   = 0, max   = NA, value = 0.05)),
+                 column(4, numericInput("fc", "Fold Change", min   = 1, max   = NA, value = 2)),
+                 column(4, numericInput("fdr", "FDR", min   = 0, max   = 1, value = 0.05)),
                  column(4, numericInput("basemean", "Basemean", min   = 0, max   = NA, value = 0))
                ),
                actionButton("goButton", "example data"),
@@ -189,7 +194,7 @@ ui<-navbarPage(
                                                      dataTableOutput("pair_PCA_data")
                                      )
                           )),
-                 tabPanel("Gene Expression",
+                 tabPanel("GOI profiling",
                           fluidRow(
                             column(4, downloadButton("download_pair_volcano", "Download volcano plot")),
                             column(4, downloadButton("download_pair_GOIheatmap", "Download heatmap"))
@@ -278,6 +283,13 @@ ui<-navbarPage(
                                           multiple = FALSE,
                                           width = "80%")
                ),
+               "Option: Normalized count file:",br(),
+               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
+               fileInput("norm_file2",
+                         label = "Select a normalized count file",
+                         accept = c("txt", "csv"),
+                         multiple = FALSE,
+                         width = "80%"),
                fluidRow(
                  column(6, selectInput("Species2", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
                h4("Cut-off conditions:"),
@@ -322,11 +334,26 @@ ui<-navbarPage(
                           )
                  ),
                  tabPanel("Result overview",
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
+                          ),
                           plotOutput("PCA2"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
+                            column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
+                          ),
                           plotOutput("scatter_1"),
                           dataTableOutput("DEG_result2_1"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
+                            column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
+                          ),
                           plotOutput("scatter_2"),
                           dataTableOutput("DEG_result2_2"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
+                            column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
+                          ),
                           plotOutput("scatter_3"),
                           dataTableOutput("DEG_result2_3"),
                           bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
@@ -345,8 +372,23 @@ ui<-navbarPage(
                                                      dataTableOutput("PCA3_data")
                                      )
                           )),
-                 tabPanel("Box plot",
-                          plotOutput("box2")),
+                 tabPanel("GOI profiling",
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter", "Download scatter plot")),
+                            column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
+                          ),
+                          fluidRow(
+                            column(4, htmlOutput("GOI2"))
+                          ),
+                          plotOutput("cond3_GOIheatmap"),
+                          div(
+                          plotOutput("cond3_GOIboxplot", height = "100%"),
+                          style = "height: calc(100vh  - 100px)"
+                          ),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_GOIbox", "Download boxplot"))
+                          )
+                          ),
                  tabPanel("Enrichment analysis",
                           plotOutput("keggenrichment2_1"),
                           plotOutput("keggenrichment2_2"),
@@ -372,8 +414,148 @@ ui<-navbarPage(
                )
              ) # main panel
            ) #sidebarLayout
+  ), #tabPanel
+  # Normalized count data analysis -------------------------------------
+  tabPanel("Normalized count data analysis",
+           # titlePanel(h5("Upload Files")),
+           sidebarLayout(
+             # Normalized count data analysis---------------------------------
+             sidebarPanel(
+               radioButtons('data_file_type3','Input:',
+                            c('Normalized_count_matrix'="Row5",
+                              'Option: Normalized_count_matrix + Metadata'="Row6"
+                            ),selected = "Row5"),
+               # Conditional panels appear based on input.data_file_type selection
+               conditionalPanel(condition="input.data_file_type3=='Row5'",
+                                strong("Count matrix format: "),br(),
+                                "The replication number is represented by the underbar.",br(),
+                                "Do not use it for anything else.", br(),
+                                fileInput("file7",
+                                          label = "Select a row count matrix file (txt, csv)",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%")
+               ),
+               conditionalPanel(condition="input.data_file_type3=='Row6'",
+                                strong("Count matrix format: "),br(),
+                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
+                                "the metadata.", br(),
+                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                img(src="input_format2.png", height = 302, width = 253), br(),
+                                fileInput("file8",
+                                          label = "Select a normalized count matrix file (txt, csv)",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%"),
+                                fileInput("file9",
+                                          label = "Select a metadata file to define samples for the following analysis",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%")
+               ),
+               fileInput("file10",
+                         label = "Option: Select a gene list file for GOI extraction",
+                         accept = c("txt", "csv", "xlsx"),
+                         multiple = FALSE,
+                         width = "80%"),
+               h4("Cut-off conditions:"),
+               fluidRow(
+                 column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0))
+               ),
+               fluidRow(
+                 column(6, selectInput("Species3", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
+               actionButton("goButton3", "example data"),
+               tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                         tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                         )
+             ) #sidebarPanel
+             ),
+           
+           # Main Panel -------------------------------------
+           mainPanel(
+             tabsetPanel(
+               type = "tabs",
+               tabPanel("Input Normalized Count Data",
+                        bsCollapse(id="norm_input_collapse_panel",open="Normalized_count_panel",multiple = FALSE,
+                                   bsCollapsePanel(title="Norm_count_matrix:",
+                                                   value="Norm_count_panel",
+                                                   dataTableOutput('norm_count_input1')
+                                   ),
+                                   bsCollapsePanel(title="Metadata:",
+                                                   value="norm_Metadata_panel",
+                                                   dataTableOutput('norm_Metadata')
+                                   ),
+                                   bsCollapsePanel(title="Gene list:",
+                                                   value="gene_list_panel",
+                                                   dataTableOutput('Gene_list')
+                                   ),
+                                   bsCollapsePanel(title="Defined_normalized_count_matrix:",
+                                                   value="D_norm_count_matrix_panel",
+                                                   fluidRow(
+                                                     column(4, downloadButton("download_d_norm_count", "Download difined normalized count"))
+                                                   ),
+                                                   dataTableOutput('d_norm_count')
+                                   )
+                        )
+               ),
+               tabPanel("Clustering",
+                        plotOutput("norm_PCA"),
+                        fluidRow(
+                          column(3, downloadButton("download_norm_PCA", "Download Clustering")),
+                          column(3, downloadButton("download_norm_heatmap", "Download heatmap")),
+                          column(6, plotOutput("norm_heatmap"))
+                        ),
+                        bsCollapse(id="norm_result_collapse_panel",open="cutoff_count_panel",multiple = TRUE,
+                                   bsCollapsePanel(title="basemean-cutoff_Norm_count_matrix:",
+                                                   value="cutoff_count_panel",
+                                                   dataTableOutput("d_norm_count_cutoff")
+                                   ),
+                                   bsCollapsePanel(title="PCA_table:",
+                                                   value="norm_PCA_panel",
+                                                   dataTableOutput("norm_PCA_table")
+                                   )
+                        ),
+                        fluidRow(
+                          column(4, downloadButton("download_norm_pca_table", "Download PCA table"))
+                        ),
+               ),
+               tabPanel("GOI profiling",
+                        fluidRow(
+                          column(4, downloadButton("download_norm_GOIheat", "Download heatmap"))
+                        ),
+                        fluidRow(
+                          column(4, htmlOutput("GOI3")),
+                          column(8, plotOutput("norm_GOIheatmap"))
+                        ),
+                        div(
+                          plotOutput("norm_GOIboxplot", height = "100%"),
+                          style = "height: calc(100vh  - 100px)"
+                        ),
+                        fluidRow(
+                          column(4, downloadButton("download_norm_GOIbox", "Download boxplot"))
+                        )
+               ),
+               tabPanel("k-means clustering",
+                        fluidRow(
+                          column(4, htmlOutput("norm_kmeans_num"),
+                                 downloadButton("download_norm_kmeans_heatmap", "Download heatmap")),
+                          column(8, plotOutput("norm_kmeans_heatmap"))
+                        ),
+                        downloadButton("download_norm_kmeans_cluster", "Download k-means clustering result"),
+                        dataTableOutput("norm_kmeans_count_table")
+               )
+             )
+           )
+           ) #sidebarLayout
   ) #tabPanel
-)
+  ) 
+  )
 # server ---------------------------------
 server <- function(input, output, session) {
   # pair-wise ------------------------------------------------------------------------------
@@ -425,6 +607,9 @@ org_code1 <- reactive({
       })
   })
   metadata <- reactive({
+    if (input$data_file_type == "Row1"){
+      return(NULL)
+    }else{
     tmp <- input$file2$datapath
     if(is.null(input$file2) && input$goButton == 0) return(NULL)
     if(is.null(input$file2) && input$goButton > 0 )  tmp = "data/example3.csv"
@@ -432,6 +617,7 @@ org_code1 <- reactive({
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
     return(df)
+    }
   })
   norm_count_matrix <- reactive({
     data <- input$norm_file1$datapath
@@ -482,6 +668,7 @@ org_code1 <- reactive({
       dds<- DESeqDataSetFromMatrix(countData = round(count),colData = group, design = ~ con)
       dds$con <- factor(dds$con, levels = unique(collist))
       dds <- DESeq(dds)
+      incProgress(1)
       })
     }
     if (input$DEG_method == "edgeR") {
@@ -493,6 +680,7 @@ org_code1 <- reactive({
       dds <- calcNormFactors(dds)
       dds <- estimateCommonDisp(dds)
       dds <- estimateTagwiseDisp(dds)
+      incProgress(1)
       })
     }
     return(dds)
@@ -554,6 +742,7 @@ org_code1 <- reactive({
       results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
       colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
       res <- results[order(results[,"PPDE"], decreasing = TRUE),]
+      incProgress(1)
       })
     }
     res <- as.data.frame(res)
@@ -708,6 +897,9 @@ org_code1 <- reactive({
   data_degcount <- reactive({
     data <- deg_result()
     count <- deg_norm_count()
+    if(is.null(count) || is.null(data)){
+      return(NULL)
+    }else{
     if(str_detect(rownames(data)[1], "ENS")){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
@@ -773,14 +965,16 @@ org_code1 <- reactive({
       }
       genenames <- as.vector(data$Row.names)
     }
-    
-    
     return(data)
+    }
   })
   
   data_degcount2 <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
+    if(is.null(count) || is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -796,11 +990,15 @@ org_code1 <- reactive({
       data3 <- dplyr::filter(data2, abs(data2$padj) < input$fdr)
       return(data3)
     }else{return(NULL)}
+    }
   })
   
   data_degcount_up <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
+    if(is.null(count) || is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -821,11 +1019,15 @@ org_code1 <- reactive({
       }
     }
     return(up_all)
+    }
   })
   
   data_degcount_down <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
+    if(is.null(count) || is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -846,6 +1048,7 @@ org_code1 <- reactive({
       }
     }
     return(down_all)
+    }
   })
   
   output$pair_deg_up <- DT::renderDataTable({
@@ -875,6 +1078,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     plot(ma_heatmap_plot())
     }
+      incProgress(1)
     })
   })
   ma_heatmap_plot <- reactive({
@@ -935,6 +1139,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = 3.5, width = 7)
         print(ma_heatmap_plot())
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -960,11 +1165,16 @@ output$download_pair_deg_count_down = downloadHandler(
     }
       return(GOI)
     }
+    incProgress(1)
     })
   })
   
   output$GOI <- renderUI({
+    if(is.null(d_row_count_matrix())){
+      return(NULL)
+    }else{
     selectizeInput("GOI", "genes of interest (GOI)", c(GOI_list()),multiple = TRUE, options = list(delimiter = " ", create = T))
+    }
   })
   output$volcano_x <- renderUI({
     sliderInput("xrange","X_axis range:",min = -100, 
@@ -1040,6 +1250,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
       withProgress(message = "volcano plot",{
     print(pair_volcano())
+        incProgress(1)
     })
     }
   })
@@ -1053,6 +1264,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = 5, width = 5)
         print(pair_volcano())
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -1110,6 +1322,7 @@ output$download_pair_deg_count_down = downloadHandler(
       if(!is.null(input$GOI)){
         withProgress(message = "Heatmap",{
       suppressWarnings(print(pair_GOIheatmap()))
+          incProgress(1)
       })
       }
     }
@@ -1124,6 +1337,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = 10, width = 7)
         print(pair_GOIheatmap())
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -1199,6 +1413,7 @@ output$download_pair_deg_count_down = downloadHandler(
       if(!is.null(input$GOI)){
         withProgress(message = "Boxplot",{
         suppressWarnings(print(pair_GOIbox()))
+          incProgress(1)
         })
       }
     }
@@ -1284,6 +1499,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = pdf_hsize, width = pdf_wsize)
         print(pair_GOIbox())
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -1378,6 +1594,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = 3.5, width = 9)
         print(pair_pca_plot())
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -1427,12 +1644,14 @@ output$download_pair_deg_count_down = downloadHandler(
           withProgress(message = "KEGG enrichment analysis",{
           formula_res <- try(compareCluster(ENTREZID~group, data=data3,
                                             fun="enrichKEGG", organism=org_code1()), silent = T)
+          incProgress(1)
           })
         }
         if(input$Gene_set == "GO"){
           withProgress(message = "GO enrichment analysis",{
           formula_res <- try(compareCluster(ENTREZID~group, data=data3,
                                             fun="enrichGO", OrgDb=org1()), silent =T)
+          incProgress(1)
           })
         }
         if (class(formula_res) == "try-error") {
@@ -1442,8 +1661,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Hallmark enrichment analysis",{
         H_t2g <- Hallmark_set()
-        em_up <- enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        em_down <- enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+        em_up <- try(enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        em_down <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
         if (class(em_up) == "try-error") em_up <- NA
         if (class(em_down) == "try-error") em_down <- NA
         if (length(em_up$ID) == 0) {
@@ -1474,6 +1693,7 @@ output$download_pair_deg_count_down = downloadHandler(
           data$GeneRatio <- parse_ratio(data$GeneRatio)
           return(data)
         }
+        incProgress(1)
         })
         }
       }else{return(NULL)}
@@ -1504,6 +1724,7 @@ output$download_pair_deg_count_down = downloadHandler(
                        OrgDb = org1(), exponent = 1, eps = 0,
                        pAdjustMethod = "BH", minGSSize = 50,
                        maxGSSize = 500, by = "fgsea", verbose = F)
+          incProgress(1)
           })
         }
         if (length(kk3$ID) == 0) {
@@ -1523,102 +1744,13 @@ output$download_pair_deg_count_down = downloadHandler(
           em4 <- setReadable(em3, org1(), 'ENTREZID')
         }
         return(em4)
+        incProgress(1)
         })
       }
     }
   })
   
-  enrichment_1_hup <- reactive({
-    data <- data_degcount()
-    data3 <- data_degcount2()
-    count <- deg_norm_count()
-    data <- na.omit(data)
-    geneList <- data$log2FoldChange
-    names(geneList) = as.character(data$ENTREZID)
-    geneList <- sort(geneList, decreasing = TRUE)
-    if(input$Species != "not selected"){
-      H_t2g <- Hallmark_set()
-        em_up <- enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        if (class(em_up) == "try-error") em_up <- NA
-        if (length(em_up$ID) == 0) {
-          em_up2 <- NULL
-        } else{
-          em_up2 <- setReadable(em_up, org1(), 'ENTREZID')
-        }
-        return(em_up2)
-    }else return(NULL)
-  })
-  
-  enrichment_1_hdown <- reactive({
-    data <- data_degcount()
-    data3 <- data_degcount2()
-    count <- deg_norm_count()
-    data <- na.omit(data)
-    geneList <- data$log2FoldChange
-    names(geneList) = as.character(data$ENTREZID)
-    geneList <- sort(geneList, decreasing = TRUE)
-    if(input$Species != "not selected"){
-      H_t2g <- Hallmark_set()
-      em_down <- enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-      if (class(em_down) == "try-error") em_down <- NA
-      if (length(em_down$ID) == 0) {
-        em_down2 <- NULL
-      } else{
-        em_down2 <- setReadable(em_down, org1(), 'ENTREZID')
-      }
-      return(em_down2)
-    }else return(NULL)
-  })
     
-  enrichment_1_up <- reactive({
-    data <- data_degcount()
-    data3 <- data_degcount2()
-    count <- deg_norm_count()
-    upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
-    geneList_up <- upgene$log2FoldChange
-    names(geneList_up) = as.character(upgene$ENTREZID)
-    if(input$Species != "not selected"){
-      if(input$Gene_set == "KEGG"){
-        kk2 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
-                          pvalueCutoff = 0.05, minGSSize = 50, maxGSSize = 500)
-      }
-      if(input$Gene_set == "GO"){
-        kk2 <- enrichGO(upgene$ENTREZID, OrgDb = org1(),
-                        pvalueCutoff = 0.05, minGSSize = 50, maxGSSize = 500)
-      }
-      if(is.null(kk2)){
-        cnet2 <- NULL
-      } else {
-        cnet2 <- setReadable(kk2, org1(), 'ENTREZID')
-      }
-      return(cnet2)
-    }
-  })
-  
-  enrichment_1_down <- reactive({
-    data <- data_degcount()
-    data3 <- data_degcount2()
-    count <- deg_norm_count()
-    downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-    geneList_down <- downgene$log2FoldChange
-    names(geneList_down) = as.character(downgene$ENTREZID)
-    if(input$Species != "not selected"){
-      if(input$Gene_set == "KEGG"){
-        kk2 <- enrichKEGG(downgene$ENTREZID, organism =org_code1(),
-                          pvalueCutoff = 0.05, minGSSize = 50, maxGSSize = 500)
-      }
-      if(input$Gene_set == "GO"){
-        kk2 <- enrichGO(downgene$ENTREZID, OrgDb = org1(),
-                        pvalueCutoff = 0.05, minGSSize = 50, maxGSSize = 500)
-      }
-      if(is.null(kk2)){
-        cnet2 <- NULL
-      } else {
-        cnet2 <- setReadable(kk2, org1(), 'ENTREZID')
-      }
-      return(cnet2)
-    }
-  })
   # pair-wise enrichment plot ------------------------------------------------------------------------------
   pair_enrich1_keggGO <- reactive({
     if(input$Gene_set != "MSigDB Hallmark"){
@@ -1730,70 +1862,75 @@ output$download_pair_deg_count_down = downloadHandler(
         print(pair_enrich1_H())
       }
     }
+          incProgress(1)
 })
       }
   })
   
-  pair_enrich2_keggGO <- reactive({
+  pair_enrich2 <- reactive({
+    data <- data_degcount()
+    data3 <- data_degcount2()
+    count <- deg_norm_count()
+    upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
+    geneList_up <- upgene$log2FoldChange
+    names(geneList_up) = as.character(upgene$ENTREZID)
+    downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
+    geneList_down <- downgene$log2FoldChange
+    names(geneList_down) = as.character(downgene$ENTREZID)
+    if(input$Species != "not selected"){
     if(input$Gene_set != "MSigDB Hallmark"){
-      data <- data_degcount()
-      data3 <- data_degcount2()
-      count <- deg_norm_count()
-      upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
-      geneList_up <- upgene$log2FoldChange
-      names(geneList_up) = as.character(upgene$ENTREZID)
-      downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-      geneList_down <- downgene$log2FoldChange
-      names(geneList_down) = as.character(downgene$ENTREZID)
-      cnet1 <- enrichment_1_up()
+        if(input$Gene_set == "KEGG"){
+          kk1 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
+                            pvalueCutoff = 0.05)
+          kk2 <- enrichKEGG(downgene$ENTREZID, organism =org_code1(),
+                            pvalueCutoff = 0.05)
+        }
+        if(input$Gene_set == "GO"){
+          kk1 <- enrichGO(upgene$ENTREZID, OrgDb = org1(),
+                          pvalueCutoff = 0.05)
+          kk2 <- enrichGO(downgene$ENTREZID, OrgDb = org1(),
+                          pvalueCutoff = 0.05)
+        }
+    }else{
+      H_t2g <- Hallmark_set()
+      kk1 <- try(enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+      kk2 <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+      if (class(kk1) == "try-error") kk1 <- NA
+      if (class(kk2) == "try-error") kk2 <- NA
+    }
+      if(is.null(kk1)){
+        cnet1 <- NULL
+      } else {
+        cnet1 <- setReadable(kk1, org1(), 'ENTREZID')
+      }
+      if(is.null(kk2)){
+        cnet2 <- NULL
+      } else {
+        cnet2 <- setReadable(kk2, org1(), 'ENTREZID')
+      }
       if (length(cnet1$ID) == 0) {
         p2 <- NULL
       } else{
         p2 <- try(as.grob(cnetplot(cnet1, foldChange=geneList_up,
                                    cex_label_gene = 0.75, cex_label_category = 1,
-                                   cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")),silent=T)
-        if(class(p2) == "try-error") p2 <- NULL
+                                   cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+        if(length(class(p2)) == 1){
+          if(class(p2) == "try-error") p2 <- NULL
+        }else{p2 <- as.grob(cnetplot(cnet1, foldChange=geneList_up,
+                                         cex_label_gene = 0.75, cex_label_category = 1,
+                                         cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
-      cnet2 <- enrichment_1_down()
       if (length(cnet2$ID) == 0) {
         p3 <- NULL
       } else{
         p3 <- try(as.grob(cnetplot(cnet2, foldChange=geneList_down,
                                    cex_label_gene = 0.75, cex_label_category = 1,
-                                   cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")), silent = T)
-        if(class(p3) == "try-error") p3 <- NULL
-      }
-      p <- plot_grid(p2, p3, nrow = 1)
-      return(p)
-    }
-  })  
-  
-  pair_enrich2_H <- reactive({
-    if(input$Gene_set == "MSigDB Hallmark"){
-      data <- data_degcount()
-      data3 <- data_degcount2()
-      count <- deg_norm_count()
-      upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
-      geneList_up <- upgene$log2FoldChange
-      names(geneList_up) = as.character(upgene$ENTREZID)
-      downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-      geneList_down <- downgene$log2FoldChange
-      names(geneList_down) = as.character(downgene$ENTREZID)
-      cnet1 <- enrichment_1_hup()
-      cnet2 <- enrichment_1_hdown()
-      if (length(cnet1$ID) == 0) {
-        p2 <- NULL
-      } else{
-        p2 <- as.grob(cnetplot(cnet1, foldChange=geneList_up,
-                               cex_label_gene = 0.75, cex_label_category = 1,
-                               cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))
-      }
-      if (length(cnet2$ID) == 0) {
-        p3 <- NULL
-      } else{
-        p3 <- as.grob(cnetplot(cnet2, foldChange=geneList_down,
-                               cex_label_gene = 0.75, cex_label_category = 1,
-                               cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))
+                                   cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+        if(length(class(p3)) == 1){
+          if(class(p3) == "try-error") p3 <- NULL
+        }else{p3 <- as.grob(cnetplot(cnet2, foldChange=geneList_down,
+                                         cex_label_gene = 0.75, cex_label_category = 1,
+                                         cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
       p <- plot_grid(p2, p3, nrow = 1)
       return(p)
@@ -1806,12 +1943,9 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     if(input$Species != "not selected"){
       withProgress(message = "cnet plot",{
-        if(input$Gene_set != "MSigDB Hallmark"){
-          p <- pair_enrich2_keggGO()
-      }else{
-          p <- pair_enrich2_H()
-        }
+          p <- pair_enrich2()
         print(p)
+        incProgress(1)
       })
     }else return(NULL)
     }
@@ -1825,14 +1959,14 @@ output$download_pair_deg_count_down = downloadHandler(
       withProgress(message = "Preparing download",{
         if(input$Gene_set != "MSigDB Hallmark"){
           p1 <- pair_enrich1_keggGO()
-          p2 <- pair_enrich2_keggGO()
-        }else{ 
+        }else{
           p1 <- pair_enrich1_H()
-          p2 <- pair_enrich2_H()
         }
+        p2 <- pair_enrich2()
         pdf(file, height = 11, width = 11)
         print(plot_grid(p1, p2, nrow =2))
         dev.off()
+        incProgress(1)
       })
     }
   )
@@ -1894,6 +2028,7 @@ output$download_pair_deg_count_down = downloadHandler(
     row_count_matrix2 <- reactive({
     if (input$data_file_type2 == "Row3"){
       tmp <- input$file4$datapath
+      if(is.null(input$file4) && input$goButton2 > 0 )  tmp = "data/example4.txt"
       if(is.null(tmp)) {
         return(NULL)
       }else{
@@ -1904,8 +2039,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }else{
       tmp <- input$file5$datapath
-      if(is.null(input$file5) && input$goButton == 0) return(NULL)
-      if(is.null(input$file5) && input$goButton > 0 )  tmp = "data/example3.xlsx"
+      if(is.null(input$file5) && input$goButton2 == 0) return(NULL)
+      if(is.null(input$file5) && input$goButton2 > 0 )  tmp = "data/example2.csv"
       if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
       if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
       if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
@@ -1913,18 +2048,21 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   })
   metadata2 <- reactive({
+    if (input$data_file_type2 == "Row3"){
+      return(NULL)
+    }else{
     tmp <- input$file6$datapath
-    if(is.null(input$file6) && input$goButton == 0) return(NULL)
-    if(is.null(input$file6) && input$goButton > 0 )  tmp = "data/example4.xlsx"
+    if(is.null(input$file6) && input$goButton2 == 0) return(NULL)
+    if(is.null(input$file6) && input$goButton2 > 0 )  tmp = "data/example6.csv"
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
     return(df)
+    }
   })
   norm_count_matrix2 <- reactive({
-    data <- input$file10$datapath
-    if(is.null(input$file10) && input$goButton == 0) return(NULL)
-    if(is.null(input$file10) && input$goButton > 0 )  tmp = "data/example3.xlsx"
+    data <- input$norm_file2$datapath
+    if(is.null(input$norm_file2) && input$goButton == 0) return(NULL)
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
@@ -1956,11 +2094,11 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   })
   
-  observeEvent(input$file5, ({
-    updateCollapse(session,id =  "input_collapse_panel2", open="Row_count_matrix_panel2")
+  observeEvent(input$file7, ({
+    updateCollapse(session,id =  "input_collapse_panel3", open="Norm_count_matrix_panel")
   }))
-  observeEvent(input$file6, ({
-    updateCollapse(session,id =  "input_collapse_panel2", open="Metadata_panel2")
+  observeEvent(input$file8, ({
+    updateCollapse(session,id =  "input_collapse_panel3", open="norm_Metadata_panel")
   }))
   output$Row_count_matrix2 <- DT::renderDataTable({
     row_count_matrix2()
@@ -1974,7 +2112,7 @@ output$download_pair_deg_count_down = downloadHandler(
   
   output$download_cond3_d_row_count = downloadHandler(
     filename = function() {
-      if (input$data_file_type == "Row3"){
+      if (input$data_file_type2 == "Row3"){
         paste(gsub("\\..+$", "", input$file4), "defined_row_count.txt", sep = "-")
       }else{
         paste(gsub("\\..+$", "", input$file5), paste0(gsub("\\..+$", "", input$file6), ".txt"), sep = "-")
@@ -2005,7 +2143,7 @@ output$download_pair_deg_count_down = downloadHandler(
   
   # 3 conditions DEG ------------------------------------------------------------------------------
   MultiOut <- reactive({
-    withProgress(message = "EBSeq",{
+    withProgress(message = "EBSeq multiple comparison test takes a few minutes",{
     count <- d_row_count_matrix2()
     collist <- gsub("\\_.+$", "", colnames(count))
     count <- data.matrix(count)
@@ -2025,11 +2163,15 @@ output$download_pair_deg_count_down = downloadHandler(
     MultiOut <- EBMultiTest(Data = count, NgVector = ngvector, Conditions = conditions, AllParti = patterns, sizeFactors = Sizes, maxround = 5)
     stopifnot(!is.null(MultiOut))
     return(MultiOut)
+    incProgress(1)
     })
   })
   
   deg_result2 <- reactive({
     count <- d_row_count_matrix2()
+    if(is.null(count)){
+      return(NULL)
+    }else{
     collist <- gsub("\\_.+$", "", colnames(count))
     count <- data.matrix(count)
       vec <- c()
@@ -2063,9 +2205,13 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
     return(as.data.frame(res))
+    }
   })
   deg_result2_pattern <- reactive({
     count <- d_row_count_matrix2()
+    if(is.null(count)){
+      return(NULL)
+    }else{
     collist <- gsub("\\_.+$", "", colnames(count))
     count <- data.matrix(count)
     vec <- c()
@@ -2090,9 +2236,13 @@ output$download_pair_deg_count_down = downloadHandler(
     MultiFC <- GetMultiFC(MultiOut)
     res <- MultiPP$Pattern
     return(as.data.frame(res))
+    }
   })
   deg_result2_condmean <- reactive({
     count <- d_row_count_matrix2()
+    if(is.null(count)){
+      return(NULL)
+    }else{
     collist <- gsub("\\_.+$", "", colnames(count))
     count <- data.matrix(count)
     vec <- c()
@@ -2117,10 +2267,15 @@ output$download_pair_deg_count_down = downloadHandler(
     MultiFC <- GetMultiFC(MultiOut)
     res <- MultiFC$CondMeans[ord,]
     return(as.data.frame(res))
+    }
   })
   
   deg_norm_count2 <- reactive({
+    if(is.null(norm_count_matrix2())){
     count <- d_row_count_matrix2()
+    if(is.null(count)){
+      return(NULL)
+    }else{
     collist <- gsub("\\_.+$", "", colnames(count))
     group <- data.frame(con = factor(collist))
       count <- data.matrix(count)
@@ -2137,11 +2292,16 @@ output$download_pair_deg_count_down = downloadHandler(
       if(str_detect(rownames(count)[1], "ENS")){
         gene_IDs  <- gene_ID()
         data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
         rownames(data2) <- data2$Row.names
         normalized_counts <- data2[,-1]
       }
     }
     return(as.data.frame(normalized_counts))
+    }
+    }else{
+      return(norm_count_matrix2())
+    }
   })
   
   output$DEG_result2_1 <- DT::renderDataTable({
@@ -2158,7 +2318,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   download_cond3_dir <-reactive({
-    if (input$data_file_type == "Row3"){
+    if (input$data_file_type2 == "Row3"){
       dir_name <- paste(gsub("\\..+$", "", input$file4), "EBSeq" , sep ="-")
     }else{
       dir_name <- paste(gsub("\\..+$", "", input$file5), "EBSeq" , sep ="-")
@@ -2173,11 +2333,29 @@ output$download_pair_deg_count_down = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"normalized_count.txt", sep = "-")},
     content = function(file){write.table(deg_norm_count2(), file, row.names = T, sep = "\t", quote = F)}
   )
+  
+  output$download_3cond_DEG_table1 = downloadHandler(
+    filename = function() {paste(download_cond3_dir(),"DEG_result1.txt", sep = "-")},
+    content = function(file){write.table(data_3degcount2_1(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_3cond_DEG_table2 = downloadHandler(
+    filename = function() {paste(download_cond3_dir(),"DEG_result2.txt", sep = "-")},
+    content = function(file){write.table(data_3degcount2_2(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_3cond_DEG_table3 = downloadHandler(
+    filename = function() {paste(download_cond3_dir(),"DEG_result3.txt", sep = "-")},
+    content = function(file){write.table(data_3degcount2_3(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
+  
   #3conditions DEG vis------------------------
   
   #3conditions DEG_1------------------------
   data_3degcount1_1 <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2227,10 +2405,14 @@ output$download_pair_deg_count_down = downloadHandler(
       
       data3$sig <- factor(data3$sig, labels = new.levels)
       return(data3)
+    }
   })
   
   data_3degcount2_1 <- reactive({
     data3 <- data_3degcount1_1()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
     if(length(unique(data3$sig)) == 1){
       data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
       return(data4)
@@ -2259,11 +2441,16 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       return(data4)
     }
+    }
   })
 
   #3conditions scatter + heatmap_1
-  output$scatter_1 <- renderPlot({
+  
+  cond3_scatter1_plot <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2311,52 +2498,78 @@ output$download_pair_deg_count_down = downloadHandler(
       new.levels <- c("NS")
       col = "darkgray"}
     data3$sig <- factor(data3$sig, labels = new.levels)
-  complete_data <- stats::na.omit(data3)
-  labs_data <- subset(complete_data, padj <= input$fdr2 & Row.names !=
-                        "" & (FC_x)*(FC_y) >= log2(input$fc2))
-  labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
-  labs_data <- dplyr::filter(labs_data, sig != "NS")
-  labs_data <- utils::head(labs_data, 20)
-  font.label <- data.frame(size=5, color="black", face = "plain")
-  set.seed(42)
-  FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
-  p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
-  p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
-    geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-  p <- p + ggrepel::geom_text_repel(data = labs_data, mapping = aes(label = Row.names),
-                                    box.padding = unit(0.35, "lines"), point.padding = unit(0.3,
-                                                                                            "lines"), force = 1, fontface = font.label$face,
-                                    size = font.label$size/2, color = font.label$color)
-  p <- p +
-    theme_bw()+ scale_color_manual(values = col)+
-    theme(legend.position = "top" , legend.title = element_blank(),
-          axis.text.x= ggplot2::element_text(size = 10),
-          axis.text.y= ggplot2::element_text(size = 10),
-          text = ggplot2::element_text(size = 10),
-          title = ggplot2::element_text(size = 10)) +
-    xlab(FC_xlab) + ylab(FC_ylab)
-  
-  data4 <- data_3degcount2_1()
-  if(length(unique(data3$sig)) == 1){
-    ht <- NULL
-  }else{
-  data$Row.names <- rownames(data)
-  data5 <- merge(data, data4, by ="Row.names")
-  rownames(data5) <- data5$Row.names
-  data5 <- data5[,-1]
-  data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
-  data.z <- genescale(data5, axis=1, method="Z")
-  ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                        clustering_method_columns = 'ward.D2',
-                        show_row_names = F, show_row_dend = T))
-  }
-  suppressWarnings(print(plot_grid(p, ht, rel_widths = c(2, 1))))
+    complete_data <- stats::na.omit(data3)
+    labs_data <- subset(complete_data, padj <= input$fdr2 & Row.names !=
+                          "" & (FC_x)*(FC_y) >= log2(input$fc2))
+    labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
+    labs_data <- dplyr::filter(labs_data, sig != "NS")
+    labs_data <- utils::head(labs_data, 20)
+    font.label <- data.frame(size=5, color="black", face = "plain")
+    set.seed(42)
+    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
+    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
+      geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
+    p <- p + ggrepel::geom_text_repel(data = labs_data, mapping = aes(label = Row.names),
+                                      box.padding = unit(0.35, "lines"), point.padding = unit(0.3,
+                                                                                              "lines"), force = 1, fontface = font.label$face,
+                                      size = font.label$size/2, color = font.label$color)
+    p <- p +
+      theme_bw()+ scale_color_manual(values = col)+
+      theme(legend.position = "top" , legend.title = element_blank(),
+            axis.text.x= ggplot2::element_text(size = 10),
+            axis.text.y= ggplot2::element_text(size = 10),
+            text = ggplot2::element_text(size = 10),
+            title = ggplot2::element_text(size = 10)) +
+      xlab(FC_xlab) + ylab(FC_ylab)
+    
+    data4 <- data_3degcount2_1()
+    if(length(unique(data3$sig)) == 1){
+      ht <- NULL
+    }else{
+      data$Row.names <- rownames(data)
+      data5 <- merge(data, data4, by ="Row.names")
+      rownames(data5) <- data5$Row.names
+      data5 <- data5[,-1]
+      data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
+      data.z <- genescale(data5, axis=1, method="Z")
+      ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
+                            clustering_method_columns = 'ward.D2',
+                            show_row_names = F, show_row_dend = T))
+    }
+    p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    return(p)
+    }
   })
   
-
+  output$scatter_1 <- renderPlot({
+     if(is.null(deg_norm_count2())){
+      return(NULL)
+    }else{
+      withProgress(message = "scatter plot",{
+  suppressWarnings(print(cond3_scatter1_plot()))
+      })
+    }
+  })
+  
+  output$download_3cond_scatter1 = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_scatter1.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(cond3_scatter1_plot())
+        dev.off()
+      })
+    }
+  )
   #3conditions DEG_2------------------------
   data_3degcount1_2 <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2406,10 +2619,14 @@ output$download_pair_deg_count_down = downloadHandler(
     
     data3$sig <- factor(data3$sig, labels = new.levels)
     return(data3)
+    }
   })
   
   data_3degcount2_2 <- reactive({
     data3 <- data_3degcount1_2()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
     if(length(unique(data3$sig)) == 1){
       data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
       return(data4)
@@ -2438,11 +2655,15 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       return(data4)
     }
+    }
   })
   
   #3conditions scatter + heatmap_2
-  output$scatter_2 <- renderPlot({
+  cond3_scatter2_plot <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2514,7 +2735,7 @@ output$download_pair_deg_count_down = downloadHandler(
             text = ggplot2::element_text(size = 10),
             title = ggplot2::element_text(size = 10)) +
       xlab(FC_xlab) + ylab(FC_ylab)
-
+    
     data4 <- data_3degcount2_2()
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
@@ -2530,14 +2751,38 @@ output$download_pair_deg_count_down = downloadHandler(
                             show_row_names = F, show_row_dend = T))
     }
     
-    suppressWarnings(print(plot_grid(p, ht, rel_widths = c(2, 1))))
+    p<- plot_grid(p, ht, rel_widths = c(2, 1))
+    return(p)
+    }
   })
   
+  output$scatter_2 <- renderPlot({
+    if(is.null(deg_norm_count2())){
+      return(NULL)
+    }else{
+    print(cond3_scatter2_plot())
+    }
+  })
   
+  output$download_3cond_scatter2 = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_scatter2.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(cond3_scatter2_plot())
+        dev.off()
+      })
+    }
+  )
   
   #3conditions DEG_3------------------------
   data_3degcount1_3 <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2587,10 +2832,14 @@ output$download_pair_deg_count_down = downloadHandler(
     
     data3$sig <- factor(data3$sig, labels = new.levels)
     return(data3)
+    }
   })
   
   data_3degcount2_3 <- reactive({
     data3 <- data_3degcount1_3()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
     if(length(unique(data3$sig)) == 1){
       data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
       return(data4)
@@ -2619,11 +2868,15 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       return(data4)
     }
+    }
   })
   
   #3conditions scatter + heatmap_3
-  output$scatter_3 <- renderPlot({
+  cond3_scatter3_plot <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     collist <- factor(gsub("\\_.+$", "", colnames(data)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
@@ -2711,15 +2964,39 @@ output$download_pair_deg_count_down = downloadHandler(
                             show_row_names = F, show_row_dend = T))
     }
     
-    suppressWarnings(print(plot_grid(p, ht, rel_widths = c(2, 1))))
+    p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    return(p)
+    }
   })
   
+  output$scatter_3 <- renderPlot({
+    if(is.null(deg_norm_count2())){
+      return(NULL)
+    }else{
+    print(cond3_scatter3_plot())
+    }
+  })
   
+  output$download_3cond_scatter3 = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_scatter3.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(cond3_scatter3_plot())
+        dev.off()
+      })
+    }
+  )
   
   
   #3conditions PCA--------------
   PCA3data <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     if(length(grep("SYMBOL", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "SYMBOL")]
     }
@@ -2734,10 +3011,14 @@ output$download_pair_deg_count_down = downloadHandler(
     lab_y <- paste("PC2 (", lab_y, sep = "")
     pca$rotation <- as.data.frame(pca$rotation)
     return(pca$rotation)
+    }
   })
   
   cond3_pca <- reactive({
     data <- deg_norm_count2()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     if(length(grep("SYMBOL", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "SYMBOL")]
     }
@@ -2790,7 +3071,8 @@ output$download_pair_deg_count_down = downloadHandler(
             axis.title.y=element_blank(),
             panel.background=element_rect(fill="white"),
             panel.grid=element_blank(), aspect.ratio=1)
-    p <- gridExtra::grid.arrange(g1, g2, g3, nrow = 1)
+    p <- plot_grid(g1, g2, g3, nrow = 1)
+    }
   })
   
   output$PCA2 <- renderPlot({
@@ -2799,6 +3081,221 @@ output$download_pair_deg_count_down = downloadHandler(
   output$PCA3_data <- DT::renderDataTable({
     PCA3data()
   })
+  
+  output$download_3cond_PCA = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_PCA-MDS-dendrogram.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(cond3_pca_plot())
+        dev.off()
+      })
+    }
+  )
+  #3conditions GOI------------------------------------------------------
+  GOI_list2 <- reactive({
+    withProgress(message = "Preparing GOI list",{
+      count <- deg_norm_count2()
+      if(is.null(d_row_count_matrix2())){
+        return(NULL)
+      }else{
+        if(str_detect(rownames(count)[1], "ENS")){
+          if(input$Species2 != "not selected"){
+            GOI <- count$Unique_ID
+          }else GOI <- rownames(count)
+        }else{ 
+          if(input$Species2 != "not selected"){
+            GOI <- rownames(count)
+          }else GOI <- rownames(count)
+        }
+        return(GOI)
+      }
+      incProgress(1)
+    })
+  })
+  
+  output$GOI2 <- renderUI({
+    if(is.null(d_row_count_matrix2())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing GOI list",{
+      selectizeInput("GOI2", "genes of interest (GOI)", c(GOI_list2()),multiple = TRUE, options = list(delimiter = " ", create = T))
+        })
+        }
+  })
+
+  cond3_GOIcount <- reactive({
+    count <- deg_norm_count2()
+    if(str_detect(rownames(count)[1], "ENS")){
+      if(input$Species2 != "not selected"){
+        Unique_ID <- input$GOI2
+        label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+        data <- merge(count, label_data, by="Unique_ID")
+        rownames(data) <- data$Unique_ID
+        data <- data[, - which(colnames(data) == "Row.names")]
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+        data <- data[, - which(colnames(data) == "Unique_ID")]
+      }
+    }else{
+      Row.names <- input$GOI2
+      count$Row.names <- rownames(count)  
+      label_data <- as.data.frame(Row.names, row.names = Row.names)
+      data <- merge(count, label_data, by="Row.names")
+      rownames(data) <- data$Row.names
+      data <- data[, - which(colnames(data) == "Row.names")]
+    }
+    return(data)
+  })
+  
+  cond3_GOIheat <- reactive({
+    data <- cond3_GOIcount()
+    if(is.null(data)){
+      ht <- NULL
+    }else{
+        data.z <- genescale(data, axis=1, method="Z")
+        data.z <- na.omit(data.z)
+        ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
+                      clustering_method_columns = 'ward.D2',
+                      show_row_names = T, show_row_dend = F)
+      }
+      return(ht)
+  })
+  
+  output$cond3_GOIheatmap <- renderPlot({
+    if(is.null(d_row_count_matrix2())){
+      return(NULL)
+    }else{
+      if(!is.null(input$GOI2)){
+        withProgress(message = "Boxplot",{
+          suppressWarnings(print(cond3_GOIheat()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  cond3_GOIbox <- reactive({
+    count <- deg_norm_count2()
+    data <- cond3_GOIcount()
+    if(is.null(data)){
+      p <- NULL
+    }else{
+      collist <- gsub("\\_.+$", "", colnames(data))
+      collist <- unique(collist)
+      data$Row.names <- rownames(data)
+      data <- data %>% gather(key=sample, value=value,-Row.names)
+      data$sample <- gsub("\\_.+$", "", data$sample)
+      data$Row.names <- as.factor(data$Row.names)
+      data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
+      data$value <- as.numeric(data$value)
+      p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
+                             fill = "sample", scales = "free", 
+                             add = "jitter", legend = "none",
+                             xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
+      p <- (facet(p, facet.by = "Row.names",
+                  panel.labs.background = list(fill = "transparent", color = "transparent"),
+                  scales = "free", short.panel.labs = T)+
+              theme(axis.text.x= element_text(size = 10),
+                    axis.text.y= element_text(size = 10),
+                    panel.background = element_rect(fill = "transparent", size = 0.5),
+                    title = element_text(size = 10),text = element_text(size = 10)) 
+            + scale_fill_manual(values=c("gray", "#4dc4ff", "#ff8082")))
+    }
+    return(p)
+  })
+  
+  
+  output$cond3_GOIboxplot <- renderPlot({
+    if(is.null(d_row_count_matrix2())){
+      return(NULL)
+    }else{
+      if(!is.null(input$GOI2)){
+        withProgress(message = "Boxplot",{
+          suppressWarnings(print(cond3_GOIbox()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$download_3cond_GOIbox = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_GOIboxplot.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- cond3_GOIcount()
+        rowlist <- rownames(data)
+        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
+        {pdf_hsize <- 15
+        pdf_wsize <- 15}
+        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 13.5
+        pdf_wsize <- 13.5}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 12
+        pdf_wsize <- 12}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 10.5
+        pdf_wsize <- 10.5}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        {pdf_hsize <- 9
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 7.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        {pdf_hsize <- 6
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
+        {pdf_hsize <- 5
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 5
+        pdf_wsize <- 4.5}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 4
+        pdf_wsize <- 6}
+        if (length(rowlist) == 4)
+        {pdf_hsize <- 4
+        pdf_wsize <- 4}
+        if (length(rowlist) == 3)
+        {pdf_hsize <- 2
+        pdf_wsize <- 6}
+        if (length(rowlist) == 2)
+        {pdf_hsize <- 2
+        pdf_wsize <- 4}
+        if (length(rowlist) == 1)
+        {pdf_hsize <- 2
+        pdf_wsize <- 2}
+        if (length(rowlist) > 200)
+        {pdf_hsize <- 30
+        pdf_wsize <- 30}
+        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        print(cond3_GOIbox())
+        dev.off()
+      
+        incProgress(1)
+        })
+    }
+  )
+  output$download_3cond_GOIheat = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_GOIheatmap.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- cond3_GOIcount()
+        rowlist <- rownames(data)
+        pdf(file, height = 10, width = 7)
+        print(cond3_GOIheat())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
   #3conditions enrichment ------------------------------------------------------------------------------
   #3conditions enrichment_1 ------------------------------------------------------------------------------
   enrichment3_1_1 <- reactive({
@@ -3304,11 +3801,686 @@ output$download_pair_deg_count_down = downloadHandler(
   output$enrichment3_result_3 <- DT::renderDataTable({
     as.data.frame(enrichment3_3_1())
   })
+  
+  
+  #normalized count analysis
+  #norm_count_input-------------------
+  org3 <- reactive({
+    if(input$Species3 != "not selected"){
+      switch (input$Species3,
+              "mouse" = org <- org.Mm.eg.db,
+              "human" = org <- org.Hs.eg.db,
+              "rat" = org <- org.Rn.eg.db,
+              "fly" = org <- org.Dm.eg.db,
+              "worm" = org <- org.Ce.eg.db)
+      return(org)
+    }
+  })
+  org_code3 <- reactive({
+    if(input$Species3 != "not selected"){
+      switch (input$Species3,
+              "mouse" = org_code <- "mmu",
+              "human" = org_code <- "hsa",
+              "rat" = org_code <- "rno",
+              "fly" = org_code <- "dme",
+              "worm" = org_code <- "cel")
+      return(org_code)
+    }
+  })
+  
+  norm_count_input <- reactive({
+    withProgress(message = "Importing normalized count matrix, please wait",{
+      if (input$data_file_type3 == "Row5"){
+        tmp <- input$file7$datapath
+        if(is.null(input$file7) && input$goButton3 > 0 )  tmp = "data/example7.txt"
+        if(is.null(tmp)) {
+          return(NULL)
+        }else{
+          if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+          if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+          if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+          return(df)
+        }
+      }else{
+        tmp <- input$file8$datapath
+        if(is.null(input$file8) && input$goButton3 == 0) return(NULL)
+        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "data/example8.csv"
+        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+        return(df)
+      }
+      incProgress(1)
+    })
+  })
+  norm_metadata <- reactive({
+    if (input$data_file_type3 == "Row5"){
+      return(NULL)
+    }else{
+      tmp <- input$file9$datapath
+      if(is.null(input$file9) && input$goButton == 0) return(NULL)
+      if(is.null(input$file9) && input$goButton > 0 )  tmp = "data/example9.csv"
+      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      return(df)
+    }
+  })
+  gene_list <- reactive({
+    data <- input$file10$datapath
+    if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
+    if(is.null(input$file10) && input$goButton3 > 0 )  return(NULL)
+    if(tools::file_ext(data) == "xlsx") df <- read.xls(data, header=TRUE, row.names = 1)
+    if(tools::file_ext(data) == "csv") df <- read.csv(data, header=TRUE, sep = ",", row.names = 1)
+    if(tools::file_ext(data) == "txt") df <- read.table(data, header=TRUE, sep = "\t", row.names = 1)
+    gene <-c(rownames(df))
+    df <- as.data.frame(gene, row.names = gene)
+    return(df)
+  })
+  d_norm_count_matrix <- reactive({
+    withProgress(message = "Creating defined count matrix, please wait",{
+      row <- norm_count_input()
+      gene_list <- gene_list()
+      if (input$data_file_type3 == "Row5"){
+        if(is.null(row)) {
+          return(NULL)
+        }else{
+          if(is.null(gene_list)){
+            return(row)
+          }else{
+            row <- merge(row,gene_list, by=0)
+            rownames(row) <- row$Row.names
+            row <- row[,-1]
+            row <- row[, - which(colnames(row) == "gene")]
+            return(row)
+          }
+        }
+      }else{
+        meta <- norm_metadata()
+        if (is.null(row) || is.null(meta)){
+          return(NULL)
+        } else {
+          row_t <- t(row)
+          colname <- colnames(meta)
+          data <- merge(meta, row_t, by=0, sort = F)
+          rownames(data) <- data$characteristics
+          data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
+          data2_t <- t(data2)
+          data3 <- apply(data2_t, 2, as.numeric)
+          rownames(data3) <- rownames(data2_t)
+          row <- data3
+          if(!is.null(gene_list)){
+            row <- merge(row,gene_list, by=0)
+            rownames(row) <- row$Row.names
+            row <- row[,-1]
+            data <- data[, - which(colnames(data) == "gene")]
+          }
+          return(row)
+        }
+      }
+      incProgress(1)
+    })
+  })
+  
+  d_norm_count_matrix_cutofff <- reactive({
+    withProgress(message = "Creating defined count matrix, please wait",{
+      data <- d_norm_count_matrix()
+      if(input$basemean3 != 0){
+        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean3)
+      }
+      return(data)
+      incProgress(1)
+    })
+  })
+  
+  d_norm_count_matrix2 <- reactive({
+      data <- d_norm_count_matrix()
+      if(is.null(data)){
+        return(NULL)
+      }else{
+      if(input$Species3 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")){
+          gene_IDs <- gene_ID_norm()
+          data <- merge(data, gene_IDs, by=0)
+          data <- data[, - which(colnames(data) == "Row.names")]
+        }
+      }
+        return(data)
+      }
+  })
+  
+  gene_ID_norm <- reactive({
+    res <- d_norm_count_matrix()
+    if(is.null(res)){
+      return(NULL)
+    }else{
+      if(input$Species != "not selected"){
+        if(str_detect(rownames(res)[1], "ENS")){
+          my.symbols <- rownames(res)
+          gene_IDs<-AnnotationDbi::select(org3(),keys = my.symbols,
+                                          keytype = "ENSEMBL",
+                                          columns = c("ENSEMBL","SYMBOL"))
+          colnames(gene_IDs) <- c("Row.names","SYMBOL")
+          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+          rownames(gene_IDs) <- gene_IDs$Row.names
+          return(gene_IDs)
+        }
+      }else{ return(NULL) }
+    }
+  })
+  
+  observeEvent(input$file7, ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
+  }))
+  observeEvent(input$file8, ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="norm_Metadata_panel")
+  }))
+  observeEvent(input$file10, ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="gene_list_panel")
+  }))
+  output$norm_count_input1 <- DT::renderDataTable({
+    norm_count_input()
+  })
+  output$norm_Metadata <- DT::renderDataTable({
+    norm_metadata()
+  })
+  output$d_norm_count <- DT::renderDataTable({
+    d_norm_count_matrix2()
+  })
+  output$Gene_list <- DT::renderDataTable({
+    gene_list()
+  })
+  output$download_d_norm_count = downloadHandler(
+    filename = function() {
+      if (input$data_file_type3 == "Row5"){
+        paste(gsub("\\..+$", "", input$file7), ".txt")
+      }else{
+        paste(gsub("\\..+$", "", input$file8), paste0(gsub("\\..+$", "", input$file9),".txt"), sep ="-")
+      }},
+    content = function(file){write.table(d_norm_count_matrix2(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
+  download_norm_dir <-reactive({
+    if (input$data_file_type3 == "Row5"){
+      dir_name <- paste0(gsub("\\..+$", "", input$file7), "_")
+    }else{
+      dir_name <- paste0(paste(gsub("\\..+$", "", input$file8),paste(gsub("\\..+$", "", input$file9),input$basemean3,sep = "_"),sep = "-"), "_")
+    }
+    return(dir_name)
+  }) 
+  
+  #norm clustering--------------------
+  normPCAdata <- reactive({
+    data <- d_norm_count_matrix_cutofff()
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      pca <- prcomp(data, scale. = T)
+      label<- colnames(data)
+      label<- gsub("\\_.+$", "", label)
+      lab_x <- paste(summary(pca)$importance[2,1]*100,
+                     "% of variance)", sep = "")
+      lab_x <- paste("PC1 (", lab_x, sep = "")
+      lab_y <- paste(summary(pca)$importance[2,2]*100,
+                     "% of variance)", sep = "")
+      lab_y <- paste("PC2 (", lab_y, sep = "")
+      pca$rotation <- as.data.frame(pca$rotation)
+      return(pca$rotation)
+    }
+  })
+  
+  norm_pca_plot <- reactive({
+    data <- d_norm_count_matrix_cutofff()
+    pca <- prcomp(data, scale. = T)
+    label<- colnames(data)
+    label<- gsub("\\_.+$", "", label)
+    lab_x <- paste(summary(pca)$importance[2,1]*100,
+                   "% of variance)", sep = "")
+    lab_x <- paste("PC1 (", lab_x, sep = "")
+    lab_y <- paste(summary(pca)$importance[2,2]*100,
+                   "% of variance)", sep = "")
+    lab_y <- paste("PC2 (", lab_y, sep = "")
+    pca$rotation <- as.data.frame(pca$rotation)
+    g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
+                                  y=pca$rotation[,2],
+                                  col=label, label = label)) +
+      geom_point()+
+      theme(panel.background =element_rect(fill=NA,color=NA),
+            panel.border = element_rect(fill = NA)) +
+      xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
+      theme(legend.position="none", aspect.ratio=1)
+    rho <- cor(data,method="spearman")
+    d <- dist(1-rho)
+    mds <- as.data.frame(cmdscale(d))
+    label<-colnames(data)
+    label<-gsub("\\_.+$", "", label)
+    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
+                          col = label, label = label)) +
+      geom_point()+
+      theme(panel.background =element_rect(fill=NA,color=NA),
+            panel.border = element_rect(fill = NA)) +
+      xlab("dim 1") + ylab("dim 2") +
+      geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
+    x <- NULL
+    y <- NULL
+    xend <- NULL
+    yend <- NULL
+    data.t <- t(data)
+    hc <- hclust(dist(data.t), "ward.D2")
+    dendr <- dendro_data(hc, type="rectangle")
+    g3 <- ggplot() +
+      geom_segment(data=segment(dendr),
+                   aes(x=x, y=y, xend=xend, yend=yend)) +
+      geom_text(data=label(dendr),
+                aes(x, y, label=label, hjust=0), size=3) +
+      coord_flip()+ scale_y_reverse(expand=c(0.2, 0)) +
+      theme(axis.line.y=element_blank(),
+            axis.ticks.y=element_blank(),
+            axis.text.y=element_blank(),
+            axis.title.y=element_blank(),
+            panel.background=element_rect(fill="white"),
+            panel.grid=element_blank(), aspect.ratio=1)
+    p2 <- plot_grid(g1, g2, g3, nrow = 1)
+    return(p2)
+  })
+  
+  output$download_norm_PCA = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "PCA-MDS-dendrogram.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(norm_pca_plot())
+        dev.off()
+      })
+    }
+  )
+  
+  output$norm_PCA <- renderPlot({
+    withProgress(message = "Clustering",{
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      print(norm_pca_plot())
+    }
+    })
+  })
+  
+  output$norm_PCA_table <- DT::renderDataTable({
+    normPCAdata()
+  })
+  output$d_norm_count_cutoff <- DT::renderDataTable({
+    d_norm_count_matrix_cutofff()
+  })
+  
+  output$download_norm_pca_table = downloadHandler(
+    filename = function() {
+      paste0(download_norm_dir(), "PCA_table.txt")
+    },
+    content = function(file){write.table(normPCAdata(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
+  norm_heat <- reactive({
+    data <- d_norm_count_matrix_cutofff()
+    withProgress(message = "Heatmap",{
+      if(is.null(data)){
+        return(NULL)
+      }else{ 
+        data.z <-genescale(data, axis=1, method="Z")
+        data.z <- na.omit(data.z)
+        ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
+                      clustering_method_columns = 'ward.D2',
+                      show_row_names = F, show_row_dend = F)
+      }
+    })
+  })
+  
+  output$norm_heatmap <- renderPlot({
+    data <- d_norm_count_matrix_cutofff()
+    withProgress(message = "Heatmap",{
+    if(is.null(data)){
+      return(NULL)
+    }else{ 
+      print(norm_heat())
+    }
+    })
+  })
+  
+  output$download_norm_heatmap = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "heatmap.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 9, width = 3.5)
+        print(norm_heat())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  #norm GOI------------------------------------------------------
+  d_norm_count_cutoff_uniqueID <- reactive({
+    count <- d_norm_count_matrix_cutofff()
+    if(input$Species3 != "not selected"){
+      if(str_detect(rownames(count)[1], "ENS")){
+        count$Row.names <-  rownames(count)
+        gene_IDs  <- gene_ID_norm()
+        data2 <- merge(count, gene_IDs, by="Row.names")
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
+        rownames(data2) <- data2$Row.names
+        count <- data2[,-1]
+      }
+    }
+    return(count)
+  })
+  
+  GOI_list3 <- reactive({
+    withProgress(message = "Preparing GOI list",{
+      count <- d_norm_count_cutoff_uniqueID()
+      if(is.null(count)){
+        return(NULL)
+      }else{
+        if(str_detect(rownames(count)[1], "ENS")){
+          if(input$Species3 != "not selected"){
+            GOI <- count$Unique_ID
+          }else GOI <- rownames(count)
+        }else{ 
+          if(input$Species3 != "not selected"){
+            GOI <- rownames(count)
+          }else GOI <- rownames(count)
+        }
+        return(GOI)
+      }
+    })
+  })
+  
+  output$GOI3 <- renderUI({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing GOI list",{
+        selectizeInput("GOI3", "genes of interest (GOI)", c(GOI_list3()),multiple = TRUE, options = list(delimiter = " ", create = T))
+         })
+    }
+  })
+  
+  norm_GOIcount <- reactive({
+    count <- d_norm_count_cutoff_uniqueID()
+    if(str_detect(rownames(count)[1], "ENS")){
+      if(input$Species3 != "not selected"){
+        Unique_ID <- input$GOI3
+        label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+        data <- merge(count, label_data, by="Unique_ID")
+        rownames(data) <- data$Unique_ID
+        data <- data[, - which(colnames(data) == "Row.names")]
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+        data <- data[, - which(colnames(data) == "Unique_ID")]
+      }
+    }else{
+      Row.names <- input$GOI3
+      count$Row.names <- rownames(count)  
+      label_data <- as.data.frame(Row.names, row.names = Row.names)
+      data <- merge(count, label_data, by="Row.names")
+      rownames(data) <- data$Row.names
+      data <- data[, - which(colnames(data) == "Row.names")]
+    }
+    return(data)
+  })
+  
+  norm_GOIheat <- reactive({
+    data <- norm_GOIcount()
+    if(is.null(data)){
+      ht <- NULL
+    }else{
+      data.z <- genescale(data, axis=1, method="Z")
+      data.z <- na.omit(data.z)
+      ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
+                    clustering_method_columns = 'ward.D2',
+                    show_row_names = T, show_row_dend = F)
+    }
+    return(ht)
+  })
+  
+  output$norm_GOIheatmap <- renderPlot({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      if(!is.null(input$GOI3)){
+        withProgress(message = "heatmap",{
+          suppressWarnings(print(norm_GOIheat()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  norm_GOIbox <- reactive({
+    count <- d_norm_count_cutoff_uniqueID()
+    data <- norm_GOIcount()
+    if(is.null(data)){
+      p <- NULL
+    }else{
+      collist <- gsub("\\_.+$", "", colnames(data))
+      collist <- unique(collist)
+      data$Row.names <- rownames(data)
+      data <- data %>% gather(key=sample, value=value,-Row.names)
+      data$sample <- gsub("\\_.+$", "", data$sample)
+      data$Row.names <- as.factor(data$Row.names)
+      data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
+      data$value <- as.numeric(data$value)
+      p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
+                             fill = "sample", scales = "free", 
+                             add = "jitter", legend = "none",
+                             xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
+      p <- (facet(p, facet.by = "Row.names",
+                  panel.labs.background = list(fill = "transparent", color = "transparent"),
+                  scales = "free", short.panel.labs = T)+
+              theme(axis.text.x= element_text(size = 10),
+                    axis.text.y= element_text(size = 10),
+                    panel.background = element_rect(fill = "transparent", size = 0.5),
+                    title = element_text(size = 10),text = element_text(size = 10)))
+    }
+    return(p)
+  })
+  
+  
+  output$norm_GOIboxplot <- renderPlot({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      if(!is.null(input$GOI3)){
+        withProgress(message = "Boxplot",{
+          suppressWarnings(print(norm_GOIbox()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$download_norm_GOIbox = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "GOIboxplot.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- norm_GOIcount()
+        rowlist <- rownames(data)
+        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
+        {pdf_hsize <- 15
+        pdf_wsize <- 15}
+        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 13.5
+        pdf_wsize <- 13.5}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 12
+        pdf_wsize <- 12}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 10.5
+        pdf_wsize <- 10.5}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        {pdf_hsize <- 9
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 7.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        {pdf_hsize <- 6
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
+        {pdf_hsize <- 5
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 5
+        pdf_wsize <- 4.5}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 4
+        pdf_wsize <- 6}
+        if (length(rowlist) == 4)
+        {pdf_hsize <- 4
+        pdf_wsize <- 4}
+        if (length(rowlist) == 3)
+        {pdf_hsize <- 2
+        pdf_wsize <- 6}
+        if (length(rowlist) == 2)
+        {pdf_hsize <- 2
+        pdf_wsize <- 4}
+        if (length(rowlist) == 1)
+        {pdf_hsize <- 2
+        pdf_wsize <- 2}
+        if (length(rowlist) > 200)
+        {pdf_hsize <- 30
+        pdf_wsize <- 30}
+        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        print(norm_GOIbox())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  output$download_norm_GOIheat = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "GOIheatmap.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- norm_GOIcount()
+        rowlist <- rownames(data)
+        pdf(file, height = 10, width = 7)
+        print(norm_GOIheat())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  #norm kmeans------------------------------------------------------
+  output$norm_kmeans_num <- renderUI({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing GOI list",{
+        sliderInput("norm_kmeans_number", "k-means number", min = 1, 
+                    max=20, step = 1,
+                    value = 1)
+      })
+    }
+  })
+  
+  norm_data_z <- reactive({
+    data <- d_norm_count_matrix_cutofff()
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      data.z <- genescale(data, axis = 1, method = "Z")
+      data.z <- na.omit(data.z)
+      return(data.z)
+    }
+  })
+  
+  norm_kmeans <- reactive({
+    data.z <- norm_data_z()
+    if(is.null(data.z)){
+      return(NULL)
+    }else{
+      withProgress(message = "k-means clustering",{
+        ht <- Heatmap(data.z, name = "z-score",
+                      column_order = colnames(data.z),
+                      clustering_method_columns = 'ward.D2',
+                      row_km= input$norm_kmeans_number, cluster_row_slices = F, row_km_repeats = 1000,
+                      show_row_names = F)
+        ht <- draw(ht)
+        return(ht)
+      })
+    }
+  })
+  
+  norm_kmeans_cluster <- reactive({
+    ht <- norm_kmeans()
+    data.z <- norm_data_z()
+    data <- d_norm_count_matrix_cutofff()
+    if(is.null(ht) || is.null(data.z)){
+      return(NULL)
+    }else{
+      r.dend <- row_dend(ht)
+      rcl.list <- row_order(ht)
+      lapply(rcl.list, function(x) length(x))
+      Cluster <- NULL
+      if(length(lapply(rcl.list, function(x) length(x))) != input$norm_kmeans_number){
+        return(NULL)
+      }else{
+        for (i in 1:length(row_order(ht))){ if (i == 1) {
+          clu <- t(t(row.names(data.z[row_order(ht)[[i]],])))
+          out <- cbind(clu, paste("cluster", i, sep=""))
+          colnames(out) <- c("GeneID", "Cluster")} else {
+            clu <- t(t(row.names(data.z[row_order(ht)[[i]],])))
+            clu <- cbind(clu, paste("cluster", i, sep=""))
+            out <- rbind(out, clu)}}
+        out <- as.data.frame(out)
+        rownames(out) <- out$GeneID
+        clusterCount <- merge(out, data, by=0)
+        rownames(clusterCount) <- clusterCount$GeneID
+        clusterCount <- clusterCount[,-1:-2]
+        return(clusterCount)
+      }
+    }
+  })
+  
+  output$norm_kmeans_heatmap <- renderPlot({
+    ht <- norm_kmeans()
+    if(is.null(ht)){
+      return(NULL)
+    }else{
+      print(ht)
+    }
+  })
+  
+  output$norm_kmeans_count_table <- DT::renderDataTable({
+    norm_kmeans_cluster()
+  })
+  
+  output$download_norm_kmeans_cluster = downloadHandler(
+    filename = function() {
+      paste0(download_norm_dir(), "kmeans_count_table.txt")
+    },
+    content = function(file){write.table(norm_kmeans_cluster(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_norm_kmeans_heatmap = downloadHandler(
+    filename = function() {
+      paste0(download_norm_dir(), paste(input$norm_kmeans_number,"kmeans_heatmap.txt",sep = "_"))
+    },
+    content = function(file){
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 10, width = 7)
+        print(norm_kmeans())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
 }
-
-
-
-
 
 
 

@@ -7,6 +7,7 @@ library(ggcorrplot)
 library(tidyverse)
 library(tools)
 library(ggpubr)
+library(venn)
 library(tidyverse)
 library(ggrepel)
 library(ggdendro)
@@ -415,8 +416,105 @@ ui<- fluidPage(
              ) # main panel
            ) #sidebarLayout
   ), #tabPanel
+  # venn diagram analysis---------------------------------
+  tabPanel("Venn diagram",
+           # titlePanel(h5("Upload Files")),
+           sidebarLayout(
+             # venn diagram analysis---------------------------------
+             sidebarPanel(
+               fileInput(
+                 inputId = "files", 
+                 label = "Select gene list files (txt)", 
+                 multiple = TRUE,
+                 accept = c("text/txt",
+                            "text/tab-separated-values,text/plain",
+                            ".txt")
+               ),
+               "Count extraction of intersection",
+               fileInput(
+                 inputId = "file_for_venn", 
+                 label = "Choose a normalized count file (txt)", 
+                 multiple = TRUE,
+                 accept = c("text/txt",
+                            "text/tab-separated-values,text/plain",
+                            ".txt")
+               ),
+               br(),br(),
+               h4("Input for integrated heatmap"),
+               fileInput(
+                 inputId = "countfiles", 
+                 label = "Select normalized count files (txt)", 
+                 multiple = TRUE,
+                 accept = c("text/txt",
+                            "text/tab-separated-values,text/plain",
+                            ".txt")
+               ),
+               fluidRow(
+                 column(6, selectInput(
+                   inputId = "pre_zscoring", 
+                   label = "Option: Pre-zscoring", 
+                   multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))
+               ),
+               actionButton("goButton_venn", "example data"),
+               tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                         tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                         )
+               ) #sidebarPanel
+             ),
+             
+             # Main Panel -------------------------------------
+             mainPanel(
+               tabsetPanel(
+                 type = "tabs",
+                 tabPanel("Input gene lists",
+                          plotOutput("venn"),
+                          bsCollapse(id="venn_collapse_panel",open="venn_result_panel",multiple = TRUE,
+                                     bsCollapsePanel(title="venn result:",
+                                                     value="venn_result_panel",
+                                                     downloadButton("download_venn_result", "Download venn result"),
+                                                     dataTableOutput("venn_result")
+                                     ),
+                                     bsCollapsePanel(title="intersection count table:",
+                                                     value="intersection_count_panel",
+                                                     fluidRow(
+                                                       column(4, htmlOutput("select_file1")),
+                                                       column(4, downloadButton("download_intersection_count_table", "Download intersection count table"))
+                                                     ),
+                                                     dataTableOutput("intersection_count")
+                                     )
+                          )
+                 ),
+                 tabPanel("integrated_heatmap",
+                          fluidRow(
+                            column(4, htmlOutput("select_file2")),
+                            column(4, downloadButton("download_integrated_heatmap", "download integrated heatmap"))
+                          ),
+                          plotOutput("intheatmap"),
+                          bsCollapse(id="int_result_collapse_panel",open="integrated_count_panel",multiple = TRUE,
+                                     bsCollapsePanel(title="integrated normalized count:",
+                                                     value="integrated_count_panel",
+                                                     downloadButton("download_integrated_count_table", "Download integrated count table"),
+                                                     dataTableOutput("integrated_count_table")
+                                     ),
+                                     bsCollapsePanel(title="integrated zscored normalized count:",
+                                                     value="integrated_z_count_panel",
+                                                     downloadButton("download_integrated_z_count_table", "Download integrated zscored count table"),
+                                                     dataTableOutput("integrated_count_z_table")
+                                     )
+                          )
+                 )
+               )
+             ) #sidebarLayout
+           ) #tabPanel
+  ),
   # Normalized count data analysis -------------------------------------
-  tabPanel("Normalized count data analysis",
+  tabPanel("Normalized count analysis",
            # titlePanel(h5("Upload Files")),
            sidebarLayout(
              # Normalized count data analysis---------------------------------
@@ -1195,6 +1293,7 @@ output$download_pair_deg_count_down = downloadHandler(
     data$color <- "NS"
     data$color[data$log2FoldChange < -log2(input$fc) & data$padj < input$fdr] <- "down"
     data$color[data$log2FoldChange > log2(input$fc) & data$padj < input$fdr] <- "up"
+    data$padj[data$padj == 0] <- 10^(-300)
     if(!is.null(label_data)) {
       Color <- c("blue","green","darkgray","red")
       for(name in label_data){
@@ -3844,7 +3943,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         tmp <- input$file8$datapath
         if(is.null(input$file8) && input$goButton3 == 0) return(NULL)
-        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "data/example8.csv"
+        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "data/example7.txt"
         if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
         if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
         if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
@@ -3869,7 +3968,7 @@ output$download_pair_deg_count_down = downloadHandler(
   gene_list <- reactive({
     data <- input$file10$datapath
     if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
-    if(is.null(input$file10) && input$goButton3 > 0 )  return(NULL)
+    if(is.null(input$file10) && input$goButton3 > 0 )  data = "data/example10.txt"
     if(tools::file_ext(data) == "xlsx") df <- read.xls(data, header=TRUE, row.names = 1)
     if(tools::file_ext(data) == "csv") df <- read.csv(data, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(data) == "txt") df <- read.table(data, header=TRUE, sep = "\t", row.names = 1)
@@ -4474,6 +4573,298 @@ output$download_pair_deg_count_down = downloadHandler(
       withProgress(message = "Preparing download",{
         pdf(file, height = 10, width = 7)
         print(norm_kmeans())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  #venn diagram ------------------
+  
+  output$select_file1 <- renderUI({
+    selectInput("selectfile1", "gene_list", choices = c("not selected", overlap_list()), selected = "not selected",multiple = F)
+  })
+  output$select_file2 <- renderUI({
+    if(is.null(overlap_list())){
+      return(NULL)
+    }else{
+    selectInput("selectfile", "gene_list", choices = c("not selected", overlap_list()), selected = "not selected",multiple = F)
+    }
+  })
+  
+  files_table <- reactive({
+    upload = list()
+    name = c()
+    if(is.null(input$files)){
+      if(input$goButton_venn > 0 ){
+        df <- list()
+        df[["example1"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
+        df[["example2"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
+        return(df)
+      }
+      return(NULL)
+    }else{
+    for(nr in 1:length(input$files[, 1])){
+      df <- read.table(file = input$files[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+      name <- c(name, gsub("\\..+$", "", input$files[nr,]$name))
+      upload[[nr]] <- c(rownames(df))
+    }
+    names(upload) <- name
+    return(upload)
+    }
+  })
+  
+  output$venn <- renderPlot({
+    if(is.null(files_table())){
+      return(NULL)
+    }else{
+    gene_list <- files_table()
+    venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 0.8, sncs = 0.6 )
+    }
+  })
+  
+  overlap_list <- reactive({
+    gene_list <- files_table()
+    data <- names(attr(venn(gene_list), "intersections"))
+    return(data)
+  })
+  
+  overlap_table2 <- reactive({
+    df <- data.frame("Gene" = NA, "Group"=NA)
+    gene_list <- files_table()
+    if(is.null(gene_list)){
+      return(NULL)
+    }else{
+      for (name in names(attr(venn(gene_list),"intersections"))){
+        data <- as.data.frame(attr(venn(gene_list),"intersections")[name])
+        data <- cbind(data, name)
+        colnames(data) <- c("Gene", "Group")
+        df <- rbind(df, data)
+      }
+      df <- na.omit(df)
+      return(df)
+    }
+  })
+  
+  count_for_venn <- reactive({
+    tmp <- input$file_for_venn$datapath
+    if(is.null(input$file_for_venn) && input$goButton_venn == 0){ 
+      return(NULL)
+    }else{
+      if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "data/example7.txt"
+      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      return(df)
+    }
+  })
+  
+  overlap_extract <- reactive({
+    cluster_file <- overlap_table2()
+    rownames(cluster_file) <- cluster_file$Gene
+    data <- count_for_venn()
+    if(is.null(data) || is.null(cluster_file)){
+      return(NULL)
+    }else{
+      cluster_name <- input$selectfile1
+      clusterCount <- dplyr::filter(cluster_file, Group == cluster_name)
+      clusterCount <- merge(clusterCount, data, by=0)
+      clusterCount <- clusterCount[,-2:-3]
+      rownames(clusterCount) <- clusterCount$Row.names
+      clusterCount <- clusterCount[,-1]
+      return(clusterCount)
+    }
+  })
+  
+  
+  output$venn_result <- renderDataTable({
+    overlap_table2()
+  })
+  
+  output$intersection_count <- renderDataTable({
+    overlap_extract()
+  })
+  
+  
+  
+  countfiles_integrated <- reactive({
+    if(is.null(input$countfiles)){
+      if(input$goButton_venn > 0){
+        df <- list()
+        df["data1"] <- list(read.table("data/data1.txt",header = T, row.names = 1))
+        df["data2"] <- list(read.table("data/data2.txt",header = T, row.names = 1))
+        return(df)
+      } 
+      return(NULL)
+    }else{
+      upload = list()
+      name = c()
+      for(nr in 1:length(input$countfiles[, 1])){
+        df <- read.table(file = input$countfiles[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+        name <- c(name, gsub("\\..+$", "", input$countfiles[nr,]$name))
+        upload[[nr]] <- list(df)
+      }
+      names(upload) <- name
+      return(upload)
+    }
+  })
+  
+  integrated_count <- reactive({
+    files <- countfiles_integrated()
+    if(is.null(files)){
+      return(NULL)
+    }else{
+      if(input$selectfile != "not selected"){
+        cluster_file <- overlap_table2()
+        rownames(cluster_file) <- cluster_file$Gene
+        gene_set <- dplyr::filter(cluster_file, Group == input$selectfile)
+      }
+      matrix_list <- list()
+      for (name in names(files)) {
+        matrix <- as.data.frame(files[name])
+        matrix_2 <- matrix
+        matrix_3 <- merge(matrix, matrix_2, by = 0)[,-2:-(1 + length(colnames(matrix)))]
+        matrix_list[name] <- list(matrix_3)
+      }
+      base <- matrix_list[[1]]
+      int_matrix <- lapply(matrix_list[-1], function(i) base <<- merge(base, i, by = "Row.names"))
+      rownames(base) <- base$Row.names
+      base <- data.matrix(base[,-1])
+      if(input$selectfile != "not selected"){
+        base <- merge(gene_set, base, by = 0)
+        if(length(colnames(gene_set)) != 0){
+          base <- base[,-2:-(1 + length(colnames(gene_set)))]
+        }
+        rownames(base) <- base$Row.names
+        base <- data.matrix(base[,-1])
+      }
+      colnames(base) <- gsub("(.y)$", "", colnames(base))
+      return(base)
+    }
+  })
+  
+  integrated_count_z <- reactive({
+    files <- countfiles_integrated()
+    if(is.null(files)){
+      return(NULL)
+    }else{
+      if(input$selectfile != "not selected"){
+        cluster_file <- overlap_table2()
+        rownames(cluster_file) <- cluster_file$Gene
+        gene_set <- dplyr::filter(cluster_file, Group == input$selectfile)
+      }
+      matrix_list <- list()
+      matrix_z_list <- list()
+      for (name in names(files)) {
+        matrix <- as.data.frame(files[name])
+        matrix_2 <- matrix
+        if(input$pre_zscoring == "TRUE"){
+          matrix_z <- genescale(matrix_2, axis = 1, method = "Z")
+          matrix_z <- na.omit(matrix_z)
+          matrix_z <- merge(matrix, matrix_z, by = 0)[,-2:-(1 + length(colnames(matrix)))]
+          matrix_z_list[name] <- list(matrix_z)
+        }
+        matrix_3 <- merge(matrix, matrix_2, by = 0)[,-2:-(1 + length(colnames(matrix)))]
+        matrix_list[name] <- list(matrix_3)
+      }
+      base <- matrix_list[[1]]
+      int_matrix <- lapply(matrix_list[-1], function(i) base <<- merge(base, i, by = "Row.names"))
+      rownames(base) <- base$Row.names
+      base <- data.matrix(base[,-1])
+      if(input$selectfile != "not selected"){
+        base <- merge(gene_set, base, by = 0)
+        if(length(colnames(gene_set)) != 0){
+          base <- base[,-2:-(1 + length(colnames(gene_set)))]
+        }
+        rownames(base) <- base$Row.names
+        base <- data.matrix(base[,-1])
+      }
+      if(input$pre_zscoring == "TRUE"){
+        base_z <- matrix_z_list[[1]]
+        int_matrix <- lapply(matrix_z_list[-1], function(i) base_z <<- merge(base_z, i, by = "Row.names"))
+        rownames(base_z) <- base_z$Row.names
+        base_z <- data.matrix(base_z[,-1])
+        if(input$selectfile != "not selected"){
+          base_z <- merge(gene_set, base_z, by = 0)
+          if(length(colnames(gene_set)) != 0){
+            base_z <- base_z[,-2:-(1 + length(colnames(gene_set)))]
+          }
+          rownames(base_z) <- base_z$Row.names
+          base_z <- data.matrix(base_z[,-1])
+        }
+      }
+      if(input$pre_zscoring != "TRUE"){
+        base <- genescale(base, axis = 1, method = "Z")
+        base_z <- na.omit(base)
+      }
+      colnames(base_z) <- gsub("(.y)", "", colnames(base_z))
+      
+      return(base_z)
+    }
+  })
+  
+  
+  integrated_heatmap <- reactive({
+    base_z <- integrated_count_z()
+    if(input$selectfile == "not selected" || is.null(base_z)){
+      return(NULL)
+    }else{
+      withProgress(message = "Integrated heatmap",{
+        cond <- gsub("\\_.+$", "", colnames(base_z))
+        cond <- gsub(".+\\.", "", cond)
+        cond <- factor(cond, levels = unique(cond), ordered = TRUE)
+        if(length(rownames(base_z)) <= 50){
+          ht <- Heatmap(base_z, name = "z-score",
+                        clustering_method_columns = 'ward.D2',
+                        cluster_row_slices = T, show_row_names = T,
+                        top_annotation = HeatmapAnnotation(condition = cond))
+        }else{
+          ht <- Heatmap(base_z, name = "z-score",
+                        clustering_method_columns = 'ward.D2',
+                        cluster_row_slices = T, show_row_names = F,
+                        top_annotation = HeatmapAnnotation(condition = cond))
+        }
+        incProgress(1)
+        return(draw(ht))
+      })
+    }
+  })
+  
+  output$intheatmap <- renderPlot({
+    print(integrated_heatmap())
+  })
+  output$integrated_count_table <- renderDataTable({
+    integrated_count()
+  })
+  output$integrated_count_z_table <- renderDataTable({
+    integrated_count_z()
+  })
+  
+  
+  output$download_venn_result = downloadHandler(
+    filename ="venn_result.txt",
+    content = function(file){write.table(overlap_table2(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
+  output$download_intersection_count_table = downloadHandler(
+    filename = function(){paste0(paste("intersection",input$selectfile1, sep="_"), paste0(gsub("\\..+$", "", input$file_for_venn), ".txt"))},
+    content = function(file){write.table(overlap_extract(), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  output$download_integrated_count_table = downloadHandler(
+    filename ="integrated_count_table.txt",
+    content = function(file){write.table(integrated_count(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_integrated_z_count_table = downloadHandler(
+    filename ="integrated_zscored_count_table.txt",
+    content = function(file){write.table(integrated_count_z(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_integrated_heatmap = downloadHandler(
+    filename ="integrated_heatmap.pdf",
+    content = function(file){
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 8, width = 4)
+        print(integrated_heatmap())
         dev.off()
         incProgress(1)
       })

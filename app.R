@@ -23,6 +23,8 @@ library(qvalue)
 library(org.Hs.eg.db)
 library(org.Mm.eg.db)
 library(org.Rn.eg.db)
+library(org.Dm.eg.db)
+library(org.Ce.eg.db)
 library(AnnotationDbi)
 library(clusterProfiler)
 library(enrichplot)
@@ -30,13 +32,9 @@ library(DOSE)
 library(msigdbr)
 library(genefilter)
 library(ComplexHeatmap)
-library("shinyAce",verbose=FALSE) # for showing text files, code
-library(shinyBS,verbose=FALSE) # for popup figures
+library(shinyBS)
 library(plotly,verbose=FALSE)
 library('shinyjs', verbose = FALSE)
-library('reactable', verbose = FALSE)
-library(future)
-plan(multisession)
 library(BiocManager)
 options(repos = BiocManager::repositories())
 
@@ -48,7 +46,7 @@ ui<- fluidPage(
              p(("Code available on Github:"),a("https://github.com/Kan-E/RNAseqChef",href="https://github.com/Kan-E/RNAseqChef"),align="center",width=4)),
   "RNAseqChef",
   id='navBar',
-  tabPanel("Pair-wise",
+  tabPanel("Pair-wise DEG",
            # titlePanel(h5("Upload Files")),
            sidebarLayout(
              # pair-wise -------------------------------------
@@ -87,13 +85,6 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%")
                ),
-               "Option: Normalized count file:",br(),
-               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
-               fileInput("norm_file1",
-                         label = "Select a normalized count file",
-                         accept = c("txt", "csv"),
-                         multiple = FALSE,
-                         width = "80%"),
                radioButtons('DEG_method','DEG analysis method:',
                             c('DESeq2'="DESeq2",
                               'EBSeq'="EBSeq",
@@ -114,6 +105,13 @@ ui<- fluidPage(
                  column(4, numericInput("fdr", "FDR", min   = 0, max   = 1, value = 0.05)),
                  column(4, numericInput("basemean", "Basemean", min   = 0, max   = NA, value = 0))
                ),
+               "Option: Normalized count file:",br(),
+               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
+               fileInput("norm_file1",
+                         label = "Select a normalized count file",
+                         accept = c("txt", "csv"),
+                         multiple = FALSE,
+                         width = "80%"),
                actionButton("goButton", "example data"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -244,11 +242,11 @@ ui<- fluidPage(
              ) # main panel
            ) #sidebarLayout
   ), #tabPanel
-  
-  tabPanel("3 conditions",
+  # 3conditions -------------------------------------
+  tabPanel("3 conditions DEG",
            # titlePanel(h5("Upload Files")),
            sidebarLayout(
-             # 3conditions -------------------------------------
+
              # sidebar_3conditions---------------------------------
              sidebarPanel(
                radioButtons('data_file_type2','Input:',
@@ -284,13 +282,6 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%")
                ),
-               "Option: Normalized count file:",br(),
-               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
-               fileInput("norm_file2",
-                         label = "Select a normalized count file",
-                         accept = c("txt", "csv"),
-                         multiple = FALSE,
-                         width = "80%"),
                fluidRow(
                  column(6, selectInput("Species2", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
                h4("Cut-off conditions:"),
@@ -299,6 +290,13 @@ ui<- fluidPage(
                  column(4, numericInput("fdr2", "FDR", min   = 0, max   = NA, value = 0.05)),
                  column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 0))
                ),
+               "Option: Normalized count file:",br(),
+               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
+               fileInput("norm_file2",
+                         label = "Select a normalized count file",
+                         accept = c("txt", "csv"),
+                         multiple = FALSE,
+                         width = "80%"),
                actionButton("goButton2", "example data"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -391,13 +389,13 @@ ui<- fluidPage(
                           )
                           ),
                  tabPanel("Enrichment analysis",
-                          plotOutput("keggenrichment2_1"),
-                          plotOutput("keggenrichment2_2"),
-                          plotOutput("keggenrichment2_3"),
                           fluidRow(
                             column(4, htmlOutput("Gene_set2")),
                             column(4, downloadButton("download_3enrich", "Download"))
                           ),
+                          plotOutput("keggenrichment2_1"),
+                          plotOutput("keggenrichment2_2"),
+                          plotOutput("keggenrichment2_3"),
                           bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
                                      bsCollapsePanel(title="Enrichment result1:",
                                                      value="ORA3_1_panel",
@@ -651,7 +649,23 @@ ui<- fluidPage(
              )
            )
            ) #sidebarLayout
-  ) #tabPanel
+  ), #tabPanel
+  #Instruction--------------------------
+  tabPanel("Instructions",
+           fluidRow(    
+             column(12,
+                    h2("RNAseqChef",align="center"),br(),
+                    "RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application (https://kan-e.shinyapps.io/RNAseqChef/) for automated, systematic, and integrated RNA-seq differential expression analysis.",
+                    "RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly.",br(),
+                    br(),
+                    "RNAseqChef consists of mainly five panels including,", 
+                    strong('Pair-wise DEG'), ",",strong('3 conditions DEG'),",", strong('Venn diagram'),",", 
+                    strong('normalized count data'),", and" ,strong('Enrichment viewer'),".",br(),
+                    strong('Pair-wise DEG'), "and", strong('3 conditions DEG'), "have functions for single dataset DEG analysis such as DEG detection, clustering analysis, gene expression profiling, and enrichment analysis.",br(),
+                    strong('Venn diagram'), ",", strong('normalized count data'), ", and", strong('Enrichment viewer'), "have functions for multiple dataset analysis such as Venn diagram analysis, k-means clustering, and gene-set extraction and profiling."
+             )
+           )
+  )
   ) 
   )
 # server ---------------------------------
@@ -1285,6 +1299,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   pair_volcano <- reactive({
+    if(!is.null(input$xrange)){
     data <- as.data.frame(data_degcount())
     count <- deg_norm_count()
     if(!is.null(input$GOI)){
@@ -1341,9 +1356,11 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
     return(v)
+    }else return(NULL)
   })
   
   output$volcano1 <- renderPlot({
+    if(!is.null(input$xrange)){
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
@@ -1351,6 +1368,7 @@ output$download_pair_deg_count_down = downloadHandler(
     print(pair_volcano())
         incProgress(1)
     })
+    }
     }
   })
   
@@ -1499,7 +1517,7 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 10),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 10)) 
+                    title = element_text(size = 10),text = element_text(size = 20)) 
             + scale_fill_manual(values=c("gray", "#ff8082")))
     }
     return(p)
@@ -1764,28 +1782,30 @@ output$download_pair_deg_count_down = downloadHandler(
         em_down <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
         if (class(em_up) == "try-error") em_up <- NA
         if (class(em_down) == "try-error") em_down <- NA
-        if (length(em_up$ID) == 0) {
+        if (length(as.data.frame(em_up$ID)) == 0) {
           em_up <- NA
         } else{
           em_up <- setReadable(em_up, org1(), 'ENTREZID')
         }
-        if (length(em_down$ID) == 0) {
+        if (length(as.data.frame(em_down$ID)) == 0) {
           em_down <- NA
         } else{
           em_down <- setReadable(em_down, org1(), 'ENTREZID')
         }
-        if ((length(em_up) == 0) && (length(em_down) == 0))  {
+        if ((length(as.data.frame(em_up$ID)) == 0) && (length(as.data.frame(em_down)) == 0))  {
           return(NULL)
         } else{
           group1 <- as.data.frame(em_up)
           group2 <- as.data.frame(em_down)
-          group1$Cluster <- "upregulated"
-          group2$Cluster <- "downregulated"
           if ((length(colnames(group1)) == 10) && (length(colnames(group2)) == 10))  {
+            group1$Cluster <- "upregulated"
+            group2$Cluster <- "downregulated"
             data<- rbind(group1, group2)
           }else if(length(colnames(group1)) != 10){
+            group2$Cluster <- "downregulated"
             data <- group2
           }else if(length(colnames(group2)) != 10){
+            group1$Cluster <- "upregulated"
             data <- group1
           }
           data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
@@ -1884,8 +1904,6 @@ output$download_pair_deg_count_down = downloadHandler(
       H_t2g <- Hallmark_set()
       em_up <- enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
       em_down <- enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-      if (class(em_up) == "try-error") em_up <- NA
-      if (class(em_down) == "try-error") em_down <- NA
       if (length(em_up$ID) == 0) {
         em_up <- NA
       } else{
@@ -1924,6 +1942,7 @@ output$download_pair_deg_count_down = downloadHandler(
         }
         data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
         data$GeneRatio <- parse_ratio(data$GeneRatio)
+        if(!is.na(data)){
         if ((length(data) == 0) || is.na(unique(data$qvalue))) {
           p1 <- NULL
         } else{
@@ -1932,7 +1951,7 @@ output$download_pair_deg_count_down = downloadHandler(
                           scale_color_continuous(low="red", high="blue",
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }
+        }}else p1 <- NULL
       }
       em3 <- enrichment_1_gsea()
       if (length(em3$ID) == 0) {
@@ -1950,6 +1969,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })  
   
   output$enrichment1 <- renderPlot({
+    if(!is.null(input$Gene_set)){
       if(is.null(d_row_count_matrix())){
         return(NULL)
       }else{
@@ -1964,6 +1984,7 @@ output$download_pair_deg_count_down = downloadHandler(
           incProgress(1)
 })
       }
+    }
   })
   
   pair_enrich2 <- reactive({
@@ -1971,6 +1992,7 @@ output$download_pair_deg_count_down = downloadHandler(
     data3 <- data_degcount2()
     count <- deg_norm_count()
     upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
+    
     geneList_up <- upgene$log2FoldChange
     names(geneList_up) = as.character(upgene$ENTREZID)
     downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
@@ -1997,12 +2019,12 @@ output$download_pair_deg_count_down = downloadHandler(
       if (class(kk1) == "try-error") kk1 <- NA
       if (class(kk2) == "try-error") kk2 <- NA
     }
-      if(is.null(kk1)){
+      if(length(kk1$ID) == 0){
         cnet1 <- NULL
       } else {
         cnet1 <- setReadable(kk1, org1(), 'ENTREZID')
       }
-      if(is.null(kk2)){
+      if(length(kk2$ID) == 0){
         cnet2 <- NULL
       } else {
         cnet2 <- setReadable(kk2, org1(), 'ENTREZID')
@@ -2037,6 +2059,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })  
   
   output$enrichment2 <- renderPlot({
+    if(!is.null(input$Gene_set)){
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
@@ -2047,6 +2070,7 @@ output$download_pair_deg_count_down = downloadHandler(
         incProgress(1)
       })
     }else return(NULL)
+    }
     }
   })
   
@@ -3401,6 +3425,9 @@ output$download_pair_deg_count_down = downloadHandler(
     data4 <- data_3degcount2_1()
     data3 <- data_3degcount1_1()
     cnet_list <- list()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
@@ -3412,18 +3439,11 @@ output$download_pair_deg_count_down = downloadHandler(
         if (class(formula_res) == "try-error") formula_res <- NA
         return(formula_res)
       }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+        H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
         em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        if (is.null(em)) {
+        if (length(em$ID) == 0) {
           cnet1 <- NULL
         } else {
           cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3452,11 +3472,16 @@ output$download_pair_deg_count_down = downloadHandler(
         return(data)
       }
     }
+    }
   })
   
   output$keggenrichment2_1 <- renderPlot({
+    if(!is.null(input$Gene_set2)){
     data4 <- data_3degcount2_1()
     data3 <- data_3degcount1_1()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     cnet_list <- list()
     cnet_list2 <- list()
     if(input$Species2 != "not selected"){
@@ -3484,24 +3509,20 @@ output$download_pair_deg_count_down = downloadHandler(
               } else{
                 c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                               cex_category = 0.75, colorEdge = TRUE)
-                c <- as.grob(c + guides(edge_color = "none"))
+                c <- try(as.grob(c + guides(edge_color = "none")))
+                if(length(class(c)) == 1){
+                  if(class(c) == "try-error") c <- NULL
+                }
                 cnet_list[[name]] = c
               }
             }
         }
           }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+            H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3513,14 +3534,14 @@ output$download_pair_deg_count_down = downloadHandler(
           }
         }
         if (length(cnet_list2) == 0){
-          data <- NA
+          d <- NULL
           }else{
-            data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-          }
-        data <- dplyr::filter(data, !is.na(Cluster))
-        data <- dplyr::filter(data, !is.na(Description))
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
+            if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
+            if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
+            data <- dplyr::filter(data, !is.na(Cluster))
+            data <- dplyr::filter(data, !is.na(Description))
+            data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+            data$GeneRatio <- parse_ratio(data$GeneRatio)
         if ((length(data) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
@@ -3529,12 +3550,12 @@ output$download_pair_deg_count_down = downloadHandler(
                           scale_color_continuous(low="red", high="blue",
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }
+        }}
         
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
             if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
@@ -3542,7 +3563,10 @@ output$download_pair_deg_count_down = downloadHandler(
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                             cex_category = 0.75, colorEdge = TRUE)
-              c <- as.grob(c + guides(edge_color = "none"))
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
               cnet_list[[name]] = c
             }
           }
@@ -3552,20 +3576,39 @@ output$download_pair_deg_count_down = downloadHandler(
           cnet1 <- cnet_list[[1]]
           cnet2 <- cnet_list[[2]]}
         if (length(cnet_list) == 1){
-          cnet1 <- as.data.frame(cnet_list[[1]])
+          cnet1 <- cnet_list[[1]]
           cnet2 <- NULL}
         if (length(cnet_list) == 0){
           cnet1 <- NULL
           cnet2 <- NULL}
       print(plot_grid(d, cnet1, cnet2, nrow = 1))
-      }
+    }
+    }
+    }
     })
   
   #3conditions enrichment_2 ------------------------------------------------------------------------------
-  enrichment3_2_1 <- reactive({
+    Hallmark_cond3 <- reactive({
+      if(input$Species2 != "not selected"){
+      switch (input$Species2,
+              "mouse" = species <- "Mus musculus",
+              "human" = species <- "Homo sapiens",
+              "rat" = species <- "Rattus norvegicus",
+              "fly" = species <- "Drosophila melanogaster",
+              "worm" = species <- "Caenorhabditis elegans")
+      H_t2g <- msigdbr(species = species, category = "H") %>%
+        dplyr::select(gs_name, entrez_gene)
+      return(H_t2g)
+      }else return(NULL)
+    })
+  
+    enrichment3_2_1 <- reactive({
     data4 <- data_3degcount2_2()
     data3 <- data_3degcount1_2()
     cnet_list <- list()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
@@ -3577,18 +3620,11 @@ output$download_pair_deg_count_down = downloadHandler(
         if (class(formula_res) == "try-error") formula_res <- NA
         return(formula_res)
       }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+        H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3617,10 +3653,15 @@ output$download_pair_deg_count_down = downloadHandler(
         return(data)
       }
     }
+    }
   })
   output$keggenrichment2_2 <- renderPlot({
+    if(!is.null(input$Gene_set2)){
     data4 <- data_3degcount2_2()
     data3 <- data_3degcount1_2()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     cnet_list <- list()
     cnet_list2 <- list()
     if(input$Species2 != "not selected"){
@@ -3648,24 +3689,20 @@ output$download_pair_deg_count_down = downloadHandler(
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                             cex_category = 0.75, colorEdge = TRUE)
-              c <- as.grob(c + guides(edge_color = "none"))
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
               cnet_list[[name]] = c
             }
           }
         }
       }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+        H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3677,14 +3714,14 @@ output$download_pair_deg_count_down = downloadHandler(
           }
         }
         if (length(cnet_list2) == 0){
-          data <- NA
+          d <- NULL
         }else{
-          data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-        }
-        data <- dplyr::filter(data, !is.na(Cluster))
-        data <- dplyr::filter(data, !is.na(Description))
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
+          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
+          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
+          data <- dplyr::filter(data, !is.na(Cluster))
+          data <- dplyr::filter(data, !is.na(Description))
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
         if ((length(data) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
@@ -3693,12 +3730,12 @@ output$download_pair_deg_count_down = downloadHandler(
                          scale_color_continuous(low="red", high="blue",
                                                 guide=guide_colorbar(reverse=TRUE)) +
                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }
+        }}
         
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
             if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
@@ -3706,7 +3743,10 @@ output$download_pair_deg_count_down = downloadHandler(
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                             cex_category = 0.75, colorEdge = TRUE)
-              c <- as.grob(c + guides(edge_color = "none"))
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
               cnet_list[[name]] = c
             }
           }
@@ -3716,18 +3756,23 @@ output$download_pair_deg_count_down = downloadHandler(
         cnet1 <- cnet_list[[1]]
         cnet2 <- cnet_list[[2]]}
       if (length(cnet_list) == 1){
-        cnet1 <- as.data.frame(cnet_list[[1]])
+        cnet1 <- cnet_list[[1]]
         cnet2 <- NULL}
       if (length(cnet_list) == 0){
         cnet1 <- NULL
         cnet2 <- NULL}
       print(plot_grid(d, cnet1, cnet2, nrow = 1))
     }
+    }
+    }
   })
   #3conditions enrichment_3 ------------------------------------------------------------------------------
   enrichment3_3_1 <- reactive({
     data4 <- data_3degcount2_3()
     data3 <- data_3degcount1_3()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     cnet_list <- list()
     if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
@@ -3740,18 +3785,11 @@ output$download_pair_deg_count_down = downloadHandler(
         if (class(formula_res) == "try-error") formula_res <- NA
         return(formula_res)
       }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+        H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(em$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3780,21 +3818,27 @@ output$download_pair_deg_count_down = downloadHandler(
         return(data)
       }
     }
+    }
   })
   output$keggenrichment2_3 <- renderPlot({
+    if(!is.null(input$Gene_set2)){
     data4 <- data_3degcount2_3()
     data3 <- data_3degcount1_3()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
     cnet_list <- list()
     cnet_list2 <- list()
     if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         formula_res <- enrichment3_3_1()
+        if(!is.null(formula_res)){
         if ((length(as.data.frame(formula_res)) == 0) ||
             is.na(unique(as.data.frame(formula_res)$qvalue))) {
           d <- NULL
         } else{
           d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
-        }
+        }}else d <- NULL
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             if(input$Gene_set2 == "KEGG"){
@@ -3811,20 +3855,16 @@ output$download_pair_deg_count_down = downloadHandler(
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                             cex_category = 0.75, colorEdge = TRUE)
-              c <- as.grob(c + guides(edge_color = "none"))
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
               cnet_list[[name]] = c
             }
           }
         }
       }else{
-        switch (input$Species2,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
+        H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
@@ -3840,14 +3880,14 @@ output$download_pair_deg_count_down = downloadHandler(
           }
         }
         if (length(cnet_list2) == 0){
-          data <- NA
+          d <- NULL
         }else{
-          data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-        }
-        data <- dplyr::filter(data, !is.na(Cluster))
-        data <- dplyr::filter(data, !is.na(Description))
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
+          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
+          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
+          data <- dplyr::filter(data, !is.na(Cluster))
+          data <- dplyr::filter(data, !is.na(Description))
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
         if ((length(data) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
@@ -3856,7 +3896,7 @@ output$download_pair_deg_count_down = downloadHandler(
                          scale_color_continuous(low="red", high="blue",
                                                 guide=guide_colorbar(reverse=TRUE)) +
                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }
+        }}
         
         for (name in unique(data3$sig)) {
           if (name != "NS"){
@@ -3869,7 +3909,10 @@ output$download_pair_deg_count_down = downloadHandler(
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
                             cex_category = 0.75, colorEdge = TRUE)
-              c <- as.grob(c + guides(edge_color = "none"))
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
               cnet_list[[name]] = c
             }
           }
@@ -3879,12 +3922,14 @@ output$download_pair_deg_count_down = downloadHandler(
         cnet1 <- cnet_list[[1]]
         cnet2 <- cnet_list[[2]]}
       if (length(cnet_list) == 1){
-        cnet1 <- as.data.frame(cnet_list[[1]])
+        cnet1 <- cnet_list[[1]]
         cnet2 <- NULL}
       if (length(cnet_list) == 0){
         cnet1 <- NULL
         cnet2 <- NULL}
       print(plot_grid(d, cnet1, cnet2, nrow = 1))
+    }
+    }
     }
   })
   output$Gene_set2 <- renderUI({
@@ -4619,7 +4664,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
     gene_list <- files_table()
-    venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 0.8, sncs = 0.6 )
+    venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 0.8, sncs = 0.6 )
     }
   })
   
@@ -4710,6 +4755,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   integrated_count <- reactive({
+    if(!is.null(input$selectfile)){
     files <- countfiles_integrated()
     if(is.null(files)){
       return(NULL)
@@ -4741,9 +4787,11 @@ output$download_pair_deg_count_down = downloadHandler(
       colnames(base) <- gsub("(.y)$", "", colnames(base))
       return(base)
     }
+    }else return(NULL)
   })
   
   integrated_count_z <- reactive({
+    if(!is.null(input$selectfile)){
     files <- countfiles_integrated()
     if(is.null(files)){
       return(NULL)
@@ -4801,10 +4849,12 @@ output$download_pair_deg_count_down = downloadHandler(
       
       return(base_z)
     }
+    }else return(NULL)
   })
   
   
   integrated_heatmap <- reactive({
+    if(!is.null(input$selectfile)){
     base_z <- integrated_count_z()
     if(input$selectfile == "not selected" || is.null(base_z)){
       return(NULL)
@@ -4827,6 +4877,7 @@ output$download_pair_deg_count_down = downloadHandler(
         incProgress(1)
         return(draw(ht))
       })
+    }
     }
   })
   

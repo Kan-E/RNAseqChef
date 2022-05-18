@@ -55,20 +55,20 @@ ui<- fluidPage(
   "",
   id='navBar',
   tabPanel("RNAseqChef" ,value='Title', icon = icon("utensils"),
-           fluidRow(    
+           fluidRow(
              column(12,
                     h1("RNAseqChef",align="center"),br(),
                     p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
                       align="center"),
                     br(),
-                    column(6, 
+                    column(6,
                            h4("Pair-wise DEG"),
                            "Detects and visualizes differentially expressed genes",br(),br(),
                            img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),
                            h4("3 conditions DEG"),
                            "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",br(),br(),
                            img(src="3cond_DEG.png", width = 600,height = 475)),
-                    column(6, 
+                    column(6,
                            h4("Venn diagram"),
                            "Detects and visualizes the overlap between DEGs from multiple datasets",br(),br(),
                            img(src="Venn.png", width = 600,height = 230),br(),br(),br(),br(),
@@ -154,7 +154,7 @@ ui<- fluidPage(
           }"
                          ))
              ), #sidebarPanel
-             
+
              # Main Panel -------------------------------------
              mainPanel(
                tabsetPanel(
@@ -343,7 +343,7 @@ ui<- fluidPage(
           }"
                          ))
              ), #sidebarPanel
-             
+
              # Main Panel -------------------------------------
              mainPanel(
                tabsetPanel(
@@ -461,8 +461,8 @@ ui<- fluidPage(
              # venn diagram analysis---------------------------------
              sidebarPanel(
                fileInput(
-                 inputId = "files", 
-                 label = "Select gene list files (txt)", 
+                 inputId = "files",
+                 label = "Select gene list files (txt)",
                  multiple = TRUE,
                  accept = c("text/txt",
                             "text/tab-separated-values,text/plain",
@@ -470,8 +470,8 @@ ui<- fluidPage(
                ),
                "Count extraction of intersection",
                fileInput(
-                 inputId = "file_for_venn", 
-                 label = "Choose a normalized count file (txt)", 
+                 inputId = "file_for_venn",
+                 label = "Choose a normalized count file (txt)",
                  multiple = TRUE,
                  accept = c("text/txt",
                             "text/tab-separated-values,text/plain",
@@ -480,8 +480,8 @@ ui<- fluidPage(
                br(),br(),
                h4("Input for integrated heatmap"),
                fileInput(
-                 inputId = "countfiles", 
-                 label = "Select normalized count files (txt)", 
+                 inputId = "countfiles",
+                 label = "Select normalized count files (txt)",
                  multiple = TRUE,
                  accept = c("text/txt",
                             "text/tab-separated-values,text/plain",
@@ -489,8 +489,8 @@ ui<- fluidPage(
                ),
                fluidRow(
                  column(6, selectInput(
-                   inputId = "pre_zscoring", 
-                   label = "Option: Pre-zscoring", 
+                   inputId = "pre_zscoring",
+                   label = "Option: Pre-zscoring",
                    multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))
                ),
                actionButton("goButton_venn", "example data"),
@@ -505,7 +505,7 @@ ui<- fluidPage(
                          )
                ) #sidebarPanel
              ),
-             
+
              # Main Panel -------------------------------------
              mainPanel(
                tabsetPanel(
@@ -612,7 +612,7 @@ ui<- fluidPage(
                          )
              ) #sidebarPanel
              ),
-           
+
            # Main Panel -------------------------------------
            mainPanel(
              tabsetPanel(
@@ -692,7 +692,7 @@ ui<- fluidPage(
   ), #tabPanel
   #Instruction--------------------------
   tabPanel("Reference",
-           fluidRow(    
+           fluidRow(
              column(10,
                     h2("To cite RNAseqChef:"),
                     p("Web tool:",br(), "Kan Etoh: RNAseqChef (2022)", a("https://kan-e.shinyapps.io/RNAseqChef/",href="https://kan-e.shinyapps.io/RNAseqChef/")),
@@ -728,7 +728,7 @@ ui<- fluidPage(
              )
            )
   )
-  ) 
+  )
   )
 # server ---------------------------------
 server <- function(input, output, session) {
@@ -755,7 +755,7 @@ org_code1 <- reactive({
     return(org_code)
   }
 })
-  
+
     row_count_matrix <- reactive({
       withProgress(message = "Importing row count matrix, please wait",{
     if (input$data_file_type == "Row1"){
@@ -829,8 +829,8 @@ org_code1 <- reactive({
     }
     })
   })
-  
- 
+
+
   # pair-wise DEG ------------------------------------------------------------------------------
   dds <- reactive({
     count <- d_row_count_matrix()
@@ -859,7 +859,7 @@ org_code1 <- reactive({
     }
     return(dds)
   })
-  
+
   deg_result <- reactive({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -922,12 +922,12 @@ org_code1 <- reactive({
     res <- as.data.frame(res)
     if(input$Species != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
-        my.symbols <- rownames(res)
+        my.symbols <- gsub("\\..*","", rownames(res))
         gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
                                         keytype = "ENSEMBL",
                                         columns = c("ENSEMBL","SYMBOL"))
         colnames(gene_IDs) <- c("Row.names","SYMBOL")
-        res$Row.names <- rownames(res)
+        res$Row.names <- gsub("\\..*","", rownames(res))
         gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
         data2 <- merge(res, gene_IDs, by="Row.names")
         rownames(data2) <- data2$Row.names
@@ -937,7 +937,7 @@ org_code1 <- reactive({
     return(res)
     }
   })
-  
+
   deg_norm_count <- reactive({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -973,12 +973,12 @@ org_code1 <- reactive({
     if(input$Species != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
         normalized_counts <- as.data.frame(normalized_counts)
-        my.symbols <- rownames(normalized_counts)
+        my.symbols <- gsub("\\..*","", rownames(normalized_counts))
         gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
                                         keytype = "ENSEMBL",
                                         columns = c("ENSEMBL","SYMBOL"))
         colnames(gene_IDs) <- c("Row.names","SYMBOL")
-        normalized_counts$Row.names <- rownames(normalized_counts)
+        normalized_counts$Row.names <- gsub("\\..*","", rownames(normalized_counts))
         gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
         data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
         rownames(data2) <- data2$Row.names
@@ -989,7 +989,7 @@ org_code1 <- reactive({
       }
     }
   })
-  
+
   observeEvent(input$file1, ({
     updateCollapse(session,id =  "input_collapse_panel", open="Row_count_matrix_panel")
   }))
@@ -1045,7 +1045,7 @@ org_code1 <- reactive({
     dir_name <- paste0(dir_name, paste0("_fdr", input$fdr))
     dir_name <- paste0(dir_name, paste0("_basemean", input$basemean))
     return(dir_name)
-  }) 
+  })
   #pair-wise DEG vis---------------------------
   gene_ID_pair <- reactive({
     res <- d_row_count_matrix()
@@ -1054,7 +1054,7 @@ org_code1 <- reactive({
     }else{
       if(input$Species != "not selected"){
         if(str_detect(rownames(res)[1], "ENS")){
-          my.symbols <- rownames(res)
+          my.symbols <- gsub("\\..*","", rownames(res))
           gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
                                           keytype = "ENSEMBL",
                                           columns = c("ENSEMBL","SYMBOL"))
@@ -1066,8 +1066,8 @@ org_code1 <- reactive({
       }else{ return(NULL) }
     }
   })
-  
-  
+
+
   data_degcount <- reactive({
     data <- deg_result()
     count <- deg_norm_count()
@@ -1094,7 +1094,7 @@ org_code1 <- reactive({
     data <- merge(data,count, by=0)
     Type <- input$DEG_method
     data <- dplyr::filter(data, apply(data[,8:(7 + Cond_1 + Cond_2)],1,mean) > input$basemean)
-    
+
     if(input$Species != "not selected"){
     }
     if (Type == "EBSeq"){
@@ -1103,7 +1103,7 @@ org_code1 <- reactive({
       baseMean <- (data$C1Mean + data$C2Mean)*(1/2)
       data <- cbind(data, baseMean)
     }
-    
+
     if (Type == "DESeq2"){
       data$log2FoldChange <- -1 * data$log2FoldChange
     }
@@ -1112,7 +1112,7 @@ org_code1 <- reactive({
       data$baseMean <- 2^data$baseMean
       data$log2FoldChange <- -1 * data$log2FoldChange
     }
-    
+
     if(str_detect(rownames(count)[1], "ENS")){
       if(input$Species != "not selected"){
         my.symbols <- data$Row.names
@@ -1142,7 +1142,7 @@ org_code1 <- reactive({
     return(data)
     }
   })
-  
+
   data_degcount2 <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
@@ -1166,7 +1166,7 @@ org_code1 <- reactive({
     }else{return(NULL)}
     }
   })
-  
+
   data_degcount_up <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
@@ -1195,7 +1195,7 @@ org_code1 <- reactive({
     return(up_all)
     }
   })
-  
+
   data_degcount_down <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
@@ -1224,7 +1224,7 @@ org_code1 <- reactive({
     return(down_all)
     }
   })
-  
+
   output$pair_deg_up <- DT::renderDataTable({
     data_degcount_up()
   })
@@ -1236,14 +1236,14 @@ org_code1 <- reactive({
       paste0(download_pair_overview_dir(), "_DEG_count_up.txt")
     },
     content = function(file) {write.table(data_degcount_up(), file, quote = F, row.names = T, sep = "\t")})
- 
+
 output$download_pair_deg_count_down = downloadHandler(
   filename = function(){
     paste0(download_pair_overview_dir(), "_DEG_count_down.txt")
   },
   content = function(file) {write.table(data_degcount_down(), file, quote = F, row.names = T, sep = "\t")})
 
-  
+
   # pair-wise MA ------------------------------------------------------------------------------
   output$MA <- renderPlot({
     withProgress(message = "MA plot and heatmap",{
@@ -1317,9 +1317,9 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
 
-  
+
+
   # pair-wise volcano--------------
   GOI_list <- reactive({
     withProgress(message = "Preparing GOI list",{
@@ -1332,7 +1332,7 @@ output$download_pair_deg_count_down = downloadHandler(
       if(input$Species != "not selected"){
         GOI <- data$Unique_ID
       }else GOI <- data$Row.names
-    }else{ 
+    }else{
       if(input$Species != "not selected"){
         GOI <- data$Row.names
       }else GOI <- data$Row.names
@@ -1342,7 +1342,7 @@ output$download_pair_deg_count_down = downloadHandler(
     incProgress(1)
     })
   })
-  
+
   output$GOI <- renderUI({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -1351,7 +1351,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   })
   output$volcano_x <- renderUI({
-    sliderInput("xrange","X_axis range:",min = -100, 
+    sliderInput("xrange","X_axis range:",min = -100,
                 max=100, step = 1,
                 value = c(-10, 10))
   })
@@ -1359,7 +1359,7 @@ output$download_pair_deg_count_down = downloadHandler(
     sliderInput("yrange","Y_axis range:",min = 0, max= 300, step = 1,
                 value = 100)
   })
-  
+
   pair_volcano <- reactive({
     if(!is.null(input$xrange)){
     data <- as.data.frame(data_degcount())
@@ -1387,7 +1387,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
       Color <- c("blue","darkgray","red")
     }
-    
+
     v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4)
     v <- v  + geom_vline(xintercept = c(-log2(input$fc), log2(input$fc)), linetype = c(2, 2), color = c("black", "black")) +
       geom_hline(yintercept = c(-log10(input$fdr)), linetype = 2, color = c("black"))
@@ -1420,7 +1420,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(v)
     }else return(NULL)
   })
-  
+
   output$volcano1 <- renderPlot({
     if(!is.null(input$xrange)){
     if(is.null(d_row_count_matrix())){
@@ -1433,7 +1433,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   output$download_pair_volcano = downloadHandler(
     filename = function(){
       paste0(download_pair_overview_dir(), "_volcano.pdf")
@@ -1447,7 +1447,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   pair_GOIheatmap <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
@@ -1471,10 +1471,10 @@ output$download_pair_deg_count_down = downloadHandler(
         data2 <- merge(data, label_data, by="Unique_ID")
         rownames(data2) <- data2$Unique_ID
         data2 <- data2[, - which(colnames(data2) == "Row.names")]
-      }else{ 
+      }else{
         Row.names <- input$GOI
         label_data <- as.data.frame(Row.names, row.names = Row.names)
-        data2 <- merge(data, label_data, by="Row.names") 
+        data2 <- merge(data, label_data, by="Row.names")
         rownames(data2) <- data2$Row.names}
     }else{
       Row.names <- input$GOI
@@ -1482,7 +1482,7 @@ output$download_pair_deg_count_down = downloadHandler(
       data2 <- merge(data, label_data, by="Row.names")
       rownames(data2) <- data2$Row.names
     }
-    
+
     if(is.null(data2)){
       ht <- NULL
     }else{
@@ -1493,7 +1493,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(ht)
   })
-  
+
   output$GOIheatmap <- renderPlot({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -1506,7 +1506,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   output$download_pair_GOIheatmap = downloadHandler(
     filename = function(){
       paste0(download_pair_overview_dir(), "_GOIheatmap.pdf")
@@ -1520,9 +1520,9 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
-  
-  
+
+
+
   pair_GOIbox <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
@@ -1546,10 +1546,10 @@ output$download_pair_deg_count_down = downloadHandler(
         data2 <- merge(data, label_data, by="Unique_ID")
         rownames(data2) <- data2$Unique_ID
         data2 <- data2[, - which(colnames(data2) == "Row.names")]
-      }else{ 
+      }else{
         Row.names <- input$GOI
         label_data <- as.data.frame(Row.names, row.names = Row.names)
-        data2 <- merge(data, label_data, by="Row.names") 
+        data2 <- merge(data, label_data, by="Row.names")
         rownames(data2) <- data2$Row.names}
     }else{
       Row.names <- input$GOI
@@ -1570,7 +1570,7 @@ output$download_pair_deg_count_down = downloadHandler(
       data3$sample <- factor(data3$sample,levels=collist,ordered=TRUE)
       data3$value <- as.numeric(data3$value)
       p <- ggpubr::ggboxplot(data3, x = "sample", y = "value",
-                             fill = "sample", scales = "free", 
+                             fill = "sample", scales = "free",
                              add = "jitter", legend = "none",
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
@@ -1579,12 +1579,12 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 10),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 20)) 
+                    title = element_text(size = 10),text = element_text(size = 20))
             + scale_fill_manual(values=c("gray", "#ff8082")))
     }
     return(p)
   })
-  
+
   output$GOIbox <- renderPlot({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -1618,10 +1618,10 @@ output$download_pair_deg_count_down = downloadHandler(
             data2 <- merge(data, label_data, by="Unique_ID")
             rownames(data2) <- data2$Unique_ID
             data2 <- data2[, - which(colnames(data2) == "Row.names")]
-          }else{ 
+          }else{
             Row.names <- input$GOI
             label_data <- as.data.frame(Row.names, row.names = Row.names)
-            data2 <- merge(data, label_data, by="Row.names") 
+            data2 <- merge(data, label_data, by="Row.names")
             rownames(data2) <- data2$Row.names}
         }else{
           Row.names <- input$GOI
@@ -1682,7 +1682,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   # pair-wise PCA ------------------------------------------------------------------------------
   pairPCAdata <- reactive({
     if(is.null(d_row_count_matrix())){
@@ -1705,7 +1705,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(pca$rotation)
     }
   })
-  
+
   pair_pca_plot <- reactive({
     data <- deg_norm_count()
     if(length(grep("SYMBOL", colnames(data))) != 0){
@@ -1763,7 +1763,7 @@ output$download_pair_deg_count_down = downloadHandler(
     p2 <- plot_grid(g1, g2, g3, nrow = 1)
     return(p2)
   })
-  
+
   output$download_pair_PCA = downloadHandler(
     filename = function(){
       paste0(download_pair_overview_dir(), "_PCA-MDS-dendrogram.pdf")
@@ -1777,7 +1777,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   output$PCA <- renderPlot({
     if(is.null(d_row_count_matrix())){
       return(NULL)
@@ -1785,11 +1785,11 @@ output$download_pair_deg_count_down = downloadHandler(
     print(pair_pca_plot())
     }
   })
-  
+
   output$pair_PCA_data <- DT::renderDataTable({
     pairPCAdata()
   })
-  
+
   output$download_pair_PCA_table = downloadHandler(
     filename = function() {
       paste0(download_pair_overview_dir(), "_PCA_table.txt")
@@ -1817,7 +1817,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }else return(NULL)
   })
-  
+
   enrichment_1_1 <- reactive({
     data3 <- data_degcount2()
     if(input$Species != "not selected"){
@@ -1882,7 +1882,7 @@ output$download_pair_deg_count_down = downloadHandler(
         }
       }else{return(NULL)}
   })
-  
+
   enrichment_1_gsea <- reactive({
     data <- data_degcount()
     data3 <- data_degcount2()
@@ -1933,8 +1933,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
-    
+
+
   # pair-wise enrichment plot ------------------------------------------------------------------------------
   pair_enrich1_keggGO <- reactive({
     if(input$Gene_set != "MSigDB Hallmark"){
@@ -1959,8 +1959,8 @@ output$download_pair_deg_count_down = downloadHandler(
       p <- plot_grid(p1, p4, nrow = 1)
       return(p)
     }
-  })  
-  
+  })
+
   pair_enrich1_H <- reactive({
     if(input$Gene_set == "MSigDB Hallmark"){
       count <- deg_norm_count()
@@ -2031,8 +2031,8 @@ output$download_pair_deg_count_down = downloadHandler(
       p <- plot_grid(p1, p4, nrow = 1)
       return(p)
     }
-  })  
-  
+  })
+
   output$enrichment1 <- renderPlot({
     if(!is.null(input$Gene_set)){
       if(is.null(d_row_count_matrix())){
@@ -2051,13 +2051,13 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   pair_enrich2 <- reactive({
     data <- data_degcount()
     data3 <- data_degcount2()
     count <- deg_norm_count()
     upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
-    
+
     geneList_up <- upgene$log2FoldChange
     names(geneList_up) = as.character(upgene$ENTREZID)
     downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
@@ -2121,8 +2121,8 @@ output$download_pair_deg_count_down = downloadHandler(
       p <- plot_grid(p2, p3, nrow = 1)
       return(p)
     }
-  })  
-  
+  })
+
   output$enrichment2 <- renderPlot({
     if(!is.null(input$Gene_set)){
     if(is.null(d_row_count_matrix())){
@@ -2138,7 +2138,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   output$download_pair_enrichment = downloadHandler(
     filename = function(){
       paste(download_pair_overview_dir(), paste0(input$Gene_set,"-enrichment.pdf"), sep="_")
@@ -2158,19 +2158,19 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   output$Gene_set <- renderUI({
     selectInput('Gene_set', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark"))
   })
-  
+
   output$pair_enrichment_result <- DT::renderDataTable({
     as.data.frame(enrichment_1_1())
   })
-  
+
   output$pair_GSEA_result <- DT::renderDataTable({
     as.data.frame(enrichment_1_gsea())
   })
-  
+
   output$download_pair_enrichment_table = downloadHandler(
     filename = function() {
       paste(download_pair_overview_dir(), paste0(input$Gene_set,"-enrichment.txt"), sep="_")
@@ -2183,12 +2183,12 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file){write.table(as.data.frame(enrichment_1_gsea()), file, row.names = F, sep = "\t", quote = F)}
   )
-  
-  
+
+
   output$Normalized_Count_matrix <- DT::renderDataTable({
     deg_norm_count()
   })
-  
+
   # 3 conditions ------------------------------------------------------------------------------
   org2 <- reactive({
     if(input$Species2 != "not selected"){
@@ -2212,7 +2212,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(org_code)
     }
   })
-  
+
     row_count_matrix2 <- reactive({
     if (input$data_file_type2 == "Row3"){
       tmp <- input$file4$datapath
@@ -2254,6 +2254,11 @@ output$download_pair_deg_count_down = downloadHandler(
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+    if(input$Species2 != "not selected"){
+      if(str_detect(rownames(df)[1], "ENS")){
+        rownames(df) < gsub("\\..*","", rownames(df))
+      }
+    }
     return(df)
   })
   d_row_count_matrix2 <- reactive({
@@ -2277,11 +2282,16 @@ output$download_pair_deg_count_down = downloadHandler(
         data2_t <- t(data2)
         data3 <- apply(data2_t, 2, as.numeric)
         rownames(data3) <- rownames(data2_t)
+        if(input$Species2 != "not selected"){
+          if(str_detect(rownames(data3)[1], "ENS")){
+            rownames(data3) < gsub("\\..*","", rownames(data3))
+          }
+        }
         return(data3)
       }
     }
   })
-  
+
   observeEvent(input$file7, ({
     updateCollapse(session,id =  "input_collapse_panel3", open="Norm_count_matrix_panel")
   }))
@@ -2297,7 +2307,7 @@ output$download_pair_deg_count_down = downloadHandler(
   output$D_Row_count_matrix2 <- DT::renderDataTable({
     d_row_count_matrix2()
   })
-  
+
   output$download_cond3_d_row_count = downloadHandler(
     filename = function() {
       if (input$data_file_type2 == "Row3"){
@@ -2308,27 +2318,27 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file){write.table(d_row_count_matrix2(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
+
   gene_ID <- reactive({
     res <- d_row_count_matrix2()
     if(is.null(res)){
       return(NULL)
     }else{
     if(input$Species2 != "not selected"){
-      if(str_detect(rownames(count)[1], "ENS")){
-        my.symbols <- rownames(res)
+      if(str_detect(rownames(res)[1], "ENS")){
+        my.symbols <- gsub("\\..*","", rownames(res))
         gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
                                         keytype = "ENSEMBL",
                                         columns = c("ENSEMBL","SYMBOL"))
         colnames(gene_IDs) <- c("Row.names","SYMBOL")
-        res$Row.names <- rownames(res)
+        res$Row.names <- gsub("\\..*","", rownames(res))
         gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
         return(gene_IDs)
       }
     }else{ return(NULL) }
     }
   })
-  
+
   # 3 conditions DEG ------------------------------------------------------------------------------
   MultiOut <- reactive({
     withProgress(message = "EBSeq multiple comparison test takes a few minutes",{
@@ -2354,7 +2364,7 @@ output$download_pair_deg_count_down = downloadHandler(
     incProgress(1)
     })
   })
-  
+
   deg_result2 <- reactive({
     count <- d_row_count_matrix2()
     if(is.null(count)){
@@ -2383,7 +2393,7 @@ output$download_pair_deg_count_down = downloadHandler(
       results <- results[ord,]
       MultiFC <- GetMultiFC(MultiOut)
       res <- results
-      
+
     if(input$Species2 != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
         gene_IDs  <- gene_ID()
@@ -2457,7 +2467,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(as.data.frame(res))
     }
   })
-  
+
   deg_norm_count2 <- reactive({
     if(is.null(norm_count_matrix2())){
     count <- d_row_count_matrix2()
@@ -2491,7 +2501,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(norm_count_matrix2())
     }
   })
-  
+
   output$DEG_result2_1 <- DT::renderDataTable({
     data_3degcount2_1()
   })
@@ -2504,7 +2514,7 @@ output$download_pair_deg_count_down = downloadHandler(
   output$Normalized_Count_matrix2 <- DT::renderDataTable({
     deg_norm_count2()
   })
-  
+
   download_cond3_dir <-reactive({
     if (input$data_file_type2 == "Row3"){
       dir_name <- paste(gsub("\\..+$", "", input$file4), "EBSeq" , sep ="-")
@@ -2515,13 +2525,13 @@ output$download_pair_deg_count_down = downloadHandler(
     dir_name <- paste0(dir_name, paste0("_fdr", input$fdr2))
     dir_name <- paste0(dir_name, paste0("_basemean", input$basemean2))
     return(dir_name)
-  }) 
-  
+  })
+
   output$download_cond3_norm_count = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"normalized_count.txt", sep = "-")},
     content = function(file){write.table(deg_norm_count2(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
+
   output$download_3cond_DEG_table1 = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result1.txt", sep = "-")},
     content = function(file){write.table(data_3degcount2_1(), file, row.names = T, sep = "\t", quote = F)}
@@ -2534,10 +2544,10 @@ output$download_pair_deg_count_down = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result3.txt", sep = "-")},
     content = function(file){write.table(data_3degcount2_3(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
-  
+
+
   #3conditions DEG vis------------------------
-  
+
   #3conditions DEG_1------------------------
   data_3degcount1_1 <- reactive({
     data <- deg_norm_count2()
@@ -2590,12 +2600,12 @@ output$download_pair_deg_count_down = downloadHandler(
       if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
         new.levels <- c("NS")
         col = "darkgray"}
-      
+
       data3$sig <- factor(data3$sig, labels = new.levels)
       return(data3)
     }
   })
-  
+
   data_3degcount2_1 <- reactive({
     data3 <- data_3degcount1_1()
     if(is.null(data3)){
@@ -2633,7 +2643,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   #3conditions scatter + heatmap_1
-  
+
   cond3_scatter1_plot <- reactive({
     data <- deg_norm_count2()
     if(is.null(data)){
@@ -2710,7 +2720,7 @@ output$download_pair_deg_count_down = downloadHandler(
             text = ggplot2::element_text(size = 10),
             title = ggplot2::element_text(size = 10)) +
       xlab(FC_xlab) + ylab(FC_ylab)
-    
+
     data4 <- data_3degcount2_1()
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
@@ -2729,7 +2739,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(p)
     }
   })
-  
+
   output$scatter_1 <- renderPlot({
      if(is.null(deg_norm_count2())){
       return(NULL)
@@ -2739,7 +2749,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   })
-  
+
   output$download_3cond_scatter1 = downloadHandler(
     filename = function(){
       paste0(download_cond3_dir(), "_scatter1.pdf")
@@ -2804,12 +2814,12 @@ output$download_pair_deg_count_down = downloadHandler(
     if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
       new.levels <- c("NS")
       col = "darkgray"}
-    
+
     data3$sig <- factor(data3$sig, labels = new.levels)
     return(data3)
     }
   })
-  
+
   data_3degcount2_2 <- reactive({
     data3 <- data_3degcount1_2()
     if(is.null(data3)){
@@ -2845,7 +2855,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   #3conditions scatter + heatmap_2
   cond3_scatter2_plot <- reactive({
     data <- deg_norm_count2()
@@ -2923,7 +2933,7 @@ output$download_pair_deg_count_down = downloadHandler(
             text = ggplot2::element_text(size = 10),
             title = ggplot2::element_text(size = 10)) +
       xlab(FC_xlab) + ylab(FC_ylab)
-    
+
     data4 <- data_3degcount2_2()
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
@@ -2938,12 +2948,12 @@ output$download_pair_deg_count_down = downloadHandler(
                             clustering_method_columns = 'ward.D2',
                             show_row_names = F, show_row_dend = T))
     }
-    
+
     p<- plot_grid(p, ht, rel_widths = c(2, 1))
     return(p)
     }
   })
-  
+
   output$scatter_2 <- renderPlot({
     if(is.null(deg_norm_count2())){
       return(NULL)
@@ -2951,7 +2961,7 @@ output$download_pair_deg_count_down = downloadHandler(
     print(cond3_scatter2_plot())
     }
   })
-  
+
   output$download_3cond_scatter2 = downloadHandler(
     filename = function(){
       paste0(download_cond3_dir(), "_scatter2.pdf")
@@ -2964,7 +2974,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   #3conditions DEG_3------------------------
   data_3degcount1_3 <- reactive({
     data <- deg_norm_count2()
@@ -3017,12 +3027,12 @@ output$download_pair_deg_count_down = downloadHandler(
     if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
       new.levels <- c("NS")
       col = "darkgray"}
-    
+
     data3$sig <- factor(data3$sig, labels = new.levels)
     return(data3)
     }
   })
-  
+
   data_3degcount2_3 <- reactive({
     data3 <- data_3degcount1_3()
     if(is.null(data3)){
@@ -3058,7 +3068,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   #3conditions scatter + heatmap_3
   cond3_scatter3_plot <- reactive({
     data <- deg_norm_count2()
@@ -3136,7 +3146,7 @@ output$download_pair_deg_count_down = downloadHandler(
             text = ggplot2::element_text(size = 10),
             title = ggplot2::element_text(size = 10)) +
       xlab(FC_xlab) + ylab(FC_ylab)
-    
+
     data4 <- data_3degcount2_3()
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
@@ -3151,12 +3161,12 @@ output$download_pair_deg_count_down = downloadHandler(
                             clustering_method_columns = 'ward.D2',
                             show_row_names = F, show_row_dend = T))
     }
-    
+
     p <- plot_grid(p, ht, rel_widths = c(2, 1))
     return(p)
     }
   })
-  
+
   output$scatter_3 <- renderPlot({
     if(is.null(deg_norm_count2())){
       return(NULL)
@@ -3164,7 +3174,7 @@ output$download_pair_deg_count_down = downloadHandler(
     print(cond3_scatter3_plot())
     }
   })
-  
+
   output$download_3cond_scatter3 = downloadHandler(
     filename = function(){
       paste0(download_cond3_dir(), "_scatter3.pdf")
@@ -3177,8 +3187,8 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
-  
+
+
   #3conditions PCA--------------
   PCA3data <- reactive({
     data <- deg_norm_count2()
@@ -3201,7 +3211,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(pca$rotation)
     }
   })
-  
+
   cond3_pca <- reactive({
     data <- deg_norm_count2()
     if(is.null(data)){
@@ -3262,14 +3272,14 @@ output$download_pair_deg_count_down = downloadHandler(
     p <- plot_grid(g1, g2, g3, nrow = 1)
     }
   })
-  
+
   output$PCA2 <- renderPlot({
     print(cond3_pca())
   })
   output$PCA3_data <- DT::renderDataTable({
     PCA3data()
   })
-  
+
   output$download_3cond_PCA = downloadHandler(
     filename = function(){
       paste0(download_cond3_dir(), "_PCA-MDS-dendrogram.pdf")
@@ -3293,7 +3303,7 @@ output$download_pair_deg_count_down = downloadHandler(
           if(input$Species2 != "not selected"){
             GOI <- count$Unique_ID
           }else GOI <- rownames(count)
-        }else{ 
+        }else{
           if(input$Species2 != "not selected"){
             GOI <- rownames(count)
           }else GOI <- rownames(count)
@@ -3303,7 +3313,7 @@ output$download_pair_deg_count_down = downloadHandler(
       incProgress(1)
     })
   })
-  
+
   output$GOI2 <- renderUI({
     if(is.null(d_row_count_matrix2())){
       return(NULL)
@@ -3328,7 +3338,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }else{
       Row.names <- input$GOI2
-      count$Row.names <- rownames(count)  
+      count$Row.names <- rownames(count)
       label_data <- as.data.frame(Row.names, row.names = Row.names)
       data <- merge(count, label_data, by="Row.names")
       rownames(data) <- data$Row.names
@@ -3336,7 +3346,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(data)
   })
-  
+
   cond3_GOIheat <- reactive({
     data <- cond3_GOIcount()
     if(is.null(data)){
@@ -3350,7 +3360,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       return(ht)
   })
-  
+
   output$cond3_GOIheatmap <- renderPlot({
     if(is.null(d_row_count_matrix2())){
       return(NULL)
@@ -3363,7 +3373,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   cond3_GOIbox <- reactive({
     count <- deg_norm_count2()
     data <- cond3_GOIcount()
@@ -3379,7 +3389,7 @@ output$download_pair_deg_count_down = downloadHandler(
       data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
       data$value <- as.numeric(data$value)
       p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
-                             fill = "sample", scales = "free", 
+                             fill = "sample", scales = "free",
                              add = "jitter", legend = "none",
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
@@ -3388,13 +3398,13 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 10),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 10)) 
+                    title = element_text(size = 10),text = element_text(size = 10))
             + scale_fill_manual(values=c("gray", "#4dc4ff", "#ff8082")))
     }
     return(p)
   })
-  
-  
+
+
   output$cond3_GOIboxplot <- renderPlot({
     if(is.null(d_row_count_matrix2())){
       return(NULL)
@@ -3407,7 +3417,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   output$download_3cond_GOIbox = downloadHandler(
     filename = function(){
       paste0(download_cond3_dir(), "_GOIboxplot.pdf")
@@ -3464,7 +3474,7 @@ output$download_pair_deg_count_down = downloadHandler(
         pdf(file, height = pdf_hsize, width = pdf_wsize)
         print(cond3_GOIbox())
         dev.off()
-      
+
         incProgress(1)
         })
     }
@@ -3542,7 +3552,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   output$keggenrichment2_1 <- renderPlot({
     if(!is.null(input$Gene_set2)){
     data4 <- data_3degcount2_1()
@@ -3619,7 +3629,7 @@ output$download_pair_deg_count_down = downloadHandler(
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
-        
+
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
@@ -3654,7 +3664,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
     })
-  
+
   #3conditions enrichment_2 ------------------------------------------------------------------------------
     Hallmark_cond3 <- reactive({
       if(input$Species2 != "not selected"){
@@ -3669,7 +3679,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(H_t2g)
       }else return(NULL)
     })
-  
+
     enrichment3_2_1 <- reactive({
     data4 <- data_3degcount2_2()
     data3 <- data_3degcount1_2()
@@ -3799,7 +3809,7 @@ output$download_pair_deg_count_down = downloadHandler(
                                                 guide=guide_colorbar(reverse=TRUE)) +
                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
-        
+
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
@@ -3965,7 +3975,7 @@ output$download_pair_deg_count_down = downloadHandler(
                                                 guide=guide_colorbar(reverse=TRUE)) +
                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
-        
+
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
@@ -4003,7 +4013,7 @@ output$download_pair_deg_count_down = downloadHandler(
   output$Gene_set2 <- renderUI({
     selectInput('Gene_set2', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark"))
   })
-  
+
   output$enrichment3_result_1 <- DT::renderDataTable({
     as.data.frame(enrichment3_1_1())
   })
@@ -4013,8 +4023,8 @@ output$download_pair_deg_count_down = downloadHandler(
   output$enrichment3_result_3 <- DT::renderDataTable({
     as.data.frame(enrichment3_3_1())
   })
-  
-  
+
+
   #normalized count analysis
   #norm_count_input-------------------
   org3 <- reactive({
@@ -4039,7 +4049,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(org_code)
     }
   })
-  
+
   norm_count_input <- reactive({
     withProgress(message = "Importing normalized count matrix, please wait",{
       if (input$data_file_type3 == "Row5"){
@@ -4133,7 +4143,7 @@ output$download_pair_deg_count_down = downloadHandler(
       incProgress(1)
     })
   })
-  
+
   d_norm_count_matrix_cutofff <- reactive({
     withProgress(message = "Creating defined count matrix, please wait",{
       data <- d_norm_count_matrix()
@@ -4144,7 +4154,7 @@ output$download_pair_deg_count_down = downloadHandler(
       incProgress(1)
     })
   })
-  
+
   d_norm_count_matrix2 <- reactive({
       data <- d_norm_count_matrix()
       if(is.null(data)){
@@ -4160,7 +4170,7 @@ output$download_pair_deg_count_down = downloadHandler(
         return(data)
       }
   })
-  
+
   gene_ID_norm <- reactive({
     res <- d_norm_count_matrix()
     if(is.null(res)){
@@ -4180,7 +4190,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{ return(NULL) }
     }
   })
-  
+
   observeEvent(input$file7, ({
     updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
   }))
@@ -4211,7 +4221,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }},
     content = function(file){write.table(d_norm_count_matrix2(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
+
   download_norm_dir <-reactive({
     if (input$data_file_type3 == "Row5"){
       dir_name <- paste0(gsub("\\..+$", "", input$file7), "_")
@@ -4219,8 +4229,8 @@ output$download_pair_deg_count_down = downloadHandler(
       dir_name <- paste0(paste(gsub("\\..+$", "", input$file8),paste(gsub("\\..+$", "", input$file9),input$basemean3,sep = "_"),sep = "-"), "_")
     }
     return(dir_name)
-  }) 
-  
+  })
+
   #norm clustering--------------------
   normPCAdata <- reactive({
     data <- d_norm_count_matrix_cutofff()
@@ -4240,7 +4250,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(pca$rotation)
     }
   })
-  
+
   norm_pca_plot <- reactive({
     data <- d_norm_count_matrix_cutofff()
     pca <- prcomp(data, scale. = T)
@@ -4295,7 +4305,7 @@ output$download_pair_deg_count_down = downloadHandler(
     p2 <- plot_grid(g1, g2, g3, nrow = 1)
     return(p2)
   })
-  
+
   output$download_norm_PCA = downloadHandler(
     filename = function(){
       paste0(download_norm_dir(), "PCA-MDS-dendrogram.pdf")
@@ -4308,7 +4318,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   output$norm_PCA <- renderPlot({
     withProgress(message = "Clustering",{
     if(is.null(d_norm_count_matrix_cutofff())){
@@ -4318,27 +4328,27 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     })
   })
-  
+
   output$norm_PCA_table <- DT::renderDataTable({
     normPCAdata()
   })
   output$d_norm_count_cutoff <- DT::renderDataTable({
     d_norm_count_matrix_cutofff()
   })
-  
+
   output$download_norm_pca_table = downloadHandler(
     filename = function() {
       paste0(download_norm_dir(), "PCA_table.txt")
     },
     content = function(file){write.table(normPCAdata(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
+
   norm_heat <- reactive({
     data <- d_norm_count_matrix_cutofff()
     withProgress(message = "Heatmap",{
       if(is.null(data)){
         return(NULL)
-      }else{ 
+      }else{
         data.z <-genescale(data, axis=1, method="Z")
         data.z <- na.omit(data.z)
         ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
@@ -4347,18 +4357,18 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     })
   })
-  
+
   output$norm_heatmap <- renderPlot({
     data <- d_norm_count_matrix_cutofff()
     withProgress(message = "Heatmap",{
     if(is.null(data)){
       return(NULL)
-    }else{ 
+    }else{
       print(norm_heat())
     }
     })
   })
-  
+
   output$download_norm_heatmap = downloadHandler(
     filename = function(){
       paste0(download_norm_dir(), "heatmap.pdf")
@@ -4372,7 +4382,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   #norm GOI------------------------------------------------------
   d_norm_count_cutoff_uniqueID <- reactive({
     count <- d_norm_count_matrix_cutofff()
@@ -4388,7 +4398,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(count)
   })
-  
+
   GOI_list3 <- reactive({
     withProgress(message = "Preparing GOI list",{
       count <- d_norm_count_cutoff_uniqueID()
@@ -4399,7 +4409,7 @@ output$download_pair_deg_count_down = downloadHandler(
           if(input$Species3 != "not selected"){
             GOI <- count$Unique_ID
           }else GOI <- rownames(count)
-        }else{ 
+        }else{
           if(input$Species3 != "not selected"){
             GOI <- rownames(count)
           }else GOI <- rownames(count)
@@ -4408,7 +4418,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     })
   })
-  
+
   output$GOI3 <- renderUI({
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
@@ -4418,7 +4428,7 @@ output$download_pair_deg_count_down = downloadHandler(
          })
     }
   })
-  
+
   norm_GOIcount <- reactive({
     count <- d_norm_count_cutoff_uniqueID()
     if(str_detect(rownames(count)[1], "ENS")){
@@ -4433,7 +4443,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }else{
       Row.names <- input$GOI3
-      count$Row.names <- rownames(count)  
+      count$Row.names <- rownames(count)
       label_data <- as.data.frame(Row.names, row.names = Row.names)
       data <- merge(count, label_data, by="Row.names")
       rownames(data) <- data$Row.names
@@ -4441,7 +4451,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(data)
   })
-  
+
   norm_GOIheat <- reactive({
     data <- norm_GOIcount()
     if(is.null(data)){
@@ -4455,7 +4465,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(ht)
   })
-  
+
   output$norm_GOIheatmap <- renderPlot({
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
@@ -4468,7 +4478,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   norm_GOIbox <- reactive({
     count <- d_norm_count_cutoff_uniqueID()
     data <- norm_GOIcount()
@@ -4484,7 +4494,7 @@ output$download_pair_deg_count_down = downloadHandler(
       data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
       data$value <- as.numeric(data$value)
       p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
-                             fill = "sample", scales = "free", 
+                             fill = "sample", scales = "free",
                              add = "jitter", legend = "none",
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
@@ -4497,8 +4507,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     return(p)
   })
-  
-  
+
+
   output$norm_GOIboxplot <- renderPlot({
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
@@ -4511,7 +4521,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   output$download_norm_GOIbox = downloadHandler(
     filename = function(){
       paste0(download_norm_dir(), "GOIboxplot.pdf")
@@ -4593,13 +4603,13 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       withProgress(message = "Preparing GOI list",{
-        sliderInput("norm_kmeans_number", "k-means number", min = 1, 
+        sliderInput("norm_kmeans_number", "k-means number", min = 1,
                     max=20, step = 1,
                     value = 1)
       })
     }
   })
-  
+
   norm_data_z <- reactive({
     data <- d_norm_count_matrix_cutofff()
     if(is.null(data)){
@@ -4610,7 +4620,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(data.z)
     }
   })
-  
+
   norm_kmeans <- reactive({
     data.z <- norm_data_z()
     if(is.null(data.z)){
@@ -4627,7 +4637,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   })
-  
+
   norm_kmeans_cluster <- reactive({
     ht <- norm_kmeans()
     data.z <- norm_data_z()
@@ -4658,7 +4668,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
   })
-  
+
   output$norm_kmeans_heatmap <- renderPlot({
     ht <- norm_kmeans()
     if(is.null(ht)){
@@ -4667,11 +4677,11 @@ output$download_pair_deg_count_down = downloadHandler(
       print(ht)
     }
   })
-  
+
   output$norm_kmeans_count_table <- DT::renderDataTable({
     norm_kmeans_cluster()
   })
-  
+
   output$download_norm_kmeans_cluster = downloadHandler(
     filename = function() {
       paste0(download_norm_dir(), "kmeans_count_table.txt")
@@ -4691,9 +4701,9 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
   #venn diagram ------------------
-  
+
   output$select_file1 <- renderUI({
     selectInput("selectfile1", "gene_list", choices = c("not selected", overlap_list()), selected = "not selected",multiple = F)
   })
@@ -4704,7 +4714,7 @@ output$download_pair_deg_count_down = downloadHandler(
     selectInput("selectfile", "gene_list", choices = c("not selected", overlap_list()), selected = "not selected",multiple = F)
     }
   })
-  
+
   files_table <- reactive({
     upload = list()
     name = c()
@@ -4726,7 +4736,7 @@ output$download_pair_deg_count_down = downloadHandler(
     return(upload)
     }
   })
-  
+
   output$venn <- renderPlot({
     if(is.null(files_table())){
       return(NULL)
@@ -4735,13 +4745,13 @@ output$download_pair_deg_count_down = downloadHandler(
     venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 0.8, sncs = 0.6 )
     }
   })
-  
+
   overlap_list <- reactive({
     gene_list <- files_table()
     data <- names(attr(venn(gene_list), "intersections"))
     return(data)
   })
-  
+
   overlap_table2 <- reactive({
     df <- data.frame("Gene" = NA, "Group"=NA)
     gene_list <- files_table()
@@ -4758,10 +4768,10 @@ output$download_pair_deg_count_down = downloadHandler(
       return(df)
     }
   })
-  
+
   count_for_venn <- reactive({
     tmp <- input$file_for_venn$datapath
-    if(is.null(input$file_for_venn) && input$goButton_venn == 0){ 
+    if(is.null(input$file_for_venn) && input$goButton_venn == 0){
       return(NULL)
     }else{
       if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "data/example7.txt"
@@ -4771,7 +4781,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(df)
     }
   })
-  
+
   overlap_extract <- reactive({
     cluster_file <- overlap_table2()
     rownames(cluster_file) <- cluster_file$Gene
@@ -4788,18 +4798,18 @@ output$download_pair_deg_count_down = downloadHandler(
       return(clusterCount)
     }
   })
-  
-  
+
+
   output$venn_result <- renderDataTable({
     overlap_table2()
   })
-  
+
   output$intersection_count <- renderDataTable({
     overlap_extract()
   })
-  
-  
-  
+
+
+
   countfiles_integrated <- reactive({
     if(is.null(input$countfiles)){
       if(input$goButton_venn > 0){
@@ -4807,7 +4817,7 @@ output$download_pair_deg_count_down = downloadHandler(
         df["data1"] <- list(read.table("data/data1.txt",header = T, row.names = 1))
         df["data2"] <- list(read.table("data/data2.txt",header = T, row.names = 1))
         return(df)
-      } 
+      }
       return(NULL)
     }else{
       upload = list()
@@ -4821,7 +4831,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(upload)
     }
   })
-  
+
   integrated_count <- reactive({
     if(!is.null(input$selectfile)){
     files <- countfiles_integrated()
@@ -4857,7 +4867,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }else return(NULL)
   })
-  
+
   integrated_count_z <- reactive({
     if(!is.null(input$selectfile)){
     files <- countfiles_integrated()
@@ -4914,13 +4924,13 @@ output$download_pair_deg_count_down = downloadHandler(
         base_z <- na.omit(base)
       }
       colnames(base_z) <- gsub("(.y)", "", colnames(base_z))
-      
+
       return(base_z)
     }
     }else return(NULL)
   })
-  
-  
+
+
   integrated_heatmap <- reactive({
     if(!is.null(input$selectfile)){
     base_z <- integrated_count_z()
@@ -4948,7 +4958,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  
+
   output$intheatmap <- renderPlot({
     print(integrated_heatmap())
   })
@@ -4958,18 +4968,18 @@ output$download_pair_deg_count_down = downloadHandler(
   output$integrated_count_z_table <- renderDataTable({
     integrated_count_z()
   })
-  
-  
+
+
   output$download_venn_result = downloadHandler(
     filename ="venn_result.txt",
     content = function(file){write.table(overlap_table2(), file, row.names = T, sep = "\t", quote = F)}
   )
-  
+
   output$download_intersection_count_table = downloadHandler(
     filename = function(){paste0(paste("intersection",input$selectfile1, sep="_"), paste0(gsub("\\..+$", "", input$file_for_venn), ".txt"))},
     content = function(file){write.table(overlap_extract(), file, row.names = F, sep = "\t", quote = F)}
   )
-  
+
   output$download_integrated_count_table = downloadHandler(
     filename ="integrated_count_table.txt",
     content = function(file){write.table(integrated_count(), file, row.names = T, sep = "\t", quote = F)}
@@ -4989,7 +4999,7 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
-  
+
 }
 
 

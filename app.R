@@ -40,16 +40,47 @@ options(repos = BiocManager::repositories())
 
 ui<- fluidPage(
   tags$head(includeHTML(("google-analytics.html"))),
+  tags$style(
+    type = 'text/css',
+    # add the name of the tab you want to use as title in data-value
+    HTML(
+      ".container-fluid > .nav > li >
+                        a[data-value='Title'] {font-size: 20px}"
+    )
+  ),
   navbarPage(
     footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
              p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
              p(("Code available on Github:"),a("https://github.com/Kan-E/RNAseqChef",href="https://github.com/Kan-E/RNAseqChef"),align="center",width=4)),
-  "RNAseqChef",
+  "",
   id='navBar',
+  tabPanel("RNAseqChef" ,value='Title', icon = icon("utensils"),
+           fluidRow(    
+             column(12,
+                    h1("RNAseqChef",align="center"),br(),
+                    p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
+                      align="center"),
+                    br(),
+                    column(6, 
+                           h4("Pair-wise DEG"),
+                           "Detects and visualizes differentially expressed genes",br(),br(),
+                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),
+                           h4("3 conditions DEG"),
+                           "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",br(),br(),
+                           img(src="3cond_DEG.png", width = 600,height = 475)),
+                    column(6, 
+                           h4("Venn diagram"),
+                           "Detects and visualizes the overlap between DEGs from multiple datasets",br(),br(),
+                           img(src="Venn.png", width = 600,height = 230),br(),br(),br(),br(),
+                           h4("Normalized count analysis"),
+                           "identifies similar samples and gene expression pattern by clustering methods",br(),br(),
+                           img(src="Normalized.png", width = 550,height = 500))
+             )
+           )
+  ),
+  # pair-wise -------------------------------------
   tabPanel("Pair-wise DEG",
-           # titlePanel(h5("Upload Files")),
            sidebarLayout(
-             # pair-wise -------------------------------------
              # sidebar---------------------------------
              sidebarPanel(
                radioButtons('data_file_type','Input:',
@@ -216,6 +247,11 @@ ui<- fluidPage(
                           )),
                  tabPanel("Enrichment analysis",
                           fluidRow(
+                            column(4, textOutput("Spe1"),
+                                   tags$head(tags$style("#Spe1{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
                             column(4, htmlOutput("Gene_set")),
                             column(4, downloadButton("download_pair_enrichment", "Download"))
                           ),
@@ -244,7 +280,6 @@ ui<- fluidPage(
   ), #tabPanel
   # 3conditions -------------------------------------
   tabPanel("3 conditions DEG",
-           # titlePanel(h5("Upload Files")),
            sidebarLayout(
 
              # sidebar_3conditions---------------------------------
@@ -390,6 +425,11 @@ ui<- fluidPage(
                           ),
                  tabPanel("Enrichment analysis",
                           fluidRow(
+                            column(4, textOutput("Spe2"),
+                                   tags$head(tags$style("#Spe2{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
                             column(4, htmlOutput("Gene_set2")),
                             column(4, downloadButton("download_3enrich", "Download"))
                           ),
@@ -651,18 +691,40 @@ ui<- fluidPage(
            ) #sidebarLayout
   ), #tabPanel
   #Instruction--------------------------
-  tabPanel("Instructions",
+  tabPanel("Reference",
            fluidRow(    
-             column(12,
-                    h2("RNAseqChef",align="center"),br(),
-                    "RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application (https://kan-e.shinyapps.io/RNAseqChef/) for automated, systematic, and integrated RNA-seq differential expression analysis.",
-                    "RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly.",br(),
+             column(10,
+                    h2("To cite RNAseqChef:"),
+                    p("Web tool:",br(), "Kan Etoh: RNAseqChef (2022)", a("https://kan-e.shinyapps.io/RNAseqChef/",href="https://kan-e.shinyapps.io/RNAseqChef/")),
+                    p("Source code:",br(), "Kan Etoh: RNAseqChef: web application for automated, systematic, and integrated RNA-seq differential expression analysis. (2022)", a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),br(),
                     br(),
-                    "RNAseqChef consists of mainly five panels including,", 
-                    strong('Pair-wise DEG'), ",",strong('3 conditions DEG'),",", strong('Venn diagram'),",", 
-                    strong('normalized count data'),", and" ,strong('Enrichment viewer'),".",br(),
-                    strong('Pair-wise DEG'), "and", strong('3 conditions DEG'), "have functions for single dataset DEG analysis such as DEG detection, clustering analysis, gene expression profiling, and enrichment analysis.",br(),
-                    strong('Venn diagram'), ",", strong('normalized count data'), ", and", strong('Enrichment viewer'), "have functions for multiple dataset analysis such as Venn diagram analysis, k-means clustering, and gene-set extraction and profiling."
+                    h2("Reference:"),
+"- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
+"- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
+  differential expression analysis of RNA-seq data. R package version 1.30.0.",br(),
+"- Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for
+  RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)",br(),
+"- Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential
+  expression analysis of digital gene expression data. Bioinformatics 26, 139-140",br(),
+"- Nikolaos Ignatiadis, Bernd Klaus, Judith Zaugg and Wolfgang Huber (2016): Data-driven hypothesis
+  weighting increases detection power in genome-scale multiple testing. Nature Methods 13:577,
+  doi: 10.1038/nmeth.3885",br(),
+"- John D. Storey, Andrew J. Bass, Alan Dabney and David Robinson (2021). qvalue: Q-value
+  estimation for false discovery rate control. R package version 2.26.0.
+  http://github.com/jdstorey/qvalue",br(),
+"- Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro",br(),
+"- T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141",br(),
+"- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
+"- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
+"- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
+"- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
+"- R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.",br(),
+"- Gu, Z. (2016) Complex heatmaps reveal patterns and correlations in multidimensional genomic data. Bioinformatics.",br(),
+"- H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.", br(),
+"- Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr",br(),
+"- Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn",br(),
+"- Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr",br(),
+"- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr"
              )
            )
   )
@@ -1735,6 +1797,9 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file){write.table(pairPCAdata(), file, row.names = T, sep = "\t", quote = F)}
   )
   # pair-wise enrichment ------------------------------------------------------------------------------
+  output$Spe1 <- renderText({
+    if(input$Species == "not selected") print("Please select 'Species'")
+  })
   Hallmark_set <- reactive({
     if(input$Species != "not selected"){
     if(input$Gene_set != "MSigDB Hallmark"){
@@ -1838,7 +1903,7 @@ output$download_pair_deg_count_down = downloadHandler(
           })
         }
         if(input$Gene_set == "GO"){
-          withProgress(message = "GO GSEA",{
+          withProgress(message = "GO GSEA takes a few minutes",{
           kk3 <- gseGO(geneList = geneList, pvalueCutoff = 0.05,
                        OrgDb = org1(), exponent = 1, eps = 0,
                        pAdjustMethod = "BH", minGSSize = 50,
@@ -3420,6 +3485,9 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   )
   #3conditions enrichment ------------------------------------------------------------------------------
+  output$Spe2 <- renderText({
+    if(input$Species2 == "not selected") print("Please select 'Species'")
+  })
   #3conditions enrichment_1 ------------------------------------------------------------------------------
   enrichment3_1_1 <- reactive({
     data4 <- data_3degcount2_1()

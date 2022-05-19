@@ -3,12 +3,10 @@ library(DT)
 library(gdata)
 library(rstatix)
 library(multcomp)
-library(ggcorrplot)
 library(tidyverse)
 library(tools)
 library(ggpubr)
 library(venn)
-library(tidyverse)
 library(ggrepel)
 library(ggdendro)
 library(ggplotify)
@@ -64,17 +62,21 @@ ui<- fluidPage(
                     column(6,
                            h4("Pair-wise DEG"),
                            "Detects and visualizes differentially expressed genes",br(),br(),
-                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),
+                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),br(),br(),
                            h4("3 conditions DEG"),
                            "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",br(),br(),
                            img(src="3cond_DEG.png", width = 600,height = 475)),
                     column(6,
                            h4("Venn diagram"),
                            "Detects and visualizes the overlap between DEGs from multiple datasets",br(),br(),
-                           img(src="Venn.png", width = 600,height = 230),br(),br(),br(),br(),
+                           img(src="Venn.png", width = 600,height = 230),br(),br(),
                            h4("Normalized count analysis"),
                            "identifies similar samples and gene expression pattern by clustering methods",br(),br(),
-                           img(src="Normalized.png", width = 550,height = 500))
+                           img(src="Normalized.png", width = 550,height = 500),
+                           h4("Enrichment viewer"),
+                           "determins and visualises biological functions of gene set of interest",br(),br(),
+                           img(src="enrichment_viewer.png", width = 550,height = 250)
+                           )
              )
            )
   ),
@@ -143,7 +145,7 @@ ui<- fluidPage(
                          accept = c("txt", "csv"),
                          multiple = FALSE,
                          width = "80%"),
-               actionButton("goButton", "example data"),
+               actionButton("goButton", "example data (human)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -332,7 +334,7 @@ ui<- fluidPage(
                          accept = c("txt", "csv"),
                          multiple = FALSE,
                          width = "80%"),
-               actionButton("goButton2", "example data"),
+               actionButton("goButton2", "example data (human)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -594,7 +596,7 @@ ui<- fluidPage(
                          accept = c("txt", "csv", "xlsx"),
                          multiple = FALSE,
                          width = "80%"),
-               h4("Cut-off conditions:"),
+               h4("Cut-off condition:"),
                fluidRow(
                  column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0))
                ),
@@ -690,6 +692,67 @@ ui<- fluidPage(
            )
            ) #sidebarLayout
   ), #tabPanel
+  # enrichment viewer -------------------------------------
+  tabPanel("Enrichment viewer",
+           sidebarLayout(
+             # enrichment viewer---------------------------------
+             sidebarPanel(
+               strong("Gene list format: "),br(),
+               "First column must be gene name (Gene symbol or ENSEMBL ID).",br(),
+               "Second column must be group or cluster name.",br(),
+               "You can use result files of venn diagram analysis and k-means clustering as input.",
+               fileInput("enrich_data_file",
+                         label = "Select a gene list file (txt, csv, xlsx)",
+                         accept = c("txt", "csv", "xlsx"),
+                         multiple = FALSE,
+                         width = "80%"),
+               fluidRow(
+                 column(6, selectInput("Species4", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
+               actionButton("goButton4", "example data (human)"),
+               tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                         tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                         )
+               ) #sidebarPanel
+             ),
+
+             # Main Panel -------------------------------------
+             mainPanel(
+               tabsetPanel(
+                 type = "tabs",
+                 tabPanel("Input gene list for enrichment analysis",
+                          dataTableOutput('enrichment_input')
+                 ),
+                 tabPanel("Enrichment analysis",
+                          fluidRow(
+                            column(4, textOutput("Spe3"),
+                                   tags$head(tags$style("#Spe3{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
+                            column(4, htmlOutput("Gene_set3")),
+                            column(4, downloadButton("download_enrichment", "Download dot plot"))
+                          ),
+                          plotOutput("enrichment3"),
+                          fluidRow(
+                            column(4, htmlOutput("whichGroup")),
+                            column(4, downloadButton("download_enrichment_cnet", "Download cnet plot"))
+                          ),
+                          plotOutput("enrichment4"),
+                          fluidRow(
+                            column(4, downloadButton("download_enrichment_table", "Download enrichment result"))
+                          ),
+                          dataTableOutput('enrichment_result')
+                 )
+               )
+             )
+           ) #sidebarLayout
+  ),
   #Instruction--------------------------
   tabPanel("Reference",
            fluidRow(
@@ -4972,7 +5035,7 @@ output$download_pair_deg_count_down = downloadHandler(
 
   output$download_venn_result = downloadHandler(
     filename ="venn_result.txt",
-    content = function(file){write.table(overlap_table2(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(overlap_table2(), file, row.names = F, sep = "\t", quote = F)}
   )
 
   output$download_intersection_count_table = downloadHandler(
@@ -4998,6 +5061,343 @@ output$download_pair_deg_count_down = downloadHandler(
         incProgress(1)
       })
     }
+  )
+
+  # enrichment viewer ------------------------------------------------------------------------------
+  output$Spe3 <- renderText({
+    if(input$Species4 == "not selected") print("Please select 'Species'")
+  })
+  Hallmark_enrich <- reactive({
+    if(input$Species4 != "not selected"){
+      if(input$Gene_set3 != "MSigDB Hallmark"){
+        return(NULL)
+      }else{
+        switch (input$Species4,
+                "mouse" = species <- "Mus musculus",
+                "human" = species <- "Homo sapiens",
+                "rat" = species <- "Rattus norvegicus",
+                "fly" = species <- "Drosophila melanogaster",
+                "worm" = species <- "Caenorhabditis elegans")
+        H_t2g <- msigdbr(species = species, category = "H") %>%
+          dplyr::select(gs_name, entrez_gene)
+        return(H_t2g)
+      }
+    }else return(NULL)
+  })
+  org4 <- reactive({
+    if(input$Species4 != "not selected"){
+      switch (input$Species4,
+              "mouse" = org <- org.Mm.eg.db,
+              "human" = org <- org.Hs.eg.db,
+              "rat" = org <- org.Rn.eg.db,
+              "fly" = org <- org.Dm.eg.db,
+              "worm" = org <- org.Ce.eg.db)
+      return(org)
+    }
+  })
+  org_code4 <- reactive({
+    if(input$Species4 != "not selected"){
+      switch (input$Species4,
+              "mouse" = org_code <- "mmu",
+              "human" = org_code <- "hsa",
+              "rat" = org_code <- "rno",
+              "fly" = org_code <- "dme",
+              "worm" = org_code <- "cel")
+      return(org_code)
+    }
+  })
+
+  enrich_input <- reactive({
+    tmp <- input$enrich_data_file$datapath
+    if(is.null(input$enrich_data_file) && input$goButton4 == 0){
+      return(NULL)
+    }else{
+      if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "data/enrich_example.txt"
+      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      return(df)
+    }
+  })
+
+  output$enrichment_input <- DT::renderDataTable({
+    as.data.frame(enrich_input())
+  })
+
+
+  enrich_viewer1 <- reactive({
+    data <- enrich_input()
+    if(is.null(data) || input$Species4 == "not selected"){
+      return(NULL)
+    }else{
+      df <- data.frame(GeneID = rownames(data), Group = data[,1])
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org4(),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org4(), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+  })
+
+  enrich_viewer2 <- reactive({
+    data3 <- enrich_viewer1()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
+      if(input$Gene_set3 != "MSigDB Hallmark"){
+        if(input$Gene_set3 == "KEGG"){
+          withProgress(message = "KEGG enrichment analysis",{
+            formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                              fun="enrichKEGG", organism=org_code4()), silent = T)
+            incProgress(1)
+          })
+        }
+        if(input$Gene_set3 == "GO"){
+          withProgress(message = "GO enrichment analysis",{
+            formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                              fun="enrichGO", OrgDb=org4()), silent =T)
+            incProgress(1)
+          })
+        }
+        if (class(formula_res) == "try-error") {
+          formula_res <- NULL
+        }else{
+          formula_res <-setReadable(formula_res, org4(), 'ENTREZID')
+          return(formula_res)
+        }
+      }else{
+        withProgress(message = "Hallmark enrichment analysis",{
+          H_t2g <- Hallmark_enrich()
+          df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+          colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          for (name in unique(data3$Group)) {
+            em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            if (length(as.data.frame(em)$ID) != 0) {
+              if(length(colnames(as.data.frame(em))) == 9){
+                cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
+                cnet1$Group <- name
+                df <- rbind(df, cnet1)
+              }
+            }
+          }
+          df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          df$GeneRatio <- parse_ratio(df$GeneRatio)
+          return(df)
+        })
+      }
+    }
+  })
+
+  # enrichment plot ------------------------------------------------------------------------------
+  enrich_keggGO <- reactive({
+    formula_res <- enrich_viewer2()
+    if(is.null(formula_res)){
+      return(NULL)
+    }else{
+      if(input$Gene_set3 != "MSigDB Hallmark"){
+        if ((length(as.data.frame(formula_res)) == 0) ||
+            is.na(unique(as.data.frame(formula_res)$qvalue))) {
+          p1 <- NULL
+        } else{
+          p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
+        }
+        p <- plot_grid(p1)
+        return(p)
+      }
+    }
+  })
+
+  enrich_H <- reactive({
+    data3 <- enrich_viewer1()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
+      if(input$Gene_set3 == "MSigDB Hallmark"){
+        H_t2g <- Hallmark_enrich()
+        df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+        colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+        for (name in unique(data3$Group)) {
+          em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+          if (length(as.data.frame(em)$ID) != 0) {
+            if(length(colnames(as.data.frame(em))) == 9){
+              cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
+              cnet1$Group <- name
+              if (length(cnet1$pvalue) > 5){
+                cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
+                cnet1 <- cnet1[1:5,]
+              }
+              df <- rbind(df, cnet1)
+            }
+          }
+        }
+        df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
+        df$GeneRatio <- parse_ratio(df$GeneRatio)
+        if ((length(df$Description) == 0) || is.na(unique(df$qvalue))) {
+          p1 <- NULL
+        } else{
+          p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
+                          geom_point(aes(color=qvalue,size=GeneRatio)) +
+                          scale_color_continuous(low="red", high="blue",
+                                                 guide=guide_colorbar(reverse=TRUE)) +
+                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+          p <- plot_grid(p1)
+          return(p)
+        }}else return(NULL)
+    }
+  })
+
+  output$enrichment3 <- renderPlot({
+    if(!is.null(input$Gene_set3)){
+      if(is.null(enrich_viewer2())){
+        return(NULL)
+      }else{
+        withProgress(message = "Plot results",{
+          if(input$Species4 != "not selected"){
+            if(input$Gene_set3 != "MSigDB Hallmark"){
+              print(enrich_keggGO())
+            }else{
+              print(enrich_H())
+            }
+          }
+          incProgress(1)
+        })
+      }
+    }
+  })
+
+  enrichGroup <- reactive({
+    data3 <- enrich_viewer1()
+    if(is.null(data3)){
+      return(NULL)
+    }else{
+      group <- unique(data3$Group)
+      return(group)
+    }
+  })
+
+  output$whichGroup <- renderUI({
+    if(is.null(enrichGroup())){
+      return(NULL)
+    }else{
+      selectInput("which_group", "Group", choices = c(enrichGroup()), multiple = FALSE)
+    }
+  })
+
+  enrich2 <- reactive({
+    data <- enrich_viewer1()
+    group <- input$which_group
+    if(is.null(data) || is.null(group)){
+      return(NULL)
+    }else{
+      data2 <- dplyr::filter(data, Group == group)
+      if(input$Gene_set3 != "MSigDB Hallmark"){
+        if(input$Gene_set3 == "KEGG"){
+          kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code4(),
+                            pvalueCutoff = 0.05)
+        }
+        if(input$Gene_set3 == "GO"){
+          kk1 <- enrichGO(data2$ENTREZID, OrgDb = org4(),
+                          pvalueCutoff = 0.05)
+        }
+      }else{
+        H_t2g <- Hallmark_enrich()
+        kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        if (class(kk1) == "try-error") kk1 <- NA
+      }
+      if(length(kk1$ID) == 0){
+        cnet1 <- NULL
+      } else {
+        cnet1 <- setReadable(kk1, org4(), 'ENTREZID')
+      }
+      if (length(cnet1$ID) == 0) {
+        p2 <- NULL
+      } else{
+        p2 <- try(as.grob(cnetplot(cnet1,
+                                   cex_label_gene = 0.75, cex_label_category = 1,
+                                   cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+        if(length(class(p2)) == 1){
+          if(class(p2) == "try-error") p2 <- NULL
+        }else{p2 <- as.grob(cnetplot(cnet1,
+                                     cex_label_gene = 0.75, cex_label_category = 1,
+                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
+      }
+      p <- plot_grid(p2)
+      return(p)
+    }
+  })
+
+  output$enrichment4 <- renderPlot({
+    if(!is.null(input$Gene_set3)){
+      if(is.null(enrich_input())){
+        return(NULL)
+      }else{
+        if(input$Species4 != "not selected"){
+          withProgress(message = "cnet plot",{
+            p <- enrich2()
+            print(p)
+            incProgress(1)
+          })
+        }else return(NULL)
+      }
+    }
+  })
+
+  output$download_enrichment = downloadHandler(
+    filename = function(){
+      paste(gsub("\\..+$", "", input$enrich_data_file), paste0(input$Gene_set3,".txt"), sep ="-")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$Gene_set3 != "MSigDB Hallmark"){
+          p1 <- enrich_keggGO()
+        }else{
+          p1 <- enrich_H()
+        }
+        pdf(file, height = 11, width = 11)
+        print(plot_grid(p1))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  output$download_enrichment_cnet = downloadHandler(
+    filename = function(){
+      paste(gsub("\\..+$", "", input$enrich_data_file), paste(input$Gene_set3,paste0(input$which_group,".txt"), "_"), sep ="-")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        p1 <- enrich2()
+        pdf(file, height = 11, width = 11)
+        print(plot_grid(p1))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+
+  output$Gene_set3 <- renderUI({
+    selectInput('Gene_set3', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark"))
+  })
+
+  output$enrichment_result <- DT::renderDataTable({
+    as.data.frame(enrich_viewer2())
+  })
+
+  output$download_enrichment_table = downloadHandler(
+    filename = function() {
+      paste(gsub("\\..+$", "", input$enrich_data_file), paste0(input$Gene_set3,"_table.txt"), sep ="-")
+    },
+    content = function(file){write.table(as.data.frame(enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
   )
 
 }

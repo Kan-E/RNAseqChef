@@ -5354,7 +5354,7 @@ output$download_pair_deg_count_down = downloadHandler(
 
   output$download_enrichment = downloadHandler(
     filename = function(){
-      paste(gsub("\\..+$", "", input$enrich_data_file), paste0(input$Gene_set3,".txt"), sep ="-")
+      paste(gsub("\\..+$", "", input$enrich_data_file), paste0(input$Gene_set3,".pdf"), sep ="-")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
@@ -5363,7 +5363,7 @@ output$download_pair_deg_count_down = downloadHandler(
         }else{
           p1 <- enrich_H()
         }
-        pdf(file, height = 11, width = 11)
+        pdf(file, height = 6, width = 8)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)
@@ -5372,12 +5372,12 @@ output$download_pair_deg_count_down = downloadHandler(
   )
   output$download_enrichment_cnet = downloadHandler(
     filename = function(){
-      paste(gsub("\\..+$", "", input$enrich_data_file), paste(input$Gene_set3,paste0(input$which_group,".txt"), "_"), sep ="-")
+      paste(gsub("\\..+$", "", input$enrich_data_file), paste(input$Gene_set3,paste0(input$which_group,".pdf"), sep = "_"), sep ="-")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
         p1 <- enrich2()
-        pdf(file, height = 11, width = 11)
+        pdf(file, height = 6, width = 6)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)

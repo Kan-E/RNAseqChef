@@ -46,6 +46,7 @@ ui<- fluidPage(
                         a[data-value='Title'] {font-size: 20px}"
     )
   ),
+  tags$style(HTML(".navbar{margin:3px;}")),
   navbarPage(
     footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
              p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
@@ -55,18 +56,20 @@ ui<- fluidPage(
   tabPanel("RNAseqChef" ,value='Title', icon = icon("utensils"),
            fluidRow(
              column(12,
+                    br(),br(),
                     h1("RNAseqChef",align="center"),br(),
                     p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
-                      align="center"),
-                    br(),
-                    column(6,
+                      align="center"),br(),br(),style={'background-color:beige;'},
+                    ),
+             column(12,
+                    column(6,br(),
                            h4("Pair-wise DEG"),
                            "Detects and visualizes differentially expressed genes",br(),br(),
                            img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),br(),br(),
                            h4("3 conditions DEG"),
                            "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",br(),br(),
                            img(src="3cond_DEG.png", width = 600,height = 475)),
-                    column(6,
+                    column(6,br(),
                            h4("Venn diagram"),
                            "Detects and visualizes the overlap between DEGs from multiple datasets",br(),br(),
                            img(src="Venn.png", width = 600,height = 230),br(),br(),
@@ -323,9 +326,9 @@ ui<- fluidPage(
                  column(6, selectInput("Species2", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
                h4("Cut-off conditions:"),
                fluidRow(
-                 column(4, numericInput("fc2", "Fold Change", min   = 0, max   = NA, value = 2)),
-                 column(4, numericInput("fdr2", "FDR", min   = 0, max   = NA, value = 0.05)),
-                 column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 0))
+                 column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
+                 column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
+                 column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
                ),
                "Option: Normalized count file:",br(),
                "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
@@ -433,7 +436,7 @@ ui<- fluidPage(
             font-style: bold;
             }"))),
                             column(4, htmlOutput("Gene_set2")),
-                            column(4, downloadButton("download_3enrich", "Download"))
+                            column(4, downloadButton("download_cond3_enrichment", "Download"))
                           ),
                           plotOutput("keggenrichment2_1"),
                           plotOutput("keggenrichment2_2"),
@@ -441,14 +444,23 @@ ui<- fluidPage(
                           bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
                                      bsCollapsePanel(title="Enrichment result1:",
                                                      value="ORA3_1_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table1", "Download enrichment result table 1"))
+                                                     ),
                                                      dataTableOutput('enrichment3_result_1')
                                      ),
                                      bsCollapsePanel(title="Enrichment result2:",
                                                      value="ORA3_2_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table2", "Download enrichment result table 2"))
+                                                     ),
                                                      dataTableOutput('enrichment3_result_2')
                                      ),
                                      bsCollapsePanel(title="Enrichment result3:",
                                                      value="ORA3_3_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table3", "Download enrichment result table 3"))
+                                                     ),
                                                      dataTableOutput('enrichment3_result_3')
                                      )
                           ))
@@ -795,6 +807,7 @@ ui<- fluidPage(
   )
 # server ---------------------------------
 server <- function(input, output, session) {
+  options(shiny.maxRequestSize=30*1024^2)
   # pair-wise ------------------------------------------------------------------------------
 org1 <- reactive({
   if(input$Species != "not selected"){
@@ -1915,12 +1928,12 @@ output$download_pair_deg_count_down = downloadHandler(
         } else{
           em_up <- setReadable(em_up, org1(), 'ENTREZID')
         }
-        if (length(as.data.frame(em_down$ID)) == 0) {
+        if (length(as.data.frame(em_down)$ID) == 0) {
           em_down <- NA
         } else{
           em_down <- setReadable(em_down, org1(), 'ENTREZID')
         }
-        if ((length(as.data.frame(em_up$ID)) == 0) && (length(as.data.frame(em_down)) == 0))  {
+        if ((length(as.data.frame(em_up)$ID) == 0) && (length(as.data.frame(em_down)) == 0))  {
           return(NULL)
         } else{
           group1 <- as.data.frame(em_up)
@@ -2313,7 +2326,9 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   norm_count_matrix2 <- reactive({
     data <- input$norm_file2$datapath
-    if(is.null(input$norm_file2) && input$goButton == 0) return(NULL)
+    if(is.null(input$norm_file2)) {
+      return(NULL)
+    }else{
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
@@ -2323,7 +2338,9 @@ output$download_pair_deg_count_down = downloadHandler(
       }
     }
     return(df)
+    }
   })
+  
   d_row_count_matrix2 <- reactive({
     row <- row_count_matrix2()
     if (input$data_file_type2 == "Row3"){
@@ -2455,17 +2472,18 @@ output$download_pair_deg_count_down = downloadHandler(
       ord <- order(results[,"PPDE"], decreasing = TRUE)
       results <- results[ord,]
       MultiFC <- GetMultiFC(MultiOut)
-      res <- results
+      res <- as.data.frame(results)
 
     if(input$Species2 != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
         gene_IDs  <- gene_ID()
+        res$Row.names <- rownames(res)
         data2 <- merge(res, gene_IDs, by="Row.names")
         rownames(data2) <- data2$Row.names
         res <- data2[,-1]
       }
     }
-    return(as.data.frame(res))
+    return(res)
     }
   })
   deg_result2_pattern <- reactive({
@@ -2548,17 +2566,18 @@ output$download_pair_deg_count_down = downloadHandler(
       ngvector <- NULL
       conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
       Sizes <- MedianNorm(count)
-      normalized_counts <- GetNormalizedMat(count, Sizes)
+      normalized_counts <- as.data.frame(GetNormalizedMat(count, Sizes))
     if(input$Species2 != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
         gene_IDs  <- gene_ID()
+        normalized_counts$Row.names <- rownames(normalized_counts)
         data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
         data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
         rownames(data2) <- data2$Row.names
         normalized_counts <- data2[,-1]
       }
     }
-    return(as.data.frame(normalized_counts))
+    return(normalized_counts)
     }
     }else{
       return(norm_count_matrix2())
@@ -2764,17 +2783,21 @@ output$download_pair_deg_count_down = downloadHandler(
                           "" & (FC_x)*(FC_y) >= log2(input$fc2))
     labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
     labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data <- utils::head(labs_data, 20)
+    labs_data2 <- utils::head(labs_data, 20)
     font.label <- data.frame(size=5, color="black", face = "plain")
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if(!is.null(labs_data)) {
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
+      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                        force = 1, fontface = font.label$face,
+                                        size = font.label$size/2, color = font.label$color)
+    }
     p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
       geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p + ggrepel::geom_text_repel(data = labs_data, mapping = aes(label = Row.names),
-                                      box.padding = unit(0.35, "lines"), point.padding = unit(0.3,
-                                                                                              "lines"), force = 1, fontface = font.label$face,
-                                      size = font.label$size/2, color = font.label$color)
     p <- p +
       theme_bw()+ scale_color_manual(values = col)+
       theme(legend.position = "top" , legend.title = element_blank(),
@@ -2819,7 +2842,7 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        pdf(file, height = 6, width = 10)
         print(cond3_scatter1_plot())
         dev.off()
       })
@@ -2977,17 +3000,21 @@ output$download_pair_deg_count_down = downloadHandler(
                           "" & (FC_x)*(FC_y) >= log2(input$fc2))
     labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
     labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data <- utils::head(labs_data, 20)
+    labs_data2 <- utils::head(labs_data, 20)
     font.label <- data.frame(size=5, color="black", face = "plain")
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if(!is.null(labs_data)) {
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
+      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                        force = 1, fontface = font.label$face,
+                                        size = font.label$size/2, color = font.label$color)
+    }
     p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
       geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p + ggrepel::geom_text_repel(data = labs_data, mapping = aes(label = Row.names),
-                                      box.padding = unit(0.35, "lines"), point.padding = unit(0.3,
-                                                                                              "lines"), force = 1, fontface = font.label$face,
-                                      size = font.label$size/2, color = font.label$color)
     p <- p +
       theme_bw()+ scale_color_manual(values = col)+
       theme(legend.position = "top" , legend.title = element_blank(),
@@ -3031,7 +3058,7 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        pdf(file, height = 6, width = 10)
         print(cond3_scatter2_plot())
         dev.off()
       })
@@ -3190,17 +3217,21 @@ output$download_pair_deg_count_down = downloadHandler(
                           "" & (FC_x)*(FC_y) >= log2(input$fc2))
     labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
     labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data <- utils::head(labs_data, 20)
+    labs_data2 <- utils::head(labs_data, 20)
     font.label <- data.frame(size=5, color="black", face = "plain")
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if(!is.null(labs_data)) {
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
+          p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                            force = 1, fontface = font.label$face,
+                                            size = font.label$size/2, color = font.label$color)
+    }
     p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
       geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p + ggrepel::geom_text_repel(data = labs_data, mapping = aes(label = Row.names),
-                                      box.padding = unit(0.35, "lines"), point.padding = unit(0.3,
-                                                                                              "lines"), force = 1, fontface = font.label$face,
-                                      size = font.label$size/2, color = font.label$color)
     p <- p +
       theme_bw()+ scale_color_manual(values = col)+
       theme(legend.position = "top" , legend.title = element_blank(),
@@ -3244,7 +3275,7 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        pdf(file, height = 6, width = 10)
         print(cond3_scatter3_plot())
         dev.off()
       })
@@ -3260,6 +3291,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     if(length(grep("SYMBOL", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "SYMBOL")]
+      data <- data[, - which(colnames(data) == "Unique_ID")]
     }
     pca <- prcomp(data, scale. = T)
     label<- colnames(data)
@@ -3282,6 +3314,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     if(length(grep("SYMBOL", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "SYMBOL")]
+      data <- data[, - which(colnames(data) == "Unique_ID")]
     }
     pca <- prcomp(data, scale. = T)
     label<- colnames(data)
@@ -3395,9 +3428,8 @@ output$download_pair_deg_count_down = downloadHandler(
         label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
         data <- merge(count, label_data, by="Unique_ID")
         rownames(data) <- data$Unique_ID
-        data <- data[, - which(colnames(data) == "Row.names")]
         data <- data[, - which(colnames(data) == "SYMBOL")]
-        data <- data[, - which(colnames(data) == "Unique_ID")]
+        data <- data[,-1]
       }
     }else{
       Row.names <- input$GOI2
@@ -3405,7 +3437,7 @@ output$download_pair_deg_count_down = downloadHandler(
       label_data <- as.data.frame(Row.names, row.names = Row.names)
       data <- merge(count, label_data, by="Row.names")
       rownames(data) <- data$Row.names
-      data <- data[, - which(colnames(data) == "Row.names")]
+      data <- data[,-1]
     }
     return(data)
   })
@@ -3572,14 +3604,21 @@ output$download_pair_deg_count_down = downloadHandler(
     if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
+          withProgress(message = "KEGG dotplot",{
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
+          incProgress()
+          })
           }
         if(input$Gene_set2 == "GO"){
+          withProgress(message = "GO dotplot",{
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org2()), silent = T)
+          incProgress()
+          })
           }
         if (class(formula_res) == "try-error") formula_res <- NA
         return(formula_res)
       }else{
+        withProgress(message = "MSigDB Hallmark dotplot",{
         H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
@@ -3611,13 +3650,15 @@ output$download_pair_deg_count_down = downloadHandler(
         data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
         data$GeneRatio <- parse_ratio(data$GeneRatio)
         return(data)
+        incProgress()
+        })
       }
     }
     }
   })
 
-  output$keggenrichment2_1 <- renderPlot({
-    if(!is.null(input$Gene_set2)){
+  keggEnrichment2_1 <- reactive({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_1()
     data3 <- data_3degcount1_1()
     if(is.null(data4)){
@@ -3625,7 +3666,6 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
           formula_res <- enrichment3_1_1()
           if ((length(as.data.frame(formula_res)) == 0) ||
@@ -3637,10 +3677,16 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             if(input$Gene_set2 == "KEGG"){
+              withProgress(message = "KEGG cnet plot",{
               kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code2())
+              incProgress()
+              })
             }
             if(input$Gene_set2 == "GO"){
+              withProgress(message = "GO cnet plot",{
               kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org2())
+              incProgress()
+              })
             }
               if (is.null(kk1)) {
                 cnet1 <- NULL
@@ -3659,6 +3705,7 @@ output$download_pair_deg_count_down = downloadHandler(
             }
         }
           }else{
+            
             H_t2g <- Hallmark_cond3()
         for (name in unique(data3$sig)) {
           if (name != "NS"){
@@ -3692,7 +3739,7 @@ output$download_pair_deg_count_down = downloadHandler(
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
-
+            withProgress(message = "MSigDB Hallmark cnet plot",{
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
@@ -3712,6 +3759,8 @@ output$download_pair_deg_count_down = downloadHandler(
             }
           }
         }
+            incProgress()
+            })
           }
         if (length(cnet_list) == 2){
           cnet1 <- cnet_list[[1]]
@@ -3722,11 +3771,19 @@ output$download_pair_deg_count_down = downloadHandler(
         if (length(cnet_list) == 0){
           cnet1 <- NULL
           cnet2 <- NULL}
-      print(plot_grid(d, cnet1, cnet2, nrow = 1))
+      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
     }
-    }
-    }
+    }else return(NULL)
     })
+  
+  output$keggenrichment2_1 <- renderPlot({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
+      p <- keggEnrichment2_1()
+      if(!is.null(p)){
+        print(p) 
+      }
+    }
+  })
 
   #3conditions enrichment_2 ------------------------------------------------------------------------------
     Hallmark_cond3 <- reactive({
@@ -3796,8 +3853,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  output$keggenrichment2_2 <- renderPlot({
-    if(!is.null(input$Gene_set2)){
+    keggEnrichment2_2 <- reactive({
+      if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_2()
     data3 <- data_3degcount1_2()
     if(is.null(data4)){
@@ -3805,7 +3862,6 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         formula_res <- enrichment3_2_1()
         if ((length(as.data.frame(formula_res)) == 0) ||
@@ -3902,9 +3958,18 @@ output$download_pair_deg_count_down = downloadHandler(
       if (length(cnet_list) == 0){
         cnet1 <- NULL
         cnet2 <- NULL}
-      print(plot_grid(d, cnet1, cnet2, nrow = 1))
+      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
+      return(p)
     }
-    }
+    }else return(NULL)
+  })
+  
+  output$keggenrichment2_2 <- renderPlot({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
+      p <- keggEnrichment2_2()
+      if(!is.null(p)){
+        print(p) 
+      }
     }
   })
   #3conditions enrichment_3 ------------------------------------------------------------------------------
@@ -3961,8 +4026,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     }
   })
-  output$keggenrichment2_3 <- renderPlot({
-    if(!is.null(input$Gene_set2)){
+  keggEnrichment2_3 <- reactive({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_3()
     data3 <- data_3degcount1_3()
     if(is.null(data4)){
@@ -3970,7 +4035,6 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         formula_res <- enrichment3_3_1()
         if(!is.null(formula_res)){
@@ -4068,11 +4132,21 @@ output$download_pair_deg_count_down = downloadHandler(
       if (length(cnet_list) == 0){
         cnet1 <- NULL
         cnet2 <- NULL}
-      print(plot_grid(d, cnet1, cnet2, nrow = 1))
+      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
+      return(p)
     }
-    }
+    }else return(NULL)
+  })
+  
+  output$keggenrichment2_3 <- renderPlot({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
+      p <- keggEnrichment2_3()
+      if(!is.null(p)){
+        print(p) 
+      }
     }
   })
+  
   output$Gene_set2 <- renderUI({
     selectInput('Gene_set2', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark"))
   })
@@ -4087,7 +4161,42 @@ output$download_pair_deg_count_down = downloadHandler(
     as.data.frame(enrichment3_3_1())
   })
 
-
+  output$download_cond3_enrichment_table1 = downloadHandler(
+    filename = function() {
+      paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment1.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(enrichment3_1_1()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  output$download_cond3_enrichment_table2 = downloadHandler(
+    filename = function() {
+      paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment2.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(enrichment3_2_1()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  output$download_cond3_enrichment_table3 = downloadHandler(
+    filename = function() {
+      paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment3.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(enrichment3_3_1()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  output$download_cond3_enrichment = downloadHandler(
+    filename = function(){
+      paste(download_cond3_dir(), paste0(input$Gene_set,"-enrichment.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        p1 <- keggEnrichment2_1()
+        p2 <- keggEnrichment2_2()
+        p3 <- keggEnrichment2_3()
+        pdf(file, height = 12, width = 15)
+        print(plot_grid(p1, p2, p3, nrow =3))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
   #normalized count analysis
   #norm_count_input-------------------
   org3 <- reactive({
@@ -4208,14 +4317,18 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   d_norm_count_matrix_cutofff <- reactive({
+    data <- d_norm_count_matrix()
+    if(is.null(data)){
+      return(NULL)
+    }else{
     withProgress(message = "Creating defined count matrix, please wait",{
-      data <- d_norm_count_matrix()
       if(input$basemean3 != 0){
         data <- dplyr::filter(data, apply(data,1,mean) > input$basemean3)
       }
       return(data)
       incProgress(1)
     })
+    }
   })
 
   d_norm_count_matrix2 <- reactive({
@@ -4258,10 +4371,13 @@ output$download_pair_deg_count_down = downloadHandler(
     updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
   }))
   observeEvent(input$file8, ({
-    updateCollapse(session,id =  "norm_input_collapse_panel", open="norm_Metadata_panel")
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
   }))
   observeEvent(input$file10, ({
     updateCollapse(session,id =  "norm_input_collapse_panel", open="gene_list_panel")
+  }))
+  observeEvent(input$file9, ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="norm_Metadata_panel")
   }))
   output$norm_count_input1 <- DT::renderDataTable({
     norm_count_input()
@@ -4712,6 +4828,7 @@ output$download_pair_deg_count_down = downloadHandler(
       rcl.list <- row_order(ht)
       lapply(rcl.list, function(x) length(x))
       Cluster <- NULL
+      if(!is.null(input$norm_kmeans_number)){
       if(length(lapply(rcl.list, function(x) length(x))) != input$norm_kmeans_number){
         return(NULL)
       }else{
@@ -4729,6 +4846,7 @@ output$download_pair_deg_count_down = downloadHandler(
         clusterCount <- clusterCount[,-1:-2]
         return(clusterCount)
       }
+      }else return(NULL)
     }
   })
 
@@ -4753,7 +4871,7 @@ output$download_pair_deg_count_down = downloadHandler(
   )
   output$download_norm_kmeans_heatmap = downloadHandler(
     filename = function() {
-      paste0(download_norm_dir(), paste(input$norm_kmeans_number,"kmeans_heatmap.txt",sep = "_"))
+      paste0(download_norm_dir(), paste(input$norm_kmeans_number,"kmeans_heatmap.pdf",sep = "_"))
     },
     content = function(file){
       withProgress(message = "Preparing download",{

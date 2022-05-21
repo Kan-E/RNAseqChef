@@ -40,13 +40,12 @@ ui<- fluidPage(
   tags$head(includeHTML(("google-analytics.html"))),
   tags$style(
     type = 'text/css',
-    # add the name of the tab you want to use as title in data-value
     HTML(
       ".container-fluid > .nav > li >
-                        a[data-value='Title'] {font-size: 20px}"
+                        a[data-value='Title'] {font-size: 20px}",
+      ".navbar{margin:3px;}"
     )
   ),
-  tags$style(HTML(".navbar{margin:3px;}")),
   navbarPage(
     footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
              p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
@@ -1895,8 +1894,8 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   enrichment_1_1 <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data3 <- data_degcount2()
-    if(input$Species != "not selected"){
       if(input$Gene_set != "MSigDB Hallmark"){
         if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG enrichment analysis",{
@@ -1923,7 +1922,7 @@ output$download_pair_deg_count_down = downloadHandler(
         em_down <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
         if (class(em_up) == "try-error") em_up <- NA
         if (class(em_down) == "try-error") em_down <- NA
-        if (length(as.data.frame(em_up$ID)) == 0) {
+        if (length(as.data.frame(em_up)$ID) == 0) {
           em_up <- NA
         } else{
           em_up <- setReadable(em_up, org1(), 'ENTREZID')
@@ -1933,25 +1932,32 @@ output$download_pair_deg_count_down = downloadHandler(
         } else{
           em_down <- setReadable(em_down, org1(), 'ENTREZID')
         }
-        if ((length(as.data.frame(em_up)$ID) == 0) && (length(as.data.frame(em_down)) == 0))  {
+        if ((length(as.data.frame(em_up)$ID) == 0) && (length(as.data.frame(em_down)$ID) == 0))  {
           return(NULL)
         } else{
           group1 <- as.data.frame(em_up)
           group2 <- as.data.frame(em_down)
-          if ((length(colnames(group1)) == 10) && (length(colnames(group2)) == 10))  {
+          if ((length(colnames(group1)) != 1) && (length(colnames(group2)) != 1))  {
             group1$Cluster <- "upregulated"
             group2$Cluster <- "downregulated"
             data<- rbind(group1, group2)
-          }else if(length(colnames(group1)) != 10){
+          }
+          if((length(colnames(group1)) == 1) && (length(colnames(group2)) != 1)){
             group2$Cluster <- "downregulated"
             data <- group2
-          }else if(length(colnames(group2)) != 10){
+          }
+          if((length(colnames(group1)) != 1) && (length(colnames(group2)) == 1)){
             group1$Cluster <- "upregulated"
             data <- group1
           }
+          if((length(colnames(group1)) == 1) && (length(colnames(group2)) == 1)){
+            data <- NA
+          }
+          if(length(colnames(data)) != 0) {
           data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
           data$GeneRatio <- parse_ratio(data$GeneRatio)
           return(data)
+          }else return(NULL)
         }
         incProgress(1)
         })
@@ -1960,6 +1966,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   enrichment_1_gsea <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data <- data_degcount()
     data3 <- data_degcount2()
     count <- deg_norm_count()
@@ -1967,7 +1974,6 @@ output$download_pair_deg_count_down = downloadHandler(
     geneList <- data$log2FoldChange
     names(geneList) = as.character(data$ENTREZID)
     geneList <- sort(geneList, decreasing = TRUE)
-    if(input$Species != "not selected"){
       if(input$Gene_set != "MSigDB Hallmark"){
         if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG GSEA",{
@@ -1987,7 +1993,7 @@ output$download_pair_deg_count_down = downloadHandler(
           incProgress(1)
           })
         }
-        if (length(kk3$ID) == 0) {
+        if (length(as.data.frame(kk3)$ID) == 0) {
           kk3 <- NULL
         } else{
           kk3 <- setReadable(kk3, org1(), 'ENTREZID')
@@ -1998,7 +2004,7 @@ output$download_pair_deg_count_down = downloadHandler(
         H_t2g <- Hallmark_set()
         em3 <- GSEA(geneList, TERM2GENE = H_t2g,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                     minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F)
-        if (length(em3$ID) == 0) {
+        if (length(as.data.frame(em3)$ID) == 0) {
           em4 <- NA
         } else{
           em4 <- setReadable(em3, org1(), 'ENTREZID')
@@ -2007,26 +2013,27 @@ output$download_pair_deg_count_down = downloadHandler(
         incProgress(1)
         })
       }
-    }
+    }else return(NULL)
   })
 
 
   # pair-wise enrichment plot ------------------------------------------------------------------------------
   pair_enrich1_keggGO <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     if(input$Gene_set != "MSigDB Hallmark"){
       count <- deg_norm_count()
       formula_res <- enrichment_1_1()
-      if ((length(as.data.frame(formula_res)) == 0) ||
+      if ((length(as.data.frame(formula_res)$Description) == 0) ||
           is.na(unique(as.data.frame(formula_res)$qvalue))) {
         p1 <- NULL
       } else{
         p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
       }
       kk4 <- enrichment_1_gsea()
-      if (length(kk4$ID) == 0) {
+      if (length(as.data.frame(kk4)$ID) == 0) {
         p4 <- NULL
       } else{
-        if (length(kk4$ID) >= 5){
+        if (length(as.data.frame(kk4)$ID) >= 5){
           p4 <- as.grob(gseaplot2(kk4, 1:5, pvalue_table = F))
         }else{
           p4 <- as.grob(gseaplot2(kk4, 1:length(kk3$ID), pvalue_table = F))
@@ -2035,9 +2042,11 @@ output$download_pair_deg_count_down = downloadHandler(
       p <- plot_grid(p1, p4, nrow = 1)
       return(p)
     }
+    }else return(NULL)
   })
 
   pair_enrich1_H <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     if(input$Gene_set == "MSigDB Hallmark"){
       count <- deg_norm_count()
       formula_res <- enrichment_1_1()
@@ -2045,46 +2054,51 @@ output$download_pair_deg_count_down = downloadHandler(
       H_t2g <- Hallmark_set()
       em_up <- enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
       em_down <- enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-      if (length(em_up$ID) == 0) {
+      if (length(as.data.frame(em_up)$ID) == 0) {
         em_up <- NA
       } else{
         em_up <- setReadable(em_up, org1(), 'ENTREZID')
       }
-      if (length(em_down$ID) == 0) {
+      if (length(as.data.frame(em_down)$ID) == 0) {
         em_down <- NA
       } else{
         em_down <- setReadable(em_down, org1(), 'ENTREZID')
       }
       if ((length(em_up) == 0) && (length(em_down) == 0))  {
-        return(NULL)
+        p1 <- NULL
       } else{
         group1 <- as.data.frame(em_up)
         group2 <- as.data.frame(em_down)
         group1$Cluster <- "upregulated"
         group2$Cluster <- "downregulated"
-        if(length(em_up) != 0){
+        if(length(as.data.frame(em_up)$ID) != 0){
           if (length(group1$pvalue) > 5){
             group1 <- group1[sort(group1$pvalue, decreasing = F, index=T)$ix,]
             group1 <- group1[1:5,]
           }
         }
-        if(length(em_down) != 0){
+        if(length(as.data.frame(em_down)$ID) != 0){
           if (length(group2$pvalue) > 5){
             group2 <- group2[sort(group2$pvalue, decreasing = F, index=T)$ix,]
             group2 <- group2[1:5,]
           }
         }
-        if ((length(colnames(group1)) == 10) && (length(colnames(group2)) == 10))  {
+        if ((length(colnames(group1)) != 2) && (length(colnames(group2)) != 2))  {
           data<- rbind(group1, group2)
-        }else if(length(colnames(group1)) != 10){
+        }
+        if((length(colnames(group1)) == 2) && (length(colnames(group2)) != 2)){
           data <- group2
-        }else if(length(colnames(group2)) != 10){
+        }
+        if((length(colnames(group1)) != 2) && (length(colnames(group2)) == 2)){
           data <- group1
         }
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if(!is.na(data)){
-        if ((length(data) == 0) || is.na(unique(data$qvalue))) {
+        if((length(colnames(group1)) == 2) && (length(colnames(group2)) == 2)){
+          data <- NA
+        }
+        if(length(colnames(data)) != 0){
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
+        if ((length(data$Description) == 0) || is.na(unique(data$qvalue))) {
           p1 <- NULL
         } else{
           p1 <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
@@ -2095,10 +2109,10 @@ output$download_pair_deg_count_down = downloadHandler(
         }}else p1 <- NULL
       }
       em3 <- enrichment_1_gsea()
-      if (length(em3$ID) == 0) {
+      if (length(as.data.frame(em3)$ID) == 0) {
         p4 <- NULL
       } else{
-        if (length(em3$ID) >= 5){
+        if (length(as.data.frame(em3)$ID) >= 5){
           p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F))
         }else{
           p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F))
@@ -2107,6 +2121,7 @@ output$download_pair_deg_count_down = downloadHandler(
       p <- plot_grid(p1, p4, nrow = 1)
       return(p)
     }
+    }else return(NULL)
   })
 
   output$enrichment1 <- renderPlot({
@@ -2129,17 +2144,12 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   pair_enrich2 <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data <- data_degcount()
     data3 <- data_degcount2()
     count <- deg_norm_count()
     upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
-
-    geneList_up <- upgene$log2FoldChange
-    names(geneList_up) = as.character(upgene$ENTREZID)
     downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-    geneList_down <- downgene$log2FoldChange
-    names(geneList_down) = as.character(downgene$ENTREZID)
-    if(input$Species != "not selected"){
     if(input$Gene_set != "MSigDB Hallmark"){
         if(input$Gene_set == "KEGG"){
           kk1 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
@@ -2160,19 +2170,21 @@ output$download_pair_deg_count_down = downloadHandler(
       if (class(kk1) == "try-error") kk1 <- NA
       if (class(kk2) == "try-error") kk2 <- NA
     }
-      if(length(kk1$ID) == 0){
+      if(length(as.data.frame(kk1)$ID) == 0){
         cnet1 <- NULL
       } else {
         cnet1 <- setReadable(kk1, org1(), 'ENTREZID')
       }
-      if(length(kk2$ID) == 0){
+      if(length(as.data.frame(kk2)$ID) == 0){
         cnet2 <- NULL
       } else {
         cnet2 <- setReadable(kk2, org1(), 'ENTREZID')
       }
-      if (length(cnet1$ID) == 0) {
+      if (length(as.data.frame(cnet1)$ID) == 0) {
         p2 <- NULL
       } else{
+        geneList_up <- upgene$log2FoldChange
+        names(geneList_up) = as.character(upgene$ENTREZID)
         p2 <- try(as.grob(cnetplot(cnet1, foldChange=geneList_up,
                                    cex_label_gene = 0.75, cex_label_category = 1,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
@@ -2182,9 +2194,11 @@ output$download_pair_deg_count_down = downloadHandler(
                                          cex_label_gene = 0.75, cex_label_category = 1,
                                          cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
-      if (length(cnet2$ID) == 0) {
+      if (length(as.data.frame(cnet2)$ID) == 0) {
         p3 <- NULL
       } else{
+        geneList_down <- downgene$log2FoldChange
+        names(geneList_down) = as.character(downgene$ENTREZID)
         p3 <- try(as.grob(cnetplot(cnet2, foldChange=geneList_down,
                                    cex_label_gene = 0.75, cex_label_category = 1,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
@@ -2196,7 +2210,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       p <- plot_grid(p2, p3, nrow = 1)
       return(p)
-    }
+    }else return(NULL)
   })
 
   output$enrichment2 <- renderPlot({
@@ -2788,9 +2802,17 @@ output$download_pair_deg_count_down = downloadHandler(
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
+    }
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+    }
+    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
+    }
     if(!is.null(labs_data)) {
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
       p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
                                         box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
                                         force = 1, fontface = font.label$face,
@@ -3005,9 +3027,17 @@ output$download_pair_deg_count_down = downloadHandler(
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
+    }
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+    }
+    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
+    }
     if(!is.null(labs_data)) {
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
       p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
                                         box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
                                         force = 1, fontface = font.label$face,
@@ -3222,13 +3252,21 @@ output$download_pair_deg_count_down = downloadHandler(
     set.seed(42)
     FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
+    }
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+    }
+    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
+    }
     if(!is.null(labs_data)) {
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == unique(labs_data$sig)[2]),color = "blue", size= 0.25 )
-          p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
-                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
-                                            force = 1, fontface = font.label$face,
-                                            size = font.label$size/2, color = font.label$color)
+      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                        force = 1, fontface = font.label$face,
+                                        size = font.label$size/2, color = font.label$color)
     }
     p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
       geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
@@ -3430,6 +3468,13 @@ output$download_pair_deg_count_down = downloadHandler(
         rownames(data) <- data$Unique_ID
         data <- data[, - which(colnames(data) == "SYMBOL")]
         data <- data[,-1]
+      }else{
+        Row.names <- input$GOI2
+        count$Row.names <- rownames(count)
+        label_data <- as.data.frame(Row.names, row.names = Row.names)
+        data <- merge(count, label_data, by="Row.names")
+        rownames(data) <- data$Row.names
+        data <- data[,-1]
       }
     }else{
       Row.names <- input$GOI2
@@ -3595,13 +3640,13 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   #3conditions enrichment_1 ------------------------------------------------------------------------------
   enrichment3_1_1 <- reactive({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_1()
     data3 <- data_3degcount1_1()
     cnet_list <- list()
     if(is.null(data4)){
       return(NULL)
     }else{
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
           withProgress(message = "KEGG dotplot",{
@@ -3623,7 +3668,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
         em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        if (length(em$ID) == 0) {
+        if (length(as.data.frame(em)$ID) == 0) {
           cnet1 <- NULL
         } else {
           cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3668,7 +3713,7 @@ output$download_pair_deg_count_down = downloadHandler(
     cnet_list2 <- list()
       if(input$Gene_set2 != "MSigDB Hallmark"){
           formula_res <- enrichment3_1_1()
-          if ((length(as.data.frame(formula_res)) == 0) ||
+          if ((length(as.data.frame(formula_res)$Description) == 0) ||
               is.na(unique(as.data.frame(formula_res)$qvalue))) {
             d <- NULL
           } else{
@@ -3691,7 +3736,8 @@ output$download_pair_deg_count_down = downloadHandler(
               if (is.null(kk1)) {
                 cnet1 <- NULL
               } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-              if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+              if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                  is.na(unique(as.data.frame(cnet1)$qvalue))) {
                 c <- NULL
               } else{
                 c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -3710,7 +3756,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3730,7 +3776,7 @@ output$download_pair_deg_count_down = downloadHandler(
             data <- dplyr::filter(data, !is.na(Description))
             data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
             data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data) == 0) || is.na(unique(data$qvalue))) {
+        if ((length(data$Description) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
           d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
@@ -3743,10 +3789,11 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+            if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -3801,13 +3848,13 @@ output$download_pair_deg_count_down = downloadHandler(
     })
 
     enrichment3_2_1 <- reactive({
+      if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_2()
     data3 <- data_3degcount1_2()
     cnet_list <- list()
     if(is.null(data4)){
       return(NULL)
     }else{
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
@@ -3822,7 +3869,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3864,7 +3911,7 @@ output$download_pair_deg_count_down = downloadHandler(
     cnet_list2 <- list()
       if(input$Gene_set2 != "MSigDB Hallmark"){
         formula_res <- enrichment3_2_1()
-        if ((length(as.data.frame(formula_res)) == 0) ||
+        if ((length(as.data.frame(formula_res)$Description) == 0) ||
             is.na(unique(as.data.frame(formula_res)$qvalue))) {
           d <- NULL
         } else{
@@ -3881,7 +3928,7 @@ output$download_pair_deg_count_down = downloadHandler(
             if (is.null(kk1)) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-            if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+            if ((length(as.data.frame(cnet1)$ID) == 0) || is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -3899,7 +3946,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -3919,7 +3966,7 @@ output$download_pair_deg_count_down = downloadHandler(
           data <- dplyr::filter(data, !is.na(Description))
           data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
           data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data) == 0) || is.na(unique(data$qvalue))) {
+        if ((length(data$Description) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
           d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
@@ -3932,10 +3979,11 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+            if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -3974,13 +4022,13 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   #3conditions enrichment_3 ------------------------------------------------------------------------------
   enrichment3_3_1 <- reactive({
+    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
     data4 <- data_3degcount2_3()
     data3 <- data_3degcount1_3()
     if(is.null(data4)){
       return(NULL)
     }else{
     cnet_list <- list()
-    if(input$Species2 != "not selected"){
       if(input$Gene_set2 != "MSigDB Hallmark"){
         if(input$Gene_set2 == "KEGG"){
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
@@ -3995,7 +4043,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(em$ID) == 0) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -4038,7 +4086,7 @@ output$download_pair_deg_count_down = downloadHandler(
       if(input$Gene_set2 != "MSigDB Hallmark"){
         formula_res <- enrichment3_3_1()
         if(!is.null(formula_res)){
-        if ((length(as.data.frame(formula_res)) == 0) ||
+        if ((length(as.data.frame(formula_res)$Description) == 0) ||
             is.na(unique(as.data.frame(formula_res)$qvalue))) {
           d <- NULL
         } else{
@@ -4055,7 +4103,8 @@ output$download_pair_deg_count_down = downloadHandler(
             if (is.null(kk1)) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-            if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+            if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -4073,7 +4122,7 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
@@ -4093,7 +4142,7 @@ output$download_pair_deg_count_down = downloadHandler(
           data <- dplyr::filter(data, !is.na(Description))
           data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
           data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data) == 0) || is.na(unique(data$qvalue))) {
+        if ((length(data$Description) == 0) || is.na(unique(data$qvalue))) {
           d <- NULL
         } else{
           d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
@@ -4106,10 +4155,11 @@ output$download_pair_deg_count_down = downloadHandler(
         for (name in unique(data3$sig)) {
           if (name != "NS"){
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (is.null(em)) {
+            if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(cnet1$ID) == 0) || is.na(unique(cnet1$qvalue))) {
+            if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
               c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
@@ -4182,7 +4232,7 @@ output$download_pair_deg_count_down = downloadHandler(
   
   output$download_cond3_enrichment = downloadHandler(
     filename = function(){
-      paste(download_cond3_dir(), paste0(input$Gene_set,"-enrichment.pdf"), sep="_")
+      paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment.pdf"), sep="_")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
@@ -4929,8 +4979,10 @@ output$download_pair_deg_count_down = downloadHandler(
 
   overlap_list <- reactive({
     gene_list <- files_table()
+    if(!is.null(gene_list)){
     data <- names(attr(venn(gene_list), "intersections"))
     return(data)
+    }else return(NULL)
   })
 
   overlap_table2 <- reactive({
@@ -5268,6 +5320,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   enrich_viewer2 <- reactive({
+    if(!is.null(input$Gene_set3)){
     data3 <- enrich_viewer1()
     if(is.null(data3)){
       return(NULL)
@@ -5308,22 +5361,26 @@ output$download_pair_deg_count_down = downloadHandler(
               }
             }
           }
+          if(length(df$ID) !=0){
           df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
           df$GeneRatio <- parse_ratio(df$GeneRatio)
           return(df)
+          }else return(NULL)
         })
       }
+    }
     }
   })
 
   # enrichment plot ------------------------------------------------------------------------------
   enrich_keggGO <- reactive({
+    if(!is.null(input$Gene_set3)){
     formula_res <- enrich_viewer2()
     if(is.null(formula_res)){
       return(NULL)
     }else{
       if(input$Gene_set3 != "MSigDB Hallmark"){
-        if ((length(as.data.frame(formula_res)) == 0) ||
+        if ((length(as.data.frame(formula_res)$Description) == 0) ||
             is.na(unique(as.data.frame(formula_res)$qvalue))) {
           p1 <- NULL
         } else{
@@ -5333,9 +5390,11 @@ output$download_pair_deg_count_down = downloadHandler(
         return(p)
       }
     }
+    }
   })
 
   enrich_H <- reactive({
+    if(!is.null(input$Gene_set3)){
     data3 <- enrich_viewer1()
     if(is.null(data3)){
       return(NULL)
@@ -5358,11 +5417,11 @@ output$download_pair_deg_count_down = downloadHandler(
             }
           }
         }
-        df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        df$GeneRatio <- parse_ratio(df$GeneRatio)
         if ((length(df$Description) == 0) || is.na(unique(df$qvalue))) {
           p1 <- NULL
         } else{
+          df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          df$GeneRatio <- parse_ratio(df$GeneRatio)
           p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
                           geom_point(aes(color=qvalue,size=GeneRatio)) +
                           scale_color_continuous(low="red", high="blue",
@@ -5371,6 +5430,7 @@ output$download_pair_deg_count_down = downloadHandler(
           p <- plot_grid(p1)
           return(p)
         }}else return(NULL)
+    }
     }
   })
 
@@ -5412,6 +5472,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   enrich2 <- reactive({
+    if(!is.null(input$Gene_set3)){
     data <- enrich_viewer1()
     group <- input$which_group
     if(is.null(data) || is.null(group)){
@@ -5432,12 +5493,12 @@ output$download_pair_deg_count_down = downloadHandler(
         kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
         if (class(kk1) == "try-error") kk1 <- NA
       }
-      if(length(kk1$ID) == 0){
+      if(length(as.data.frame(kk1)$ID) == 0){
         cnet1 <- NULL
       } else {
         cnet1 <- setReadable(kk1, org4(), 'ENTREZID')
       }
-      if (length(cnet1$ID) == 0) {
+      if (length(as.data.frame(cnet1)$ID) == 0) {
         p2 <- NULL
       } else{
         p2 <- try(as.grob(cnetplot(cnet1,
@@ -5451,6 +5512,7 @@ output$download_pair_deg_count_down = downloadHandler(
       }
       p <- plot_grid(p2)
       return(p)
+    }
     }
   })
 

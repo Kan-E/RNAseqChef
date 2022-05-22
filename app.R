@@ -23,6 +23,7 @@ library(org.Mm.eg.db)
 library(org.Rn.eg.db)
 library(org.Dm.eg.db)
 library(org.Ce.eg.db)
+library(org.Xl.eg.db)
 library(AnnotationDbi)
 library(clusterProfiler)
 library(enrichplot)
@@ -56,27 +57,27 @@ ui<- fluidPage(
            fluidRow(
              column(12,
                     br(),br(),
-                    h1("RNAseqChef",align="center"),br(),
+                    h1(strong("RNAseqChef"),align="center"),br(),
                     p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
-                      align="center"),br(),br(),style={'background-color:beige;'},
+                      align="center"),br(),br(),style={'background-color:beige;font-size: 16px;'},
                     ),
              column(12,
-                    column(6,br(),
-                           h4("Pair-wise DEG"),
-                           "Detects and visualizes differentially expressed genes",br(),br(),
-                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),br(),br(),
-                           h4("3 conditions DEG"),
-                           "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",br(),br(),
+                    column(6,hr(),
+                           h4(strong("Pair-wise DEG")),
+                           "Detects and visualizes differentially expressed genes",
+                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),br(),hr(),
+                           h4(strong("3 conditions DEG")),
+                           "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",
                            img(src="3cond_DEG.png", width = 600,height = 475)),
-                    column(6,br(),
-                           h4("Venn diagram"),
-                           "Detects and visualizes the overlap between DEGs from multiple datasets",br(),br(),
-                           img(src="Venn.png", width = 600,height = 230),br(),br(),
-                           h4("Normalized count analysis"),
-                           "identifies similar samples and gene expression pattern by clustering methods",br(),br(),
-                           img(src="Normalized.png", width = 550,height = 500),
-                           h4("Enrichment viewer"),
-                           "determins and visualises biological functions of gene set of interest",br(),br(),
+                    column(6,hr(),
+                           h4(strong("Venn diagram")),
+                           "Detects and visualizes the overlap between DEGs from multiple datasets",
+                           img(src="Venn.png", width = 600,height = 230),br(),hr(),
+                           h4(strong("Normalized count analysis")),
+                           "identifies similar samples and gene expression pattern by clustering methods",
+                           img(src="Normalized.png", width = 550,height = 500),hr(),
+                           h4(strong("Enrichment viewer")),
+                           "determins and visualises biological functions of gene set of interest",
                            img(src="enrichment_viewer.png", width = 550,height = 250)
                            )
              )
@@ -133,7 +134,8 @@ ui<- fluidPage(
                ),
                conditionalPanel(condition="input.DEG_method=='edgeR'"),
                fluidRow(
-                 column(6, selectInput("Species", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
+                 column(6, selectInput("Species", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
+                                                               "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
                h4("Cut-off conditions:"),
                fluidRow(
                  column(4, numericInput("fc", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -322,7 +324,8 @@ ui<- fluidPage(
                                           width = "80%")
                ),
                fluidRow(
-                 column(6, selectInput("Species2", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
+                 column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
+                                                                "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
                h4("Cut-off conditions:"),
                fluidRow(
                  column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -602,17 +605,23 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%")
                ),
+               fluidRow(
+                 column(6, selectInput("Species3", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
+                                                                "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected")),
+                 column(6, selectInput("normHeat", "Heatmap in clustering panel", c("OFF", "Draw"), selected = "OFF"))),
+               h4("Filter option 1:"),
                fileInput("file10",
-                         label = "Option: Select a gene list file for GOI extraction",
+                         label = "Select a gene list file for gene extraction",
                          accept = c("txt", "csv", "xlsx"),
                          multiple = FALSE,
                          width = "80%"),
-               h4("Cut-off condition:"),
+               h4("Filter option 2:"),
                fluidRow(
-                 column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0))
+                 column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
+                       ),
+                 column(8,  "If the gene number is >10,000 after filtering, heatmap and k-means clustering are not recommended.", br(),
+                        "The server memory may be over.")
                ),
-               fluidRow(
-                 column(6, selectInput("Species3", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
                actionButton("goButton3", "example data"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -718,7 +727,8 @@ ui<- fluidPage(
                          multiple = FALSE,
                          width = "80%"),
                fluidRow(
-                 column(6, selectInput("Species4", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))),
+                 column(6, selectInput("Species4", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
+                                                                "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
                actionButton("goButton4", "example data (human)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -811,22 +821,24 @@ server <- function(input, output, session) {
 org1 <- reactive({
   if(input$Species != "not selected"){
     switch (input$Species,
-            "mouse" = org <- org.Mm.eg.db,
-            "human" = org <- org.Hs.eg.db,
-            "rat" = org <- org.Rn.eg.db,
-            "fly" = org <- org.Dm.eg.db,
-            "worm" = org <- org.Ce.eg.db)
+            "Mus musculus" = org <- org.Mm.eg.db,
+            "Homo sapiens" = org <- org.Hs.eg.db,
+            "Rattus norvegicus" = org <- org.Rn.eg.db,
+            "Xenopus laevis" = org <- org.Xl.eg.db,
+            "Drosophila melanogaster" = org <- org.Dm.eg.db,
+            "Caenorhabditis elegans" = org <- org.Ce.eg.db)
     return(org)
   }
 })
 org_code1 <- reactive({
   if(input$Species != "not selected"){
     switch (input$Species,
-            "mouse" = org_code <- "mmu",
-            "human" = org_code <- "hsa",
-            "rat" = org_code <- "rno",
-            "fly" = org_code <- "dme",
-            "worm" = org_code <- "cel")
+            "Mus musculus" = org_code <- "mmu",
+            "Homo sapiens" = org_code <- "hsa",
+            "Rattus norvegicus" = org_code <- "rno",
+            "Xenopus laevis" = org_code <- "xla",
+            "Drosophila melanogaster" = org_code <- "dme",
+            "Caenorhabditis elegans" = org_code <- "cel")
     return(org_code)
   }
 })
@@ -1646,12 +1658,12 @@ output$download_pair_deg_count_down = downloadHandler(
       data3$value <- as.numeric(data3$value)
       p <- ggpubr::ggboxplot(data3, x = "sample", y = "value",
                              fill = "sample", scales = "free",
-                             add = "jitter", legend = "none",
+                             add = "jitter",
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
                   panel.labs.background = list(fill = "transparent", color = "transparent"),
                   scales = "free", short.panel.labs = T)+
-              theme(axis.text.x= element_text(size = 10),
+              theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
                     title = element_text(size = 10),text = element_text(size = 20))
@@ -1881,11 +1893,12 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
       }else{
     switch (input$Species,
-            "mouse" = species <- "Mus musculus",
-            "human" = species <- "Homo sapiens",
-            "rat" = species <- "Rattus norvegicus",
-            "fly" = species <- "Drosophila melanogaster",
-            "worm" = species <- "Caenorhabditis elegans")
+            "Mus musculus" = species <- "Mus musculus",
+            "Homo sapiens" = species <- "Homo sapiens",
+            "Rattus norvegicus" = species <- "Rattus norvegicus",
+            "Xenopus laevis" = species <- "Xenopus laevis",
+            "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+            "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
     H_t2g <- msigdbr(species = species, category = "H") %>%
       dplyr::select(gs_name, entrez_gene)
     return(H_t2g)
@@ -2283,22 +2296,24 @@ output$download_pair_deg_count_down = downloadHandler(
   org2 <- reactive({
     if(input$Species2 != "not selected"){
       switch (input$Species2,
-              "mouse" = org <- org.Mm.eg.db,
-              "human" = org <- org.Hs.eg.db,
-              "rat" = org <- org.Rn.eg.db,
-              "fly" = org <- org.Dm.eg.db,
-              "worm" = org <- org.Ce.eg.db)
+              "Mus musculus" = org <- org.Mm.eg.db,
+              "Homo sapiens" = org <- org.Hs.eg.db,
+              "Rattus norvegicus" = org <- org.Rn.eg.db,
+              "Xenopus laevis" = org <- org.Xl.eg.db,
+              "Drosophila melanogaster" = org <- org.Dm.eg.db,
+              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
       return(org)
     }
   })
   org_code2 <- reactive({
     if(input$Species2 != "not selected"){
       switch (input$Species2,
-              "mouse" = org_code <- "mmu",
-              "human" = org_code <- "hsa",
-              "rat" = org_code <- "rno",
-              "fly" = org_code <- "dme",
-              "worm" = org_code <- "cel")
+              "Mus musculus" = org_code <- "mmu",
+              "Homo sapiens" = org_code <- "hsa",
+              "Rattus norvegicus" = org_code <- "rno",
+              "Xenopus laevis" = org_code <- "xla",
+              "Drosophila melanogaster" = org_code <- "dme",
+              "Caenorhabditis elegans" = org_code <- "cel")
       return(org_code)
     }
   })
@@ -3530,12 +3545,12 @@ output$download_pair_deg_count_down = downloadHandler(
       data$value <- as.numeric(data$value)
       p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
                              fill = "sample", scales = "free",
-                             add = "jitter", legend = "none",
+                             add = "jitter", 
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
                   panel.labs.background = list(fill = "transparent", color = "transparent"),
                   scales = "free", short.panel.labs = T)+
-              theme(axis.text.x= element_text(size = 10),
+              theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
                     title = element_text(size = 10),text = element_text(size = 10))
@@ -3836,11 +3851,12 @@ output$download_pair_deg_count_down = downloadHandler(
     Hallmark_cond3 <- reactive({
       if(input$Species2 != "not selected"){
       switch (input$Species2,
-              "mouse" = species <- "Mus musculus",
-              "human" = species <- "Homo sapiens",
-              "rat" = species <- "Rattus norvegicus",
-              "fly" = species <- "Drosophila melanogaster",
-              "worm" = species <- "Caenorhabditis elegans")
+              "Mus musculus" = species <- "Mus musculus",
+              "Homo sapiens" = species <- "Homo sapiens",
+              "Rattus norvegicus" = species <- "Rattus norvegicus",
+              "Xenopus laevis" = species <- "Xenopus laevis",
+              "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+              "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
       H_t2g <- msigdbr(species = species, category = "H") %>%
         dplyr::select(gs_name, entrez_gene)
       return(H_t2g)
@@ -4252,22 +4268,24 @@ output$download_pair_deg_count_down = downloadHandler(
   org3 <- reactive({
     if(input$Species3 != "not selected"){
       switch (input$Species3,
-              "mouse" = org <- org.Mm.eg.db,
-              "human" = org <- org.Hs.eg.db,
-              "rat" = org <- org.Rn.eg.db,
-              "fly" = org <- org.Dm.eg.db,
-              "worm" = org <- org.Ce.eg.db)
+              "Mus musculus" = org <- org.Mm.eg.db,
+              "Homo sapiens" = org <- org.Hs.eg.db,
+              "Rattus norvegicus" = org <- org.Rn.eg.db,
+              "Xenopus laevis" = org <- org.Xl.eg.db,
+              "Drosophila melanogaster" = org <- org.Dm.eg.db,
+              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
       return(org)
     }
   })
   org_code3 <- reactive({
     if(input$Species3 != "not selected"){
       switch (input$Species3,
-              "mouse" = org_code <- "mmu",
-              "human" = org_code <- "hsa",
-              "rat" = org_code <- "rno",
-              "fly" = org_code <- "dme",
-              "worm" = org_code <- "cel")
+              "Mus musculus" = org_code <- "mmu",
+              "Homo sapiens" = org_code <- "hsa",
+              "Rattus norvegicus" = org_code <- "rno",
+              "Xenopus laevis" = org_code <- "xla",
+              "Drosophila melanogaster" = org_code <- "dme",
+              "Caenorhabditis elegans" = org_code <- "cel")
       return(org_code)
     }
   })
@@ -4357,7 +4375,7 @@ output$download_pair_deg_count_down = downloadHandler(
             row <- merge(row,gene_list, by=0)
             rownames(row) <- row$Row.names
             row <- row[,-1]
-            data <- data[, - which(colnames(data) == "gene")]
+            row <- row[, - which(colnames(row) == "gene")]
           }
           return(row)
         }
@@ -4390,7 +4408,9 @@ output$download_pair_deg_count_down = downloadHandler(
         if(str_detect(rownames(data)[1], "ENS")){
           gene_IDs <- gene_ID_norm()
           data <- merge(data, gene_IDs, by=0)
-          data <- data[, - which(colnames(data) == "Row.names")]
+          data <- data[, - which(colnames(data) == "Row.names.y")]
+          rownames(data) <- data[,1] 
+          data <- data[,-1]
         }
       }
         return(data)
@@ -4402,7 +4422,7 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(res)){
       return(NULL)
     }else{
-      if(input$Species != "not selected"){
+      if(input$Species3 != "not selected"){
         if(str_detect(rownames(res)[1], "ENS")){
           my.symbols <- rownames(res)
           gene_IDs<-AnnotationDbi::select(org3(),keys = my.symbols,
@@ -4562,7 +4582,7 @@ output$download_pair_deg_count_down = downloadHandler(
     normPCAdata()
   })
   output$d_norm_count_cutoff <- DT::renderDataTable({
-    d_norm_count_matrix_cutofff()
+    d_norm_count_cutoff_uniqueID()
   })
 
   output$download_norm_pca_table = downloadHandler(
@@ -4573,6 +4593,7 @@ output$download_pair_deg_count_down = downloadHandler(
   )
 
   norm_heat <- reactive({
+    if(input$normHeat != "OFF"){
     data <- d_norm_count_matrix_cutofff()
     withProgress(message = "Heatmap",{
       if(is.null(data)){
@@ -4583,8 +4604,10 @@ output$download_pair_deg_count_down = downloadHandler(
         ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
                       show_row_names = F, show_row_dend = F)
+        return(ht)
       }
     })
+    }else return(NULL)
   })
 
   output$norm_heatmap <- renderPlot({
@@ -4617,11 +4640,11 @@ output$download_pair_deg_count_down = downloadHandler(
     count <- d_norm_count_matrix_cutofff()
     if(input$Species3 != "not selected"){
       if(str_detect(rownames(count)[1], "ENS")){
-        count$Row.names <-  rownames(count)
         gene_IDs  <- gene_ID_norm()
-        data2 <- merge(count, gene_IDs, by="Row.names")
+        data2 <- merge(count, gene_IDs, by= 0)
+        rownames(data2) <- data2[,1]
+        data2 <- data2[, - which(colnames(data2) == "Row.names.y")]
         data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
-        rownames(data2) <- data2$Row.names
         count <- data2[,-1]
       }
     }
@@ -4666,9 +4689,15 @@ output$download_pair_deg_count_down = downloadHandler(
         label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
         data <- merge(count, label_data, by="Unique_ID")
         rownames(data) <- data$Unique_ID
-        data <- data[, - which(colnames(data) == "Row.names")]
         data <- data[, - which(colnames(data) == "SYMBOL")]
         data <- data[, - which(colnames(data) == "Unique_ID")]
+      }else{
+        Row.names <- input$GOI3
+        count$Row.names <- rownames(count)
+        label_data <- as.data.frame(Row.names, row.names = Row.names)
+        data <- merge(count, label_data, by="Row.names")
+        rownames(data) <- data$Row.names
+        data <- data[, - which(colnames(data) == "Row.names")]
       }
     }else{
       Row.names <- input$GOI3
@@ -4724,12 +4753,12 @@ output$download_pair_deg_count_down = downloadHandler(
       data$value <- as.numeric(data$value)
       p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
                              fill = "sample", scales = "free",
-                             add = "jitter", legend = "none",
+                             add = "jitter",
                              xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
       p <- (facet(p, facet.by = "Row.names",
                   panel.labs.background = list(fill = "transparent", color = "transparent"),
                   scales = "free", short.panel.labs = T)+
-              theme(axis.text.x= element_text(size = 10),
+              theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
                     title = element_text(size = 10),text = element_text(size = 10)))
@@ -4831,7 +4860,7 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      withProgress(message = "Preparing GOI list",{
+      withProgress(message = "Preparing kmeans clustering",{
         sliderInput("norm_kmeans_number", "k-means number", min = 1,
                     max=20, step = 1,
                     value = 1)
@@ -5243,11 +5272,12 @@ output$download_pair_deg_count_down = downloadHandler(
         return(NULL)
       }else{
         switch (input$Species4,
-                "mouse" = species <- "Mus musculus",
-                "human" = species <- "Homo sapiens",
-                "rat" = species <- "Rattus norvegicus",
-                "fly" = species <- "Drosophila melanogaster",
-                "worm" = species <- "Caenorhabditis elegans")
+                "Mus musculus" = species <- "Mus musculus",
+                "Homo sapiens" = species <- "Homo sapiens",
+                "Rattus norvegicus" = species <- "Rattus norvegicus",
+                "Xenopus laevis" = species <- "Xenopus laevis",
+                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
         H_t2g <- msigdbr(species = species, category = "H") %>%
           dplyr::select(gs_name, entrez_gene)
         return(H_t2g)
@@ -5257,22 +5287,24 @@ output$download_pair_deg_count_down = downloadHandler(
   org4 <- reactive({
     if(input$Species4 != "not selected"){
       switch (input$Species4,
-              "mouse" = org <- org.Mm.eg.db,
-              "human" = org <- org.Hs.eg.db,
-              "rat" = org <- org.Rn.eg.db,
-              "fly" = org <- org.Dm.eg.db,
-              "worm" = org <- org.Ce.eg.db)
+              "Mus musculus" = org <- org.Mm.eg.db,
+              "Homo sapiens" = org <- org.Hs.eg.db,
+              "Rattus norvegicus" = org <- org.Rn.eg.db,
+              "Xenopus laevis" = org <- org.Xl.eg.db,
+              "Drosophila melanogaster" = org <- org.Dm.eg.db,
+              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
       return(org)
     }
   })
   org_code4 <- reactive({
     if(input$Species4 != "not selected"){
       switch (input$Species4,
-              "mouse" = org_code <- "mmu",
-              "human" = org_code <- "hsa",
-              "rat" = org_code <- "rno",
-              "fly" = org_code <- "dme",
-              "worm" = org_code <- "cel")
+              "Mus musculus" = org_code <- "mmu",
+              "Homo sapiens" = org_code <- "hsa",
+              "Rattus norvegicus" = org_code <- "rno",
+              "Xenopus laevis" = org_code <- "xla",
+              "Drosophila melanogaster" = org_code <- "dme",
+              "Caenorhabditis elegans" = org_code <- "cel")
       return(org_code)
     }
   })

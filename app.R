@@ -775,42 +775,124 @@ ui<- fluidPage(
            ) #sidebarLayout
   ),
   #Instruction--------------------------
-  tabPanel("Reference",
-           fluidRow(
-             column(10,
-                    h2("To cite RNAseqChef:"),
-                    p("Web tool:",br(), "Kan Etoh: RNAseqChef (2022)", a("https://kan-e.shinyapps.io/RNAseqChef/",href="https://kan-e.shinyapps.io/RNAseqChef/")),
-                    p("Source code:",br(), "Kan Etoh: RNAseqChef: web application for automated, systematic, and integrated RNA-seq differential expression analysis. (2022)", a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),br(),
-                    br(),
-                    h2("Reference:"),
-"- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
-"- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
+  navbarMenu("More",
+             tabPanel("Volcano navi",
+                      sidebarLayout(
+                        # Normalized count data analysis---------------------------------
+                        sidebarPanel(
+                          strong("File format: "),br(),
+                          "First column must be gene name (Gene symbol or ENSEMBL ID).",br(),
+                          "The file must contain", strong("log2FoldChange"), "and", 
+                          strong("padj"), "columns.",br(),
+                          "You can use a pair-wise DEG result file as input.",
+                          fileInput("deg_file1",
+                                    label = "Select a pair-wise DEG result file",
+                                    accept = c("txt", "csv"),
+                                    multiple = FALSE,
+                                    width = "80%"),
+                          fileInput("deg_file2",
+                                    label = "Option: select a normalized count file",
+                                    accept = c("txt", "csv"),
+                                    multiple = FALSE,
+                                    width = "80%"),
+                          fluidRow(
+                            column(6, selectInput("Species5", "Species", c("not selected", "human", "mouse", "rat", "fly", "worm"), selected = "not selected"))
+                          ),
+                          fluidRow(
+                            column(4, numericInput("fc4", "Fold Change", min   = 1, max   = NA, value = 2)),
+                            column(4, numericInput("fdr4", "FDR", min   = 0, max   = 1, value = 0.05))
+                          ),
+                          actionButton("goButton5", "example data"),
+                          tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                    tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                    )
+                          ) #sidebarPanel
+                        ),
+                        
+                        # Main Panel -------------------------------------
+                        mainPanel(
+                          tabsetPanel(
+                            type = "tabs",
+                            tabPanel("Input DEG result",
+                                     bsCollapse(id="DEG_input_collapse_panel",open="DEG_panel",multiple = FALSE,
+                                                bsCollapsePanel(title="DEG_result:",
+                                                                value="DEG_panel",
+                                                                dataTableOutput('DEG_input1')
+                                                ),
+                                                bsCollapsePanel(title="Option: normalized_count_matrix:",
+                                                                value="normalized_count_matrix_panel",
+                                                                dataTableOutput('norm_count_forDEG')
+                                                )
+                                     )
+                            ),
+                            tabPanel("GOI profiling",
+                                     fluidRow(
+                                       column(4, downloadButton("download_volcano_navi", "Download volcano plot")),
+                                       column(4, downloadButton("download_deg_heatmap", "Download heatmap"))
+                                     ),
+                                     fluidRow(
+                                       column(4, htmlOutput("degGOI")),
+                                       column(4, htmlOutput("deg_volcano_x")),
+                                       column(4, htmlOutput("deg_volcano_y"))
+                                     ),
+                                     fluidRow(
+                                       column(8, plotOutput("deg_volcano1")),
+                                       column(4, plotOutput("deg_GOIheatmap"))
+                                     ),
+                                     div(
+                                       plotOutput("deg_GOIbox", height = "100%"),
+                                       style = "height: calc(100vh  - 100px)"
+                                     ),
+                                     fluidRow(
+                                       column(4, downloadButton("download_deg_GOIbox", "Download boxplot"))
+                                     ))
+                          )
+                        )
+                      ) #sidebarLayout
+             ),
+             tabPanel("Reference",
+                      fluidRow(
+                        column(10,
+                               h2("To cite RNAseqChef:"),
+                               p("Web tool:",br(), "Kan Etoh: RNAseqChef (2022)", a("https://kan-e.shinyapps.io/RNAseqChef/",href="https://kan-e.shinyapps.io/RNAseqChef/")),
+                               p("Source code:",br(), "Kan Etoh: RNAseqChef: web application for automated, systematic, and integrated RNA-seq differential expression analysis. (2022)", a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),br(),
+                               br(),
+                               h2("Reference:"),
+                               "- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
+                               "- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
   differential expression analysis of RNA-seq data. R package version 1.30.0.",br(),
-"- Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for
+                               "- Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for
   RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)",br(),
-"- Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential
+                               "- Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential
   expression analysis of digital gene expression data. Bioinformatics 26, 139-140",br(),
-"- Nikolaos Ignatiadis, Bernd Klaus, Judith Zaugg and Wolfgang Huber (2016): Data-driven hypothesis
+                               "- Nikolaos Ignatiadis, Bernd Klaus, Judith Zaugg and Wolfgang Huber (2016): Data-driven hypothesis
   weighting increases detection power in genome-scale multiple testing. Nature Methods 13:577,
   doi: 10.1038/nmeth.3885",br(),
-"- John D. Storey, Andrew J. Bass, Alan Dabney and David Robinson (2021). qvalue: Q-value
+                               "- John D. Storey, Andrew J. Bass, Alan Dabney and David Robinson (2021). qvalue: Q-value
   estimation for false discovery rate control. R package version 2.26.0.
   http://github.com/jdstorey/qvalue",br(),
-"- Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro",br(),
-"- T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141",br(),
-"- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
-"- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
-"- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
-"- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
-"- R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.",br(),
-"- Gu, Z. (2016) Complex heatmaps reveal patterns and correlations in multidimensional genomic data. Bioinformatics.",br(),
-"- H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.", br(),
-"- Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr",br(),
-"- Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn",br(),
-"- Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr",br(),
-"- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr"
+                               "- Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro",br(),
+                               "- T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141",br(),
+                               "- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
+                               "- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
+                               "- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
+                               "- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
+                               "- R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.",br(),
+                               "- Gu, Z. (2016) Complex heatmaps reveal patterns and correlations in multidimensional genomic data. Bioinformatics.",br(),
+                               "- H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.", br(),
+                               "- Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr",br(),
+                               "- Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn",br(),
+                               "- Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr",br(),
+                               "- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr"
+                        )
+                      )
              )
-           )
   )
   )
   )
@@ -5612,6 +5694,441 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file){write.table(as.data.frame(enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
   )
 
+  #volcano navi------------------------------------------------------
+  org5 <- reactive({
+    if(input$Species5 != "not selected"){
+      switch (input$Species5,
+              "mouse" = org <- org.Mm.eg.db,
+              "human" = org <- org.Hs.eg.db,
+              "rat" = org <- org.Rn.eg.db,
+              "fly" = org <- org.Dm.eg.db,
+              "worm" = org <- org.Ce.eg.db)
+      return(org)
+    }
+  })
+  org_code5 <- reactive({
+    if(input$Species5 != "not selected"){
+      switch (input$Species5,
+              "mouse" = org_code <- "mmu",
+              "human" = org_code <- "hsa",
+              "rat" = org_code <- "rno",
+              "fly" = org_code <- "dme",
+              "worm" = org_code <- "cel")
+      return(org_code)
+    }
+  })
+  
+  degresult <- reactive({
+    withProgress(message = "Importing normalized count matrix, please wait",{
+      tmp <- input$deg_file1$datapath
+      if(is.null(input$deg_file1) && input$goButton5 > 0 )  tmp = "data/DEGexample.txt"
+      if(is.null(tmp)) {
+        return(NULL)
+      }else{
+        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+        return(df)
+      }
+      incProgress(1)
+    })
+  })
+  norm_count_input_for_deg <- reactive({
+    withProgress(message = "Importing normalized count matrix, please wait",{
+      tmp <- input$deg_file2$datapath
+      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/data1.txt"
+      if(is.null(tmp)) {
+        return(NULL)
+      }else{
+        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+        return(df)
+      }
+      incProgress(1)
+    })
+  })
+  norm_count_combined_DEG <- reactive({
+    count <- norm_count_input_for_deg()
+    result <- degresult()
+    if(is.null(result)) {
+      return(NULL)
+    }else{
+      result <- data.frame(row.names = rownames(result),
+                           log2FoldChange = result$log2FoldChange, padj = result$padj)
+      if(is.null(count)){
+        return(result)
+      }else{
+        data <- merge(result, count, by=0)
+        rownames(data) <- data$Row.names
+        data <- data[,-1]
+        return(data)
+      }
+    }
+    
+  })
+  
+  gene_ID_DEG <- reactive({
+    res <- norm_count_combined_DEG()
+    if(is.null(res)){
+      return(NULL)
+    }else{
+      if(input$Species5 != "not selected"){
+        if(str_detect(rownames(res)[1], "ENS")){
+          my.symbols <- rownames(res)
+          gene_IDs<-AnnotationDbi::select(org5(),keys = my.symbols,
+                                          keytype = "ENSEMBL",
+                                          columns = c("ENSEMBL","SYMBOL"))
+          colnames(gene_IDs) <- c("Row.names","SYMBOL")
+          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+          rownames(gene_IDs) <- gene_IDs$Row.names
+          return(gene_IDs)
+        }
+      }else{ return(NULL) }
+    }
+  })
+  
+  observeEvent(input$deg_file1, ({
+    updateCollapse(session,id =  "DEG_input_collapse_panel", open="DEG_panel")
+  }))
+  observeEvent(input$deg_file2, ({
+    updateCollapse(session,id =  "DEG_input_collapse_panel", open="normalized_count_matrix_panel")
+  }))
+  output$DEG_input1 <- DT::renderDataTable({
+    degresult()
+  })
+  output$norm_count_forDEG <- DT::renderDataTable({
+    norm_count_input_for_deg()
+  })
+  
+  download_DEG_dir <-reactive({
+    dir_name <- paste(paste(gsub("\\..+$", "", input$deg_file1),sep = "-"), paste(input$fc4, input$fdr4,sep="_"),sep="_")
+    return(dir_name)
+  })
+  
+  DEG_uniqueID <- reactive({
+    count <- norm_count_combined_DEG()
+    if(input$Species5 != "not selected"){
+      if(str_detect(rownames(count)[1], "ENS")){
+        gene_IDs  <- gene_ID_DEG()
+        data2 <- merge(count, gene_IDs, by= 0)
+        rownames(data2) <- data2[,1]
+        data2 <- data2[, - which(colnames(data2) == "Row.names.y")]
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
+        count <- data2[,-1]
+      }
+    }
+    return(count)
+  })
+  
+  GOI_DEG <- reactive({
+    withProgress(message = "Preparing GOI list",{
+      count <- DEG_uniqueID()
+      if(is.null(count)){
+        return(NULL)
+      }else{
+        if(str_detect(rownames(count)[1], "ENS")){
+          if(input$Species5 != "not selected"){
+            GOI <- count$Unique_ID
+          }else GOI <- rownames(count)
+        }else{
+          if(input$Species5 != "not selected"){
+            GOI <- rownames(count)
+          }else GOI <- rownames(count)
+        }
+        return(GOI)
+      }
+    })
+  })
+  
+  output$degGOI <- renderUI({
+    if(is.null(DEG_uniqueID())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing GOI list",{
+        selectizeInput("degGOI", "genes of interest (GOI)", c(GOI_DEG()),multiple = TRUE, options = list(delimiter = " ", create = T))
+      })
+    }
+  })
+  
+  output$deg_volcano_x <- renderUI({
+    sliderInput("deg_xrange","X_axis range:",min = -100,
+                max=100, step = 1,
+                value = c(-10, 10))
+  })
+  output$deg_volcano_y <- renderUI({
+    sliderInput("deg_yrange","Y_axis range:",min = 0, max= 300, step = 1,
+                value = 100)
+  })
+  
+  deg_volcano <- reactive({
+    if(!is.null(input$deg_xrange)){
+      data <- as.data.frame(DEG_uniqueID())
+      if(!is.null(input$degGOI)){
+        label_data <- input$degGOI
+      }else label_data <- NULL
+      data$color <- "NS"
+      data$Row.names <- rownames(data)
+      data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4] <- "down"
+      data$color[data$log2FoldChange > log2(input$fc4) & data$padj < input$fdr4] <- "up"
+      data$padj[data$padj == 0] <- 10^(-300)
+      if(!is.null(label_data)) {
+        Color <- c("blue","green","darkgray","red")
+        for(name in label_data){
+          if(str_detect(rownames(data)[1], "ENS")){
+            if(input$Species5 != "not selected"){
+              data$color[data$Unique_ID == name] <- "GOI"
+            }else{
+              data$color[data$Row.names == name] <- "GOI"
+            }
+          }else{
+            data$color[data$Row.names == name] <- "GOI"
+          }
+        }
+      }else{
+        Color <- c("blue","darkgray","red")
+      }
+      
+      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4)
+      v <- v  + geom_vline(xintercept = c(-log2(input$fc4), log2(input$fc4)), linetype = c(2, 2), color = c("black", "black")) +
+        geom_hline(yintercept = c(-log10(input$fdr4)), linetype = 2, color = c("black"))
+      v <- v +theme_bw()+ scale_color_manual(values = Color)+
+        theme(legend.position = "top" , legend.title = element_blank(),
+              axis.text.x= ggplot2::element_text(size = 10),
+              axis.text.y= ggplot2::element_text(size = 10),
+              text = ggplot2::element_text(size = 10),
+              title = ggplot2::element_text(size = 10)) +
+        xlab("log2 fold change") + ylab("-log10(padj)") +
+        xlim(input$deg_xrange)+
+        ylim(c(0, input$deg_yrange))
+      if(!is.null(label_data)) {
+        if(str_detect(rownames(data)[1], "ENS")){
+          if(input$Species5 != "not selected"){
+            v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+          }else{
+            v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+          }
+        }else{
+          v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+          v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+        }
+      }
+      return(v)
+    }else return(NULL)
+  })
+  
+  output$deg_volcano1 <- renderPlot({
+    if(!is.null(input$deg_xrange)){
+      if(is.null(DEG_uniqueID())){
+        return(NULL)
+      }else{
+        withProgress(message = "volcano plot",{
+          print(deg_volcano())
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$download_volcano_navi = downloadHandler(
+    filename = function(){
+      paste0(download_DEG_dir(), "_volcano.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 5, width = 5)
+        print(deg_volcano())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  
+  
+  deg_GOIcount <- reactive({
+    count <- norm_count_input_for_deg()
+    if(is.null(count)){
+      return(NULL)
+    }else{
+      count <- DEG_uniqueID()
+      if(str_detect(rownames(count)[1], "ENS")){
+        if(input$Species5 != "not selected"){
+          Unique_ID <- input$degGOI
+          label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+          data <- merge(count, label_data, by="Unique_ID")
+          rownames(data) <- data$Unique_ID
+          data <- data[, - which(colnames(data) == "SYMBOL")]
+          data <- data[, - which(colnames(data) == "Unique_ID")]
+        }else{
+          Row.names <- input$degGOI
+          count$Row.names <- rownames(count)
+          label_data <- as.data.frame(Row.names, row.names = Row.names)
+          data <- merge(count, label_data, by="Row.names")
+          rownames(data) <- data$Row.names
+          data <- data[, - which(colnames(data) == "Row.names")]
+        }
+      }else{
+        Row.names <- input$degGOI
+        count$Row.names <- rownames(count)
+        label_data <- as.data.frame(Row.names, row.names = Row.names)
+        data <- merge(count, label_data, by="Row.names")
+        rownames(data) <- data$Row.names
+        data <- data[, - which(colnames(data) == "Row.names")]
+      }
+      data <- data[, - which(colnames(data) == "log2FoldChange")]
+      data <- data[, - which(colnames(data) == "padj")]
+      return(data)
+    }
+  })
+  
+  DEG_GOIheat <- reactive({
+    data <- deg_GOIcount()
+    if(is.null(data)){
+      ht <- NULL
+    }else{
+      data.z <- genescale(data, axis=1, method="Z")
+      data.z <- na.omit(data.z)
+      ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
+                    clustering_method_columns = 'ward.D2',
+                    show_row_names = T, show_row_dend = F)
+    }
+    return(ht)
+  })
+  
+  output$deg_GOIheatmap <- renderPlot({
+    if(is.null(DEG_uniqueID())){
+      return(NULL)
+    }else{
+      if(!is.null(input$degGOI)){
+        withProgress(message = "heatmap",{
+          suppressWarnings(print(DEG_GOIheat()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  deg_GOIbox <- reactive({
+    data <- deg_GOIcount()
+    if(is.null(data)){
+      p <- NULL
+    }else{
+      collist <- gsub("\\_.+$", "", colnames(data))
+      collist <- unique(collist)
+      data$Row.names <- rownames(data)
+      data <- data %>% gather(key=sample, value=value,-Row.names)
+      data$sample <- gsub("\\_.+$", "", data$sample)
+      data$Row.names <- as.factor(data$Row.names)
+      data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
+      data$value <- as.numeric(data$value)
+      p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
+                             fill = "sample", scales = "free",
+                             add = "jitter", panel.labs = NULL,
+                             xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
+      p <- (facet(p, facet.by = "Row.names",
+                  panel.labs.background = list(fill = "transparent", color = "transparent"),
+                  scales = "free", short.panel.labs = T)+
+              theme(axis.text.x= element_text(size = 0),
+                    axis.text.y= element_text(size = 10),
+                    panel.background = element_rect(fill = "transparent", size = 0.5),
+                    title = element_text(size = 10),text = element_text(size = 10)))
+    }
+    return(p)
+  })
+  
+  
+  output$deg_GOIbox <- renderPlot({
+    if(is.null(DEG_uniqueID())){
+      return(NULL)
+    }else{
+      if(!is.null(input$degGOI)){
+        withProgress(message = "Boxplot",{
+          suppressWarnings(print(deg_GOIbox()))
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$download_deg_GOIbox = downloadHandler(
+    filename = function(){
+      paste0(download_DEG_dir(), "GOIboxplot.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- deg_GOIcount()
+        rowlist <- rownames(data)
+        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
+        {pdf_hsize <- 15
+        pdf_wsize <- 15}
+        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 13.5
+        pdf_wsize <- 13.5}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 12
+        pdf_wsize <- 12}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 10.5
+        pdf_wsize <- 10.5}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        {pdf_hsize <- 9
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 7.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        {pdf_hsize <- 6
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
+        {pdf_hsize <- 5
+        pdf_wsize <- 6}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 5
+        pdf_wsize <- 4.5}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 4
+        pdf_wsize <- 6}
+        if (length(rowlist) == 4)
+        {pdf_hsize <- 4
+        pdf_wsize <- 4}
+        if (length(rowlist) == 3)
+        {pdf_hsize <- 2
+        pdf_wsize <- 6}
+        if (length(rowlist) == 2)
+        {pdf_hsize <- 2
+        pdf_wsize <- 4}
+        if (length(rowlist) == 1)
+        {pdf_hsize <- 2
+        pdf_wsize <- 2}
+        if (length(rowlist) > 200)
+        {pdf_hsize <- 30
+        pdf_wsize <- 30}
+        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        print(deg_GOIbox())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  output$download_deg_heatmap = downloadHandler(
+    filename = function(){
+      paste0(download_DEG_dir(), "GOIheatmap.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- deg_GOIcount()
+        rowlist <- rownames(data)
+        pdf(file, height = 10, width = 7)
+        print(DEG_GOIheat())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
 }
 
 

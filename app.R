@@ -89,17 +89,16 @@ ui<- fluidPage(
              # sidebar---------------------------------
              sidebarPanel(
                radioButtons('data_file_type','Input:',
-                            c('Row_count_matrix'="Row1",
-                              'Option: Row_count_matrix + Metadata'="Row2"
+                            c('Raw_count_matrix'="Row1",
+                              'Option: Raw_count_matrix + Metadata'="Row2"
                             ),selected = "Row1"),
                # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type=='Row1'",
                                 strong("Count matrix format: "),br(),
                                 "The replication number is represented by the underbar.",br(),
                                 "Do not use it for anything else.", br(),
-                                img(src="input_format1.png", height = 125, width = 204), br(),
                                 fileInput("file3",
-                                          label = "Select a row count matrix file (txt, csv)",
+                                          label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%")
@@ -109,9 +108,8 @@ ui<- fluidPage(
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
                                 "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
-                                img(src="input_format2.png", height = 302, width = 253), br(),
                                 fileInput("file1",
-                                          label = "Select a row count matrix file (txt, csv)",
+                                          label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
@@ -167,7 +165,7 @@ ui<- fluidPage(
                  type = "tabs",
                  tabPanel("Input Data",
                           bsCollapse(id="input_collapse_panel",open="Row_count_panel",multiple = TRUE,
-                                     bsCollapsePanel(title="Row_count_matrix:",
+                                     bsCollapsePanel(title="Raw_count_matrix:",
                                                      value="Row_count_panel",
                                                      dataTableOutput('Row_count_matrix')
                                      ),
@@ -175,10 +173,10 @@ ui<- fluidPage(
                                                      value="Metadata_panel",
                                                      dataTableOutput('Metadata')
                                      ),
-                                     bsCollapsePanel(title="Defined_row_count_matrix:",
+                                     bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                      value="D_row_count_matrix_panel",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_pair_d_row_count", "Download difined row count"))
+                                                       column(4, downloadButton("download_pair_d_row_count", "Download difined raw count"))
                                                      ),
                                                      dataTableOutput('D_Row_count_matrix')
                                      )
@@ -291,17 +289,16 @@ ui<- fluidPage(
              # sidebar_3conditions---------------------------------
              sidebarPanel(
                radioButtons('data_file_type2','Input:',
-                            c('Row_count_matrix'="Row3",
-                              'Option: Row_count_matrix + Metadata'="Row4"
+                            c('Raw_count_matrix'="Row3",
+                              'Option: Raw_count_matrix + Metadata'="Row4"
                             ),selected = "Row3"),
                # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type2=='Row3'",
                                 strong("Count matrix format: "),br(),
                                 "The replication number is represented by the underbar.",br(),
                                 "Do not use it for anything else.", br(),
-                                img(src="input_format1.png", height = 125, width = 204), br(),
                                 fileInput("file4",
-                                          label = "Select a row count matrix file (txt, csv)",
+                                          label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%")
@@ -311,9 +308,8 @@ ui<- fluidPage(
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
                                 "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
-                                img(src="input_format2.png", height = 302, width = 253), br(),
                                 fileInput("file5",
-                                          label = "Select a row count matrix file (txt, csv)",
+                                          label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
@@ -357,7 +353,7 @@ ui<- fluidPage(
                  type = "tabs",
                  tabPanel("Input 3 conditions Data",
                           bsCollapse(id="input_collapse_panel2",open="Row_count_panel2",multiple = FALSE,
-                                     bsCollapsePanel(title="Row_count_matrix:",
+                                     bsCollapsePanel(title="Raw_count_matrix:",
                                                      value="Row_count_panel2",
                                                      dataTableOutput('Row_count_matrix2')
                                      ),
@@ -365,7 +361,7 @@ ui<- fluidPage(
                                                      value="Metadata_panel2",
                                                      dataTableOutput('Metadata2')
                                      ),
-                                     bsCollapsePanel(title="Defined_row_count_matrix:",
+                                     bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                      value="D_row_count_matrix_panel2",
                                                      fluidRow(
                                                        column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
@@ -583,7 +579,7 @@ ui<- fluidPage(
                                 "The replication number is represented by the underbar.",br(),
                                 "Do not use it for anything else.", br(),
                                 fileInput("file7",
-                                          label = "Select a row count matrix file (txt, csv)",
+                                          label = "Select a normalized count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%")
@@ -593,7 +589,6 @@ ui<- fluidPage(
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
                                 "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
-                                img(src="input_format2.png", height = 302, width = 253), br(),
                                 fileInput("file8",
                                           label = "Select a normalized count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
@@ -620,7 +615,7 @@ ui<- fluidPage(
                  column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
                        ),
                  column(8,  "If the gene number is >10,000 after filtering, heatmap and k-means clustering are not recommended.", br(),
-                        "The server memory may be over.")
+                        "This is due to a limitation of the server memory.")
                ),
                actionButton("goButton3", "example data"),
                tags$head(tags$style("#goButton{color: black;

@@ -2126,7 +2126,7 @@ output$download_pair_deg_count_down = downloadHandler(
         if (length(as.data.frame(kk4)$ID) >= 5){
           p4 <- as.grob(gseaplot2(kk4, 1:5, pvalue_table = F))
         }else{
-          p4 <- as.grob(gseaplot2(kk4, 1:length(kk3$ID), pvalue_table = F))
+          p4 <- as.grob(gseaplot2(kk4, 1:length(kk4$ID), pvalue_table = F))
         }
       }
       p <- plot_grid(p1, p4, nrow = 1)

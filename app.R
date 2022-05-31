@@ -1474,7 +1474,7 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 7)
+        pdf(file, height = 6, width = 10)
         print(ma_heatmap_plot())
         dev.off()
         incProgress(1)
@@ -2276,12 +2276,12 @@ output$download_pair_deg_count_down = downloadHandler(
         geneList_up <- upgene$log2FoldChange
         names(geneList_up) = as.character(upgene$ENTREZID)
         p2 <- try(as.grob(cnetplot(cnet1, foldChange=geneList_up,
-                                   cex_label_gene = 0.75, cex_label_category = 1,
+                                   cex_label_gene = 0.7, cex_label_category = 0.75,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
         if(length(class(p2)) == 1){
           if(class(p2) == "try-error") p2 <- NULL
         }else{p2 <- as.grob(cnetplot(cnet1, foldChange=geneList_up,
-                                         cex_label_gene = 0.75, cex_label_category = 1,
+                                         cex_label_gene = 0.7, cex_label_category = 0.75,
                                          cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
       if (length(as.data.frame(cnet2)$ID) == 0) {
@@ -2290,12 +2290,12 @@ output$download_pair_deg_count_down = downloadHandler(
         geneList_down <- downgene$log2FoldChange
         names(geneList_down) = as.character(downgene$ENTREZID)
         p3 <- try(as.grob(cnetplot(cnet2, foldChange=geneList_down,
-                                   cex_label_gene = 0.75, cex_label_category = 1,
+                                   cex_label_gene = 0.7, cex_label_category = 0.75,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
         if(length(class(p3)) == 1){
           if(class(p3) == "try-error") p3 <- NULL
         }else{p3 <- as.grob(cnetplot(cnet2, foldChange=geneList_down,
-                                         cex_label_gene = 0.75, cex_label_category = 1,
+                                         cex_label_gene = 0.7, cex_label_category = 0.75,
                                          cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
       p <- plot_grid(p2, p3, nrow = 1)
@@ -2331,7 +2331,7 @@ output$download_pair_deg_count_down = downloadHandler(
           p1 <- pair_enrich1_H()
         }
         p2 <- pair_enrich2()
-        pdf(file, height = 11, width = 11)
+        pdf(file, height = 12, width = 12)
         print(plot_grid(p1, p2, nrow =2))
         dev.off()
         incProgress(1)
@@ -3832,7 +3832,7 @@ output$download_pair_deg_count_down = downloadHandler(
                   is.na(unique(as.data.frame(cnet1)$qvalue))) {
                 c <- NULL
               } else{
-                c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+                c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                               cex_category = 0.75, colorEdge = TRUE)
                 c <- try(as.grob(c + guides(edge_color = "none")))
                 if(length(class(c)) == 1){
@@ -3888,7 +3888,7 @@ output$download_pair_deg_count_down = downloadHandler(
                 is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                             cex_category = 0.75, colorEdge = TRUE)
               c <- try(as.grob(c + guides(edge_color = "none")))
               if(length(class(c)) == 1){
@@ -4024,7 +4024,7 @@ output$download_pair_deg_count_down = downloadHandler(
             if ((length(as.data.frame(cnet1)$ID) == 0) || is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                             cex_category = 0.75, colorEdge = TRUE)
               c <- try(as.grob(c + guides(edge_color = "none")))
               if(length(class(c)) == 1){
@@ -4079,7 +4079,7 @@ output$download_pair_deg_count_down = downloadHandler(
                 is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                             cex_category = 0.75, colorEdge = TRUE)
               c <- try(as.grob(c + guides(edge_color = "none")))
               if(length(class(c)) == 1){
@@ -4200,7 +4200,7 @@ output$download_pair_deg_count_down = downloadHandler(
                 is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                             cex_category = 0.75, colorEdge = TRUE)
               c <- try(as.grob(c + guides(edge_color = "none")))
               if(length(class(c)) == 1){
@@ -4255,7 +4255,7 @@ output$download_pair_deg_count_down = downloadHandler(
                 is.na(unique(as.data.frame(cnet1)$qvalue))) {
               c <- NULL
             } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.75, cex_label_category = 1,
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
                             cex_category = 0.75, colorEdge = TRUE)
               c <- try(as.grob(c + guides(edge_color = "none")))
               if(length(class(c)) == 1){
@@ -5079,7 +5079,7 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
     gene_list <- files_table()
-    venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 0.8, sncs = 0.6 )
+    venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 1.0, sncs = 1.0 )
     }
   })
 
@@ -5331,7 +5331,7 @@ output$download_pair_deg_count_down = downloadHandler(
     filename ="integrated_heatmap.pdf",
     content = function(file){
       withProgress(message = "Preparing download",{
-        pdf(file, height = 8, width = 4)
+        pdf(file, height = 8, width = 8)
         print(integrated_heatmap())
         dev.off()
         incProgress(1)
@@ -5611,12 +5611,12 @@ output$download_pair_deg_count_down = downloadHandler(
         p2 <- NULL
       } else{
         p2 <- try(as.grob(cnetplot(cnet1,
-                                   cex_label_gene = 0.75, cex_label_category = 1,
+                                   cex_label_gene = 0.7, cex_label_category = 0.75,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
         if(length(class(p2)) == 1){
           if(class(p2) == "try-error") p2 <- NULL
         }else{p2 <- as.grob(cnetplot(cnet1,
-                                     cex_label_gene = 0.75, cex_label_category = 1,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,
                                      cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
       }
       p <- plot_grid(p2)

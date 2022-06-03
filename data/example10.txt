@@ -1,91 +1,117 @@
-epithelial_up.HaCaT_up
-EID3
-SLC7A11
-HMOX1
-TXNRD1
-OSGIN1
-SLC7A11-AS1
-ADM2
-ERRFI1
-HSPH1
-DUSP5
-ANGPTL4
-SENP3-EIF4A1
-PODNL1
-ZFAND2A
-TNFRSF10D
-GCLM
-AOC3
-LIF
-SPRY4
-UGDH
-CEACAM19
-PLAUR
-ACRC
-QRICH2
-HSP90AA1
-CHORDC1
-SRXN1
-PPP1R15A
-MXD1
-MAFF
-HBEGF
-TRIM16L
-DNAJA1
-SPSB1
-MYH15
-TRIM16
-KDM7A
-NQO1
-DDIT3
-WNK4
-AHSA1
-C16orf72
-ERN1
-KLHL21
-PMAIP1
-RAB43
-ZSWIM4
-SOX9
-MAFG
-FAM72C
-HK2
-TRIB3
-IL6R
-FLJ42627
-ABHD16B
-CPEB2
-PANX2
-DUSP4
-MIR100HG
-SPRED3
-AGPAT9
-CLU
-AOC2
-G6PD
-NAV3
-SLC20A2
-ZYX
-SLC6A6
-PILRB
-CLDN15
-FOXP4
-FBXO30
-PLK3
-FOSL1
-TMED7-TICAM2
-ABHD4
-CTSL
-EAF1
-MAP4K4
-RCAN1
-MAP1S
-TNFRSF10A
-FTL
-CD274
-UPP1
-VEGFA
-SPHK1
-SQSTM1
-RC3H1
-HSPD1
+Gene	Group
+Ackr3	day0:day1:day5
+Acta1	day0:day1:day5
+Actc1	day0:day1:day5
+Actn2	day0:day1:day5
+Actn3	day0:day1:day5
+Adamts5	day0:day1:day5
+Ampd3	day0:day1:day5
+Anxa8	day0:day1:day5
+Atp2a1	day0:day1:day5
+Bmp1	day0:day1:day5
+C1qa	day0:day1:day5
+C1qc	day0:day1:day5
+C1qtnf3	day0:day1:day5
+Cacna1s	day0:day1:day5
+Car12	day0:day1:day5
+Casq2	day0:day1:day5
+Cav3	day0:day1:day5
+Cd163	day0:day1:day5
+Cd44	day0:day1:day5
+Cdh1	day0:day1:day5
+Cfb	day0:day1:day5
+Ch25h	day0:day1:day5
+Chrna1	day0:day1:day5
+Chrng	day0:day1:day5
+Cilp	day0:day1:day5
+Cldn4	day0:day1:day5
+Col17a1	day0:day1:day5
+D17H6S56E-5	day0:day1:day5
+Des	day0:day1:day5
+Dsc3	day0:day1:day5
+Dsg2	day0:day1:day5
+Dsg3	day0:day1:day5
+Dsp	day0:day1:day5
+Eng	day0:day1:day5
+Eno3	day0:day1:day5
+Epcam	day0:day1:day5
+F13a1	day0:day1:day5
+Fam102b	day0:day1:day5
+Fcgr2b	day0:day1:day5
+Gpr137b-ps	day0:day1:day5
+H19	day0:day1:day5
+Hist1h2ap	day0:day1:day5
+Igf2	day0:day1:day5
+Inhba	day0:day1:day5
+Irf6	day0:day1:day5
+Itga5	day0:day1:day5
+Itgb1bp2	day0:day1:day5
+Itgb4	day0:day1:day5
+Itgb6	day0:day1:day5
+Krt14	day0:day1:day5
+Krt17	day0:day1:day5
+Krt18	day0:day1:day5
+Krt5	day0:day1:day5
+Krt6a	day0:day1:day5
+Krt7	day0:day1:day5
+Krt8	day0:day1:day5
+Lama3	day0:day1:day5
+Lamc2	day0:day1:day5
+Lcn2	day0:day1:day5
+Ldb3	day0:day1:day5
+Lmod2	day0:day1:day5
+Loxl1	day0:day1:day5
+Loxl3	day0:day1:day5
+Lrrc32	day0:day1:day5
+Lsp1	day0:day1:day5
+Mb	day0:day1:day5
+Medag	day0:day1:day5
+Mrc1	day0:day1:day5
+Mybph	day0:day1:day5
+Myh1	day0:day1:day5
+Myh3	day0:day1:day5
+Myh7	day0:day1:day5
+Myh8	day0:day1:day5
+Myl1	day0:day1:day5
+Myl4	day0:day1:day5
+Mylpf	day0:day1:day5
+Myo7a	day0:day1:day5
+Myog	day0:day1:day5
+Myom2	day0:day1:day5
+Ndufa4l2	day0:day1:day5
+Neb	day0:day1:day5
+Nes	day0:day1:day5
+Obscn	day0:day1:day5
+P2rx7	day0:day1:day5
+Pcsk5	day0:day1:day5
+Pdlim3	day0:day1:day5
+Pdpn	day0:day1:day5
+Perp	day0:day1:day5
+Pkp1	day0:day1:day5
+Plek	day0:day1:day5
+Ptgs1	day0:day1:day5
+Ptgs2	day0:day1:day5
+Ryr1	day0:day1:day5
+S100a14	day0:day1:day5
+Saa3	day0:day1:day5
+Sema6b	day0:day1:day5
+Serinc2	day0:day1:day5
+Serpinb5	day0:day1:day5
+Serping1	day0:day1:day5
+Sfn	day0:day1:day5
+Slc16a3	day0:day1:day5
+Sorcs2	day0:day1:day5
+Spon1	day0:day1:day5
+Thbs4	day0:day1:day5
+Tmem8c	day0:day1:day5
+Tnc	day0:day1:day5
+Tnnc2	day0:day1:day5
+Tnni1	day0:day1:day5
+Tnni2	day0:day1:day5
+Tnnt1	day0:day1:day5
+Tnnt2	day0:day1:day5
+Tnnt3	day0:day1:day5
+Trim72	day0:day1:day5
+Trp53i11	day0:day1:day5
+Ttn	day0:day1:day5
+Wisp1	day0:day1:day5

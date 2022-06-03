@@ -1,11 +1,7 @@
-"",characteristics,transfection
-GSM2668087,untransfected_1,untransfected
-GSM2668088,untransfected_2,untransfected
-GSM2668089,untransfected_3,untransfected
-GSM2668081,dCas9 3a3l delta_1,dCas9 3a3l delta
-GSM2668082,dCas9 3a3l delta_2,dCas9 3a3l delta
-GSM2668083,dCas9 3a3l delta_3,dCas9 3a3l delta
-GSM2668084,dCas9 3a3l_1,dCas9 3a3l
-GSM2668085,dCas9 3a3l_2,dCas9 3a3l
-GSM2668086,dCas9 3a3l_3,dCas9 3a3l
-
+,characteristics
+WTday0_1,day0_1
+WTday0_2,day0_2
+WTday1_1,day1_1
+WTday1_2,day1_2
+WTday5_1,day5_1
+WTday5_2,day5_2

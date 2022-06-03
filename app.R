@@ -147,7 +147,7 @@ ui<- fluidPage(
                          accept = c("txt", "csv"),
                          multiple = FALSE,
                          width = "80%"),
-               actionButton("goButton", "example data (human)"),
+               actionButton("goButton", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -335,7 +335,7 @@ ui<- fluidPage(
                          accept = c("txt", "csv"),
                          multiple = FALSE,
                          width = "80%"),
-               actionButton("goButton2", "example data (human)"),
+               actionButton("goButton2", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -726,7 +726,7 @@ ui<- fluidPage(
                fluidRow(
                  column(6, selectInput("Species4", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
                                                                 "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
-               actionButton("goButton4", "example data (human)"),
+               actionButton("goButton4", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -799,7 +799,7 @@ ui<- fluidPage(
                             column(4, numericInput("fc4", "Fold Change", min   = 1, max   = NA, value = 2)),
                             column(4, numericInput("fdr4", "FDR", min   = 0, max   = 1, value = 0.05))
                           ),
-                          actionButton("goButton5", "example data"),
+                          actionButton("goButton5", "example data (mouse)"),
                           tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -877,9 +877,15 @@ ui<- fluidPage(
                                "- Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro",br(),
                                "- T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141",br(),
                                "- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
+                               "- Dolgalev I (2022). _msigdbr: MSigDB Gene Sets for Multiple Organisms in a Tidy Data Format_. R
+  package version 7.5.1, <https://CRAN.R-project.org/package=msigdbr>.", br(),
                                "- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
                                "- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
                                "- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
+                               "- Marc Carlson (2020). org.Rn.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
+                               "- Marc Carlson (2020). org.Xl.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
+                               "- Marc Carlson (2020). org.Dm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
+                               "- Marc Carlson (2020). org.Ce.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
                                "- R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.",br(),
                                "- Gu, Z. (2016) Complex heatmaps reveal patterns and correlations in multidimensional genomic data. Bioinformatics.",br(),
                                "- H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.", br(),
@@ -1919,13 +1925,14 @@ output$download_pair_deg_count_down = downloadHandler(
                    aes(x=x, y=y, xend=xend, yend=yend)) +
       geom_text(data=label(dendr),
                 aes(x, y, label=label, hjust=0), size=3) +
-      coord_flip()+ scale_y_reverse(expand=c(0.2, 0)) +
-      theme(axis.line.y=element_blank(),
-            axis.ticks.y=element_blank(),
-            axis.text.y=element_blank(),
-            axis.title.y=element_blank(),
-            panel.background=element_rect(fill="white"),
-            panel.grid=element_blank(), aspect.ratio=1)
+      theme(legend.position = "none",
+            axis.line.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
+            axis.title.x=element_blank(),axis.text.y=element_blank(),
+            panel.grid.minor.x=element_blank(),
+            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
+      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
     p2 <- plot_grid(g1, g2, g3, nrow = 1)
     return(p2)
   })
@@ -3497,13 +3504,14 @@ output$download_pair_deg_count_down = downloadHandler(
                    aes(x=x, y=y, xend=xend, yend=yend)) +
       geom_text(data=label(dendr),
                 aes(x, y, label=label, hjust=0), size=3) +
-      coord_flip()+ scale_y_reverse(expand=c(0.2, 0)) +
-      theme(axis.line.y=element_blank(),
-            axis.ticks.y=element_blank(),
-            axis.text.y=element_blank(),
-            axis.title.y=element_blank(),
-            panel.background=element_rect(fill="white"),
-            panel.grid=element_blank(), aspect.ratio=1)
+      theme(legend.position = "none",
+            axis.line.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
+            axis.title.x=element_blank(),axis.text.y=element_blank(),
+            panel.grid.minor.x=element_blank(),
+            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
+      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
     p <- plot_grid(g1, g2, g3, nrow = 1)
     }
   })
@@ -4638,13 +4646,14 @@ output$download_pair_deg_count_down = downloadHandler(
                    aes(x=x, y=y, xend=xend, yend=yend)) +
       geom_text(data=label(dendr),
                 aes(x, y, label=label, hjust=0), size=3) +
-      coord_flip()+ scale_y_reverse(expand=c(0.2, 0)) +
-      theme(axis.line.y=element_blank(),
-            axis.ticks.y=element_blank(),
-            axis.text.y=element_blank(),
-            axis.title.y=element_blank(),
-            panel.background=element_rect(fill="white"),
-            panel.grid=element_blank(), aspect.ratio=1)
+      theme(legend.position = "none",
+            axis.line.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
+            axis.title.x=element_blank(),axis.text.y=element_blank(),
+            panel.grid.minor.x=element_blank(),
+            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
+      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
     p2 <- plot_grid(g1, g2, g3, nrow = 1)
     return(p2)
   })
@@ -5075,8 +5084,9 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(input$files)){
       if(input$goButton_venn > 0 ){
         df <- list()
-        df[["example1"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
-        df[["example2"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
+        df[["cell1"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
+        df[["cell2"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
+        df[["cell3"]] <- c(rownames(read.table("data/example13.txt",header = T, row.names = 1,sep="\t")))
         return(df)
       }
       return(NULL)
@@ -5186,8 +5196,9 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(input$countfiles)){
       if(input$goButton_venn > 0){
         df <- list()
-        df["data1"] <- list(read.table("data/data1.txt",header = T, row.names = 1))
-        df["data2"] <- list(read.table("data/data2.txt",header = T, row.names = 1))
+        df["cell1"] <- list(read.table("data/cell1.txt",header = T, row.names = 1))
+        df["cell2"] <- list(read.table("data/cell2.txt",header = T, row.names = 1))
+        df["cell3"] <- list(read.table("data/cell3.txt",header = T, row.names = 1))
         return(df)
       }
       return(NULL)

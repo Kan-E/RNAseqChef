@@ -775,7 +775,7 @@ ui<- fluidPage(
   navbarMenu("More",
              tabPanel("Volcano navi",
                       sidebarLayout(
-                        # Normalized count data analysis---------------------------------
+                        # volcano navi---------------------------------
                         sidebarPanel(
                           strong("File format: "),br(),
                           "First column must be gene name (Gene symbol or ENSEMBL ID).",br(),
@@ -787,6 +787,10 @@ ui<- fluidPage(
                                     accept = c("txt", "csv"),
                                     multiple = FALSE,
                                     width = "80%"),
+                          radioButtons('volcano_inputType','Reverse number signs of log2FoldChange:',
+                                       c('ON'="reverseON",
+                                         'OFF'="reverseOFF"
+                                       ),selected = "reverseON"),
                           fileInput("deg_file2",
                                     label = "Option: select a normalized count file",
                                     accept = c("txt", "csv"),
@@ -5783,7 +5787,7 @@ output$download_pair_deg_count_down = downloadHandler(
   norm_count_input_for_deg <- reactive({
     withProgress(message = "Importing normalized count matrix, please wait",{
       tmp <- input$deg_file2$datapath
-      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/data1.txt"
+      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/cell1.txt"
       if(is.null(tmp)) {
         return(NULL)
       }else{
@@ -5913,6 +5917,9 @@ output$download_pair_deg_count_down = downloadHandler(
       if(!is.null(input$degGOI)){
         label_data <- input$degGOI
       }else label_data <- NULL
+      if(input$volcano_inputType == "reverseON"){
+        data$log2FoldChange <- -1 * data$log2FoldChange
+      }
       data$color <- "NS"
       data$Row.names <- rownames(data)
       data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4] <- "down"

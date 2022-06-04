@@ -1335,8 +1335,8 @@ org_code1 <- reactive({
     Cond_2 <- vec[2]
     data2 <- dplyr::filter(data, abs(data$log2FoldChange) > log(input$fc, 2))
     if(nrow(data2) != 0){
-      data2$group <- "upregulated"
-      data2$group[data2$log2FoldChange < 0] <- "downregulated"
+      data2$group <- "Up"
+      data2$group[data2$log2FoldChange < 0] <- "Down"
       data3 <- dplyr::filter(data2, abs(data2$padj) < input$fdr)
       return(data3)
     }else{return(NULL)}
@@ -2028,8 +2028,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "enrichment analysis",{
         H_t2g <- Hallmark_set()
-        em_up <- try(enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
-        em_down <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        em_up <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        em_down <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
         if (class(em_up) == "try-error") em_up <- NA
         if (class(em_down) == "try-error") em_down <- NA
         if (length(as.data.frame(em_up)$ID) == 0) {
@@ -2048,16 +2048,16 @@ output$download_pair_deg_count_down = downloadHandler(
           group1 <- as.data.frame(em_up)
           group2 <- as.data.frame(em_down)
           if ((length(colnames(group1)) != 1) && (length(colnames(group2)) != 1))  {
-            group1$Cluster <- "upregulated"
-            group2$Cluster <- "downregulated"
+            group1$Cluster <- "Up"
+            group2$Cluster <- "Down"
             data<- rbind(group1, group2)
           }
           if((length(colnames(group1)) == 1) && (length(colnames(group2)) != 1)){
-            group2$Cluster <- "downregulated"
+            group2$Cluster <- "Down"
             data <- group2
           }
           if((length(colnames(group1)) != 1) && (length(colnames(group2)) == 1)){
-            group1$Cluster <- "upregulated"
+            group1$Cluster <- "Up"
             data <- group1
           }
           if((length(colnames(group1)) == 1) && (length(colnames(group2)) == 1)){
@@ -2162,8 +2162,8 @@ output$download_pair_deg_count_down = downloadHandler(
       formula_res <- enrichment_1_1()
       data3 <- data_degcount2()
       H_t2g <- Hallmark_set()
-      em_up <- enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-      em_down <- enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+      em_up <- enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+      em_down <- enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
       if (length(as.data.frame(em_up)$ID) == 0) {
         em_up <- NA
       } else{
@@ -2179,8 +2179,8 @@ output$download_pair_deg_count_down = downloadHandler(
       } else{
         group1 <- as.data.frame(em_up)
         group2 <- as.data.frame(em_down)
-        group1$Cluster <- "upregulated"
-        group2$Cluster <- "downregulated"
+        group1$Cluster <- "Up"
+        group2$Cluster <- "Down"
         if(length(as.data.frame(em_up)$ID) != 0){
           if (length(group1$pvalue) > 5){
             group1 <- group1[sort(group1$pvalue, decreasing = F, index=T)$ix,]
@@ -2275,8 +2275,8 @@ output$download_pair_deg_count_down = downloadHandler(
         }
     }else{
       H_t2g <- Hallmark_set()
-      kk1 <- try(enricher(dplyr::filter(data3, group == "upregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
-      kk2 <- try(enricher(dplyr::filter(data3, group == "downregulated")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+      kk1 <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+      kk2 <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
       if (class(kk1) == "try-error") kk1 <- NA
       if (class(kk2) == "try-error") kk2 <- NA
     }

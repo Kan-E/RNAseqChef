@@ -49,7 +49,7 @@ ui<- fluidPage(
   ),
   navbarPage(
     footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
-             p(("Copyright (C) 2022, code licensed under MIT"),align="center",width=4),
+             p(("Copyright (C) 2022, code licensed under GPLv3"),align="center",width=4),
              p(("Code available on Github:"),a("https://github.com/Kan-E/RNAseqChef",href="https://github.com/Kan-E/RNAseqChef"),align="center",width=4)),
   "",
   id='navBar',
@@ -3651,7 +3651,7 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 10))
+                    title = element_text(size = 10),text = element_text(size = 20))
             + scale_fill_manual(values=c("gray", "#4dc4ff", "#ff8082")))
     }
     return(p)
@@ -4868,7 +4868,7 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 10)))
+                    title = element_text(size = 10),text = element_text(size = 20)))
     }
     return(p)
   })
@@ -5787,7 +5787,7 @@ output$download_pair_deg_count_down = downloadHandler(
   norm_count_input_for_deg <- reactive({
     withProgress(message = "Importing normalized count matrix, please wait",{
       tmp <- input$deg_file2$datapath
-      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/cell1.txt"
+      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/day0.txt"
       if(is.null(tmp)) {
         return(NULL)
       }else{
@@ -6090,7 +6090,7 @@ output$download_pair_deg_count_down = downloadHandler(
               theme(axis.text.x= element_text(size = 0),
                     axis.text.y= element_text(size = 10),
                     panel.background = element_rect(fill = "transparent", size = 0.5),
-                    title = element_text(size = 10),text = element_text(size = 10)))
+                    title = element_text(size = 10),text = element_text(size = 20)))
     }
     return(p)
   })

@@ -5088,9 +5088,9 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(input$files)){
       if(input$goButton_venn > 0 ){
         df <- list()
-        df[["cell1"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
-        df[["cell2"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
-        df[["cell3"]] <- c(rownames(read.table("data/example13.txt",header = T, row.names = 1,sep="\t")))
+        df[["day0"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
+        df[["day1"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
+        df[["day5"]] <- c(rownames(read.table("data/example13.txt",header = T, row.names = 1,sep="\t")))
         return(df)
       }
       return(NULL)
@@ -5200,9 +5200,9 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(input$countfiles)){
       if(input$goButton_venn > 0){
         df <- list()
-        df["cell1"] <- list(read.table("data/cell1.txt",header = T, row.names = 1))
-        df["cell2"] <- list(read.table("data/cell2.txt",header = T, row.names = 1))
-        df["cell3"] <- list(read.table("data/cell3.txt",header = T, row.names = 1))
+        df["day0"] <- list(read.table("data/day0.txt",header = T, row.names = 1))
+        df["day1"] <- list(read.table("data/day1.txt",header = T, row.names = 1))
+        df["day5"] <- list(read.table("data/day5.txt",header = T, row.names = 1))
         return(df)
       }
       return(NULL)

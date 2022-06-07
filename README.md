@@ -90,6 +90,28 @@ dplyr and tidyr (for data manipulation)
 - Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr
 - Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr
 
+# License
+This shiny code is licensed under the GPLv3. Please see the file LICENSE.md for information.
+```
+RNAseqChef, an RNA-seq data controller highlighting gene expression features
+Shiny App for automated, systematic, and integrated RNA-seq differential expression analysis
+Copyright (C) 2022  Kan Etoh
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+You may contact the author of this code, Kan Etoh, at <kaneto@kumamoto-u.ac.jp>
+```
 # Author
 
 Kan Etoh

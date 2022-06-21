@@ -5,10 +5,10 @@ account: kan-e
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6280698
-bundleId: 6006466
+bundleId: 6024447
 url: https://kan-e.shinyapps.io/RNAseqChef/
-when: 1655213609.29736
-lastSyncTime: 1655213609.29737
+when: 1655737583.7709
+lastSyncTime: 1655737583.77091
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: manual.html|manual.Rmd|README.md|RNAseqChef 日本語マニュアル.Rmd|RNAseqChef-日本語マニュアル.html
+ignoredFiles: manual.html|manual.Rmd|README.md|RNAseqChef 日本語マニュアル.Rmd|RNAseqChef-日本語マニュアル.html|日本語マニュアルPDF.log|日本語マニュアルPDF.Rmd|日本語マニュアルPDF.tex

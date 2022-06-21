@@ -18,6 +18,7 @@ library(ggnewscale)
 library(edgeR)
 library(IHW)
 library(qvalue)
+library(DEGreport)
 library(org.Hs.eg.db)
 library(org.Mm.eg.db)
 library(org.Rn.eg.db)
@@ -65,7 +66,10 @@ ui<- fluidPage(
                     column(6,hr(),
                            h4(strong("Pair-wise DEG")),
                            "Detects and visualizes differentially expressed genes",
-                           img(src="Pair-wise_DEG.png", width = 600,height = 300), br(),br(),br(),hr(),
+                           img(src="Pair-wise_DEG.png", width = 600,height = 300),br(),hr(),
+                           h4(strong("Multi DEG")),
+                           "Detects and visualizes differentially expressed genes by DESeq2 LRT following clustering analysis",
+                           img(src="Multi DEG.png", width = 600,height = 682),br(),hr(),
                            h4(strong("3 conditions DEG")),
                            "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",
                            img(src="3cond_DEG.png", width = 600,height = 475)),
@@ -298,60 +302,56 @@ ui<- fluidPage(
              ) # main panel
            ) #sidebarLayout
   ), #tabPanel
-  # 3conditions -------------------------------------
-  tabPanel("3 conditions DEG",
+  # Multi DEG -------------------------------------
+  tabPanel("Multi DEG",
            sidebarLayout(
-
-             # sidebar_3conditions---------------------------------
+             # sidebar---------------------------------
              sidebarPanel(
-               radioButtons('data_file_type2','Input:',
-                            c('Raw_count_matrix'="Row3",
-                              'Option: Raw_count_matrix + Metadata'="Row4"
-                            ),selected = "Row3"),
-               # Conditional panels appear based on input.data_file_type selection
-               conditionalPanel(condition="input.data_file_type2=='Row3'",
+               radioButtons('multi_data_file_type','Input:',
+                            c('Raw_count_matrix (One-factor multi-condition)'="Row1",
+                              'Raw_count_matrix + metadata (Two-factor multi-condition)'="Row2"
+                            ),selected = "Row1"),
+               conditionalPanel(condition="input.multi_data_file_type=='Row1'",
                                 strong("Count matrix format: "),br(),
                                 "The replication number is represented by the underbar.",br(),
                                 "Do not use it for anything else.", br(),
-                                fileInput("file4",
+                                fileInput("multi_file1",
                                           label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%")
                ),
-               conditionalPanel(condition="input.data_file_type2=='Row4'",
+               conditionalPanel(condition="input.multi_data_file_type=='Row2'",
                                 strong("Count matrix format: "),br(),
-                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
-                                "the metadata.", br(),
-                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
-                                fileInput("file5",
+                                "Metadata is required for multi-condition multi-factor DEG analysis.",br(),br(),
+                                fileInput("multi_file2",
                                           label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
-                                fileInput("file6",
+                                fileInput("multi_file3",
                                           label = "Select a metadata file to define samples for the following analysis",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%")
                ),
-               fluidRow(
-                 column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
+               fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
+                 column(6, selectInput("Species6", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
                                                                 "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
                h4("Cut-off conditions:"),
                fluidRow(
-                 column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
-                 column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
-                 column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
+                 column(4, numericInput("fc6", "Fold Change", min   = 0, max   = NA, value = 1.5)),
+                 column(4, numericInput("fdr6", "FDR", min   = 0, max   = 1, value = 0.05)),
+                 column(4, numericInput("basemean6", "Basemean", min   = 0, max   = NA, value = 0))
                ),
                "Option: Normalized count file:",br(),
                "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
-               fileInput("norm_file2",
+               fileInput("multi_norm_file1",
                          label = "Select a normalized count file",
                          accept = c("txt", "csv"),
-                         multiple = FALSE,
+                         multiple = TRUE,
                          width = "80%"),
-               actionButton("goButton2", "example data (mouse)"),
+               actionButton("goButton6", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -362,122 +362,193 @@ ui<- fluidPage(
           }"
                          ))
              ), #sidebarPanel
-
+             
              # Main Panel -------------------------------------
              mainPanel(
                tabsetPanel(
                  type = "tabs",
-                 tabPanel("Input 3 conditions Data",
-                          bsCollapse(id="input_collapse_panel2",open="Row_count_panel2",multiple = FALSE,
+                 tabPanel("Input Data",
+                          bsCollapse(id="multi_input_collapse_panel",open="multi_Row_count_panel",multiple = TRUE,
                                      bsCollapsePanel(title="Raw_count_matrix:",
-                                                     value="Row_count_panel2",
-                                                     dataTableOutput('Row_count_matrix2')
+                                                     value="multi_Row_count_panel",
+                                                     dataTableOutput('multi_Row_count_matrix')
                                      ),
                                      bsCollapsePanel(title="Metadata:",
-                                                     value="Metadata_panel2",
-                                                     dataTableOutput('Metadata2')
+                                                     value="multi_Metadata_panel",
+                                                     dataTableOutput('multi_Metadata')
                                      ),
                                      bsCollapsePanel(title="Defined_raw_count_matrix:",
-                                                     value="D_row_count_matrix_panel2",
-                                                     fluidRow(
-                                                       column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
-                                                     ),
-                                                     dataTableOutput('D_Row_count_matrix2')
+                                                     value="multi_d_Row_count_panel",
+                                                     dataTableOutput('multi_d_Row_count_matrix')
                                      )
                           )
                  ),
                  tabPanel("Result overview",
                           fluidRow(
-                            column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
+                            column(4, downloadButton("download_multi_PCA", "Download clustering analysis"))
                           ),
-                          plotOutput("PCA2"),
-                          fluidRow(
-                            column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
-                            column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
-                          ),
-                          plotOutput("scatter_1"),
-                          dataTableOutput("DEG_result2_1"),
-                          fluidRow(
-                            column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
-                            column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
-                          ),
-                          plotOutput("scatter_2"),
-                          dataTableOutput("DEG_result2_2"),
-                          fluidRow(
-                            column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
-                            column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
-                          ),
-                          plotOutput("scatter_3"),
-                          dataTableOutput("DEG_result2_3"),
-                          bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
-                                     bsCollapsePanel(title="Normalized_Count_matrix:",
-                                                     value="norm_panel2",
+                          plotOutput("multi_PCA"),
+                          bsCollapse(id="input_collapse_multi_DEG",open="DEG_panel",multiple = TRUE,
+                                     bsCollapsePanel(title="DEG_result:",
+                                                     value="DEG_panel",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_cond3_norm_count", "Download normalized count"))
+                                                       column(4, downloadButton("download_multi_DEG_result", "Download DEG result"))
                                                      ),
-                                                     dataTableOutput("Normalized_Count_matrix2")
+                                                     dataTableOutput("multi_DEG_result")
+                                     ),
+                                     bsCollapsePanel(title="Normalized_Count_matrix:",
+                                                     value="multi_norm_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_multi_norm_count", "Download normalized count matrix"))
+                                                     ),
+                                                     dataTableOutput("multi_Normalized_Count_matrix")
                                      ),
                                      bsCollapsePanel(title="PCA:",
-                                                     value="PCA3_panel",
+                                                     value="multi_PCA_panel",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_cond3_pca_table", "Download PCA table"))
+                                                       column(4, downloadButton("download_multi_PCA_table", "Download PCA table"))
                                                      ),
-                                                     dataTableOutput("PCA3_data")
+                                                     dataTableOutput("multi_PCA_data")
                                      )
                           )),
-                 tabPanel("GOI profiling",
+                 tabPanel("Divisive analysis clustering",
                           fluidRow(
-                            column(4, downloadButton("download_3cond_scatter", "Download scatter plot")),
-                            column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
+                            column(4, downloadButton("download_multi_boxplot", "Download boxplots"))
                           ),
                           fluidRow(
-                            column(4, htmlOutput("GOI2"))
-                          ),
-                          plotOutput("cond3_GOIheatmap"),
-                          div(
-                          plotOutput("cond3_GOIboxplot", height = "100%"),
-                          style = "height: calc(100vh  - 100px)"
-                          ),
-                          fluidRow(
-                            column(4, downloadButton("download_3cond_GOIbox", "Download boxplot"))
-                          )
-                          ),
-                 tabPanel("Enrichment analysis",
-                          fluidRow(
-                            column(4, textOutput("Spe2"),
-                                   tags$head(tags$style("#Spe2{color: red;
+                            column(3, htmlOutput("selectFC")),
+                            column(3, textOutput("multi_DEG_total1"),
+                                   tags$head(tags$style("#multi_DEG_total1{color: red;
                                  font-size: 20px;
-            font-style: bold;
-            }"))),
-                            column(4, htmlOutput("Gene_set2")),
-                            column(4, downloadButton("download_cond3_enrichment", "Download"))
+                                 font-style: bold;
+                                 }"))),
+                            column(6, htmlOutput("topP")),
                           ),
-                          plotOutput("keggenrichment2_1"),
-                          plotOutput("keggenrichment2_2"),
-                          plotOutput("keggenrichment2_3"),
-                          bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
-                                     bsCollapsePanel(title="Enrichment result1:",
-                                                     value="ORA3_1_panel",
+                          div(
+                            plotOutput("multi_boxplot", height = "100%"),
+                            style = "height: calc(100vh  - 100px)"
+                          ),
+                          bsCollapsePanel(title="DEG_pattern:",
+                                          value="multi_deg_pattern_panel",
+                                          fluidRow(
+                                            column(4, downloadButton("download_deg_pattern_list", "Download DEG pattern list"))
+                                          ),
+                                          dataTableOutput("multi_pattern1_list")
+                          ),
+                          bsCollapsePanel(title="DEG_pattern_normalized_count_data:",
+                                          value="multi_deg_pattern_count_panel",
+                                          fluidRow(
+                                            column(4, htmlOutput("multi_select_file1")),
+                                            column(4, downloadButton("download_deg_pattern_count", "Download DEG pattern normalized count data"))
+                                          ),
+                                          dataTableOutput("multi_pattern1_count")
+                          ),
+                          fluidRow(
+                            column(4, htmlOutput("multi_whichGroup1_1")),
+                            column(4, htmlOutput("Gene_set7")),
+                            column(4, downloadButton("download_multi_cluster_enrichment", "Download dot plot"))
+                          ),
+                          fluidRow(
+                            column(4, textOutput("multi_Spe"),
+                                   tags$head(tags$style("#multi_Spe{color: red;
+                                         font-size: 20px;
+                                         font-style: bold;
+                                      }")))
+                          ),
+                          plotOutput("multi_enrichment3"),
+                          fluidRow(
+                            column(4, htmlOutput("multi_whichGroup1_2")),
+                            column(4, downloadButton("download_multi_enrichment_cnet", "Download cnet plot"))
+                          ),
+                          plotOutput("multi_enrichment4"),
+                          fluidRow(
+                            column(4, downloadButton("download_multi_enrichment_table", "Download enrichment result"))
+                          ),
+                          dataTableOutput('multi_enrichment_result')
+                 ),
+                 tabPanel("k-means clustering",
+                          fluidRow(
+                            column(3, htmlOutput("selectFC2")),
+                            column(3, textOutput("multi_DEG_total2"),
+                                   tags$head(tags$style("#multi_DEG_total2{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"))),
+                            column(6, htmlOutput("topP2"))
+                          ),
+                          fluidRow(
+                            column(4, htmlOutput("multi_kmeans_num"),
+                                   downloadButton("download_multi_kmeans_heatmap", "Download heatmap"),
+                                   downloadButton("download_multi_kmeans_boxplot", "Download boxplots")),
+                            column(8, plotOutput("multi_kmeans_heatmap"))
+                          ),
+                          div(
+                            plotOutput("multi_kmeans_boxplot", height = "100%"),
+                            style = "height: calc(100vh  - 100px)"
+                          ),
+                          bsCollapsePanel(title="kmeans_result:",
+                                          value="multi_deg_kmeans_pattern_count_panel",
+                                          fluidRow(
+                                            column(4, downloadButton("download_multi_kmeans_cluster", "Download k-means clustering result"))
+                                          ),
+                                          dataTableOutput("multi_kmeans_count_table")
+                          ),
+                          bsCollapsePanel(title="cluster_normalized_count_data:",
+                                          value="multi_deg_kmeans_pattern_count_panel",
+                                          fluidRow(
+                                            column(4, htmlOutput("multi_select_file2")),
+                                            column(4, downloadButton("download_deg_kmeans_pattern_count", "Download DEG pattern normalized count data"))
+                                          ),
+                                          dataTableOutput("multi_pattern2_count")
+                          ),
+                          
+                          fluidRow(
+                            column(4, htmlOutput("multi_whichGroup2_1")),
+                            column(4, htmlOutput("Gene_set8")),
+                            column(4, downloadButton("download_multi_cluster_enrichment2", "Download dot plot"))
+                          ),
+                          fluidRow(
+                            column(4, textOutput("multi_Spe2"),
+                                   tags$head(tags$style("#multi_Spe2{color: red;
+                                         font-size: 20px;
+                                         font-style: bold;
+                                      }")))
+                          ),
+                          plotOutput("multi_enrichment5"),
+                          fluidRow(
+                            column(4, htmlOutput("multi_whichGroup2_2")),
+                            column(4, downloadButton("download_multi_enrichment_cnet2", "Download cnet plot"))
+                          ),
+                          plotOutput("multi_enrichment6"),
+                          fluidRow(
+                            column(4, downloadButton("download_multi_enrichment_table2", "Download enrichment result"))
+                          ),
+                          dataTableOutput('multi_enrichment_result2')
+                 ),
+                 tabPanel("GSEA",
+                          fluidRow(
+                            column(3, htmlOutput("selectEnrich_pair")),
+                            column(4, htmlOutput("Gene_set6")),
+                            column(4, downloadButton("download_multi_enrichment", "Download"))
+                          ),
+                          fluidRow(
+                            column(4, textOutput("multi_Spe1"),
+                                   tags$head(tags$style("#multi_Spe1{color: red;
+                                         font-size: 20px;
+                                         font-style: bold;
+                                      }")))
+                          ),
+                          plotOutput("multi_enrichment1"),
+                          bsCollapse(id="input_collapse_multi_enrich",open="ORA_panel",multiple = TRUE,
+                                     bsCollapsePanel(title="GSEA result:",
+                                                     value="multi_GSEA_panel",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_cond3_enrichment_table1", "Download enrichment result table 1"))
+                                                       column(4, downloadButton("download_multi_GSEA_table", "Download GSEA result"))
                                                      ),
-                                                     dataTableOutput('enrichment3_result_1')
-                                     ),
-                                     bsCollapsePanel(title="Enrichment result2:",
-                                                     value="ORA3_2_panel",
-                                                     fluidRow(
-                                                       column(4, downloadButton("download_cond3_enrichment_table2", "Download enrichment result table 2"))
-                                                     ),
-                                                     dataTableOutput('enrichment3_result_2')
-                                     ),
-                                     bsCollapsePanel(title="Enrichment result3:",
-                                                     value="ORA3_3_panel",
-                                                     fluidRow(
-                                                       column(4, downloadButton("download_cond3_enrichment_table3", "Download enrichment result table 3"))
-                                                     ),
-                                                     dataTableOutput('enrichment3_result_3')
+                                                     dataTableOutput('multi_GSEA_result')
                                      )
-                          ))
+                          )
+                 )
                )
              ) # main panel
            ) #sidebarLayout
@@ -715,6 +786,7 @@ ui<- fluidPage(
                tabPanel("k-means clustering",
                         fluidRow(
                           column(4, htmlOutput("norm_kmeans_num"),
+                                 htmlOutput("kmeans_cv"),
                                  downloadButton("download_norm_kmeans_heatmap", "Download heatmap")),
                           column(8, plotOutput("norm_kmeans_heatmap"))
                         ),
@@ -789,6 +861,190 @@ ui<- fluidPage(
   ),
   #Instruction--------------------------
   navbarMenu("More",
+             # 3conditions -------------------------------------
+             tabPanel("3 conditions DEG",
+                      sidebarLayout(
+                        
+                        # sidebar_3conditions---------------------------------
+                        sidebarPanel(
+                          radioButtons('data_file_type2','Input:',
+                                       c('Raw_count_matrix'="Row3",
+                                         'Option: Raw_count_matrix + Metadata'="Row4"
+                                       ),selected = "Row3"),
+                          # Conditional panels appear based on input.data_file_type selection
+                          conditionalPanel(condition="input.data_file_type2=='Row3'",
+                                           strong("Count matrix format: "),br(),
+                                           "The replication number is represented by the underbar.",br(),
+                                           "Do not use it for anything else.", br(),
+                                           fileInput("file4",
+                                                     label = "Select a raw count matrix file (txt, csv)",
+                                                     accept = c("txt", "csv"),
+                                                     multiple = FALSE,
+                                                     width = "80%")
+                          ),
+                          conditionalPanel(condition="input.data_file_type2=='Row4'",
+                                           strong("Count matrix format: "),br(),
+                                           "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
+                                           "the metadata.", br(),
+                                           "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                           fileInput("file5",
+                                                     label = "Select a raw count matrix file (txt, csv)",
+                                                     accept = c("txt", "csv"),
+                                                     multiple = FALSE,
+                                                     width = "80%"),
+                                           fileInput("file6",
+                                                     label = "Select a metadata file to define samples for the following analysis",
+                                                     accept = c("txt", "csv"),
+                                                     multiple = FALSE,
+                                                     width = "80%")
+                          ),
+                          fluidRow(
+                            column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
+                                                                           "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+                          h4("Cut-off conditions:"),
+                          fluidRow(
+                            column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
+                            column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
+                            column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
+                          ),
+                          "Option: Normalized count file:",br(),
+                          "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
+                          fileInput("norm_file2",
+                                    label = "Select a normalized count file",
+                                    accept = c("txt", "csv"),
+                                    multiple = FALSE,
+                                    width = "80%"),
+                          actionButton("goButton2", "example data (mouse)"),
+                          tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                    tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                    ))
+                        ), #sidebarPanel
+                        
+                        # Main Panel -------------------------------------
+                        mainPanel(
+                          tabsetPanel(
+                            type = "tabs",
+                            tabPanel("Input 3 conditions Data",
+                                     bsCollapse(id="input_collapse_panel2",open="Row_count_panel2",multiple = FALSE,
+                                                bsCollapsePanel(title="Raw_count_matrix:",
+                                                                value="Row_count_panel2",
+                                                                dataTableOutput('Row_count_matrix2')
+                                                ),
+                                                bsCollapsePanel(title="Metadata:",
+                                                                value="Metadata_panel2",
+                                                                dataTableOutput('Metadata2')
+                                                ),
+                                                bsCollapsePanel(title="Defined_raw_count_matrix:",
+                                                                value="D_row_count_matrix_panel2",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
+                                                                ),
+                                                                dataTableOutput('D_Row_count_matrix2')
+                                                )
+                                     )
+                            ),
+                            tabPanel("Result overview",
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
+                                     ),
+                                     plotOutput("PCA2"),
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
+                                       column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
+                                     ),
+                                     plotOutput("scatter_1"),
+                                     dataTableOutput("DEG_result2_1"),
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
+                                       column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
+                                     ),
+                                     plotOutput("scatter_2"),
+                                     dataTableOutput("DEG_result2_2"),
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
+                                       column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
+                                     ),
+                                     plotOutput("scatter_3"),
+                                     dataTableOutput("DEG_result2_3"),
+                                     bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
+                                                bsCollapsePanel(title="Normalized_Count_matrix:",
+                                                                value="norm_panel2",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_norm_count", "Download normalized count"))
+                                                                ),
+                                                                dataTableOutput("Normalized_Count_matrix2")
+                                                ),
+                                                bsCollapsePanel(title="PCA:",
+                                                                value="PCA3_panel",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_pca_table", "Download PCA table"))
+                                                                ),
+                                                                dataTableOutput("PCA3_data")
+                                                )
+                                     )),
+                            tabPanel("GOI profiling",
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_scatter", "Download scatter plot")),
+                                       column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
+                                     ),
+                                     fluidRow(
+                                       column(4, htmlOutput("GOI2"))
+                                     ),
+                                     plotOutput("cond3_GOIheatmap"),
+                                     div(
+                                       plotOutput("cond3_GOIboxplot", height = "100%"),
+                                       style = "height: calc(100vh  - 100px)"
+                                     ),
+                                     fluidRow(
+                                       column(4, downloadButton("download_3cond_GOIbox", "Download boxplot"))
+                                     )
+                            ),
+                            tabPanel("Enrichment analysis",
+                                     fluidRow(
+                                       column(4, textOutput("Spe2"),
+                                              tags$head(tags$style("#Spe2{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
+                                       column(4, htmlOutput("Gene_set2")),
+                                       column(4, downloadButton("download_cond3_enrichment", "Download"))
+                                     ),
+                                     plotOutput("keggenrichment2_1"),
+                                     plotOutput("keggenrichment2_2"),
+                                     plotOutput("keggenrichment2_3"),
+                                     bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
+                                                bsCollapsePanel(title="Enrichment result1:",
+                                                                value="ORA3_1_panel",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_enrichment_table1", "Download enrichment result table 1"))
+                                                                ),
+                                                                dataTableOutput('enrichment3_result_1')
+                                                ),
+                                                bsCollapsePanel(title="Enrichment result2:",
+                                                                value="ORA3_2_panel",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_enrichment_table2", "Download enrichment result table 2"))
+                                                                ),
+                                                                dataTableOutput('enrichment3_result_2')
+                                                ),
+                                                bsCollapsePanel(title="Enrichment result3:",
+                                                                value="ORA3_3_panel",
+                                                                fluidRow(
+                                                                  column(4, downloadButton("download_cond3_enrichment_table3", "Download enrichment result table 3"))
+                                                                ),
+                                                                dataTableOutput('enrichment3_result_3')
+                                                )
+                                     ))
+                          )
+                        ) # main panel
+                      ) #sidebarLayout
+             ), #tabPanel
              tabPanel("Volcano navi",
                       sidebarLayout(
                         # volcano navi---------------------------------
@@ -2996,6 +3252,2029 @@ output$download_pair_deg_count_down = downloadHandler(
     contentType = "application/zip"
   )
   
+  #multi DEG--------------------------
+  org6 <- reactive({
+    if(input$Species6 != "not selected"){
+      switch (input$Species6,
+              "Mus musculus" = org <- org.Mm.eg.db,
+              "Homo sapiens" = org <- org.Hs.eg.db,
+              "Rattus norvegicus" = org <- org.Rn.eg.db,
+              "Xenopus laevis" = org <- org.Xl.eg.db,
+              "Drosophila melanogaster" = org <- org.Dm.eg.db,
+              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
+      return(org)
+    }
+  })
+  org_code6 <- reactive({
+    if(input$Species6 != "not selected"){
+      switch (input$Species6,
+              "Mus musculus" = org_code <- "mmu",
+              "Homo sapiens" = org_code <- "hsa",
+              "Rattus norvegicus" = org_code <- "rno",
+              "Xenopus laevis" = org_code <- "xla",
+              "Drosophila melanogaster" = org_code <- "dme",
+              "Caenorhabditis elegans" = org_code <- "cel")
+      return(org_code)
+    }
+  })
+  
+  multi_row_count_matrix <- reactive({
+    withProgress(message = "Importing row count matrix, please wait",{
+      if (input$multi_data_file_type == "Row1"){
+        tmp <- input$multi_file1$datapath
+        if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = "data/example4.txt"
+        if(is.null(tmp)) {
+          return(NULL)
+        }else{
+          if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+          if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+          if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+          return(df)
+        }
+      }
+      if (input$multi_data_file_type == "Row2"){
+        tmp <- input$multi_file2$datapath
+        if(is.null(input$multi_file2) && input$goButton6 == 0) return(NULL)
+        if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = "data/example8.txt"
+        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+        return(df)
+      }
+    })
+  })
+  multi_metadata <- reactive({
+    if (input$multi_data_file_type != "Row2"){
+      return(NULL)
+    }else{
+      tmp <- input$multi_file3$datapath
+      if(is.null(input$multi_file3) && input$goButton6 == 0) return(NULL)
+      if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = "data/example5.csv"
+      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      rownames(df) <- gsub("-",".",rownames(df))
+      return(df)
+    }
+  })
+  
+  multi_d_row_count_matrix <- reactive({
+    row <- multi_row_count_matrix()
+    if (input$multi_data_file_type == "Row1"){
+      if(is.null(row)) {
+        return(NULL)
+      }else{
+        return(row)
+      }
+    }else{
+      meta <- multi_metadata()
+      if (is.null(row) || is.null(meta)){
+        return(NULL)
+      } else {
+        row_t <- t(row)
+        colname <- colnames(meta)
+        data <- merge(meta, row_t, by=0, sort = F)
+        rownames(data) <- data[,1]
+        data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
+        data2 <- data2[,1:length(rownames(row))]
+        data2_t <- t(data2)
+        data3 <- apply(data2_t, 2, as.numeric)
+        rownames(data3) <- rownames(data2_t)
+        if(input$Species6 != "not selected"){
+          if(str_detect(rownames(data3)[1], "ENS")){
+            rownames(data3) < gsub("\\..*","", rownames(data3))
+          }
+        }
+        return(data3)
+      }
+    }
+  })
+  
+  multi_norm_count_matrix <- reactive({
+    if(is.null(input$multi_norm_file1)){
+      return(NULL)
+    }else{
+      if(length(input$multi_norm_file1[, 1]) == 1){
+        upload <- read.table(file = input$multi_norm_file1[[1, 'datapath']], header = T ,sep="\t", row.names = 1)
+      }else{
+        upload = list()
+        for(nr in 1:length(input$multi_norm_file1[, 1])){
+          df <- read.table(file = input$multi_norm_file1[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+          upload[gsub("\\..+$", "", input$multi_norm_file1[nr,]$name)] <- list(df)
+        }
+      } 
+      return(upload)
+    }
+  })
+  
+  
+  # Multi DEG ------------------------------------------------------------------------------
+  multi_dds <- reactive({
+    count <- multi_d_row_count_matrix()
+    meta <- multi_metadata()
+    if(is.null(count)){
+      return(NULL)
+    }else{
+      withProgress(message = "DESeq2",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(count))
+          meta <- data.frame(condition = factor(collist))
+        }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+        dds<- DESeqDataSetFromMatrix(countData = round(count),colData = meta, design = ~ condition)
+        dds$meta <- factor(paste0(dds[[colnames(meta)[1]]], dds[[colnames(meta)[2]]]))
+        design(dds) <- ~ meta
+        dds <- DESeq(dds,test = "LRT", full = ~ meta, reduced = ~ 1)
+        incProgress(1)
+      })
+      return(dds)
+    }
+  })
+  
+  multi_deg_result <- reactive({
+    if(is.null(multi_d_row_count_matrix())){
+      return(NULL)
+    }else{
+      withProgress(message = "Prepare a DEG result",{
+        count <- multi_d_row_count_matrix()
+        meta <- multi_metadata()
+        dds <- multi_dds()
+        df <- list()
+        for(i in 1:choose(n=length(unique(dds$meta)),k=2)){
+          res <- results(dds, contrast = c("meta", as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[1,i]]),as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[2,i]])))
+          foldchange <- data.frame(gene = rownames(res), log2FC = res$log2FoldChange)
+          df[res@elementMetadata@listData[["description"]][2]] <- list(foldchange)
+        }
+        fc_matrix <- as.data.frame(df[names(df)[1]])
+        colnames(fc_matrix) <- sub("log2.fold.change..MLE...meta.","",colnames(fc_matrix))
+        colnames(fc_matrix)[1] <- "gene"
+        for(i in 1:(length(names(df))-1)){
+          matrix <- as.data.frame(df[names(df)[1+i]])
+          colnames(matrix) <- sub("log2.fold.change..MLE...meta.","",colnames(matrix))
+          colnames(matrix)[1] <- "gene"
+          fc_matrix <- merge(fc_matrix, matrix, by="gene")
+        }
+        if(input$FDR_method6 == "IHW") {
+          ihw_res <- ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
+          res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
+        }
+        if(input$FDR_method6 == "Qvalue") {
+          res <- results(dds)
+          qvalue <- qvalue::qvalue(res$pvalue)
+          res$padj <- qvalue$qvalues
+        }
+        res <- data.frame(gene=rownames(res), padj=res$padj)
+        fc_matrix <- merge(fc_matrix, res, by="gene")
+        rownames(fc_matrix)<- fc_matrix$gene
+        fc_matrix <- fc_matrix[,-1]
+        
+        res <- fc_matrix
+        if(input$Species6 != "not selected"){
+          if(str_detect(rownames(count)[1], "ENS")){
+            my.symbols <- gsub("\\..*","", rownames(res))
+            gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                            keytype = "ENSEMBL",
+                                            columns = c("ENSEMBL","SYMBOL"))
+            colnames(gene_IDs) <- c("Row.names","SYMBOL")
+            res$Row.names <- gsub("\\..*","", rownames(res))
+            gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+            data2 <- merge(res, gene_IDs, by="Row.names")
+            rownames(data2) <- data2$Row.names
+            res <- data2[,-1]
+          }
+        }
+        return(res)
+      })
+    }
+  })
+  
+  multi_deg_norm_count <- reactive({
+    if(is.null(multi_d_row_count_matrix())){
+      return(NULL)
+    }else{
+      if(!is.null(multi_norm_count_matrix())){
+        return(multi_norm_count_matrix())
+      }else {
+        count <- multi_d_row_count_matrix()
+        dds <- multi_dds()
+        normalized_counts <- counts(dds, normalized=TRUE)
+        
+        if(input$Species6 != "not selected"){
+          if(str_detect(rownames(count)[1], "ENS")){
+            normalized_counts <- as.data.frame(normalized_counts)
+            my.symbols <- gsub("\\..*","", rownames(normalized_counts))
+            gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                            keytype = "ENSEMBL",
+                                            columns = c("ENSEMBL","SYMBOL"))
+            colnames(gene_IDs) <- c("Row.names","SYMBOL")
+            normalized_counts$Row.names <- gsub("\\..*","", rownames(normalized_counts))
+            gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+            data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
+            rownames(data2) <- data2$Row.names
+            normalized_counts <- data2[,-1]
+          }
+        }
+        return(normalized_counts)
+      }
+    }
+  })
+  
+  observeEvent(input$multi_file1, ({
+    updateCollapse(session,id =  "multi_input_collapse_panel", open="multi_Row_count_panel")
+  }))
+  observeEvent(input$multi_file2, ({
+    updateCollapse(session,id =  "multi_input_collapse_panel", open="multi_Metadata_panel")
+  }))
+  output$multi_Row_count_matrix <- DT::renderDataTable({
+    multi_row_count_matrix()
+  })
+  output$multi_d_Row_count_matrix <- DT::renderDataTable({
+    multi_d_row_count_matrix()
+  })
+  
+  output$multi_Metadata <- DT::renderDataTable({
+    multi_metadata()
+  })
+  output$multi_DEG_result <- DT::renderDataTable({
+    multi_deg_result()
+  })
+  output$multi_Normalized_Count_matrix <- DT::renderDataTable({
+    multi_deg_norm_count()
+  })
+  
+  output$download_multi_DEG_result = downloadHandler(
+    filename = function() {
+      if (input$multi_data_file_type == "Row1"){
+        paste(gsub("\\..+$", "", input$multi_file1), paste0(input$FDR_method6,".txt"), sep ="-")
+      }else{
+        paste(gsub("\\..+$", "", input$multi_file2), paste0(input$FDR_method6,".txt"), sep ="-")
+      }},
+    content = function(file){write.table(multi_deg_result(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_multi_norm_count = downloadHandler(
+    filename = function() {
+      if (input$multi_data_file_type == "Row1"){
+        paste(gsub("\\..+$", "", input$multi_file1), "normalized.txt", sep ="-")
+      }else{
+        paste(gsub("\\..+$", "", input$multi_file2), "normalized.txt", sep ="-")
+      }},
+    content = function(file){write.table(multi_deg_norm_count(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  download_multi_overview_dir <-reactive({
+    if (input$multi_data_file_type == "Row1"){
+      dir_name <- paste(gsub("\\..+$", "", input$multi_file1), input$FDR_method6, sep ="-")
+    }else{
+      dir_name <- paste(gsub("\\..+$", "", input$multi_file2), input$FDR_method6, sep ="-")
+    }
+    dir_name <- paste0(dir_name, paste0("_fdr", input$fdr6))
+    dir_name <- paste0(dir_name, paste0("_basemean", input$basemean6))
+    return(dir_name)
+  })
+  #multi DEG vis---------------------------
+  output$multi_DEG_total1 <- renderText({
+    if(is.null(multi_pattern1())){
+      return(NULL)
+    }else{ 
+      print(paste0("The DEG number after the filteration: ", length(multi_pattern1()$gene)))
+    }
+  })
+  
+  multi_gene_ID_pair <- reactive({
+    res <- multi_d_row_count_matrix()
+    if(is.null(res)){
+      return(NULL)
+    }else{
+      if(input$Species6 != "not selected"){
+        if(str_detect(rownames(res)[1], "ENS")){
+          my.symbols <- gsub("\\..*","", rownames(res))
+          gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                          keytype = "ENSEMBL",
+                                          columns = c("ENSEMBL","SYMBOL"))
+          colnames(gene_IDs) <- c("Row.names","SYMBOL")
+          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+          rownames(gene_IDs) <- gene_IDs$Row.names
+          return(gene_IDs)
+        }
+      }else{ return(NULL) }
+    }
+  })
+  
+  multi_select <- reactive({
+    dds <- multi_dds()
+    return(unique(dds$meta))
+  })
+  
+  output$selectFC <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC", "Select a pair for fold change cut-off", c(multi_select()),
+                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  output$topP <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      sliderInput("topP", "Most significant genes", min = 0,
+                  max=5000, step = 100,
+                  value = 2000)
+    }
+  })
+  
+  multi_pattern1 <- reactive({
+    count <- multi_d_row_count_matrix()
+    meta <- multi_metadata()
+    dds <- multi_dds()
+    if(is.null(dds) || length(input$selectFC) != 2){
+      return(NULL)
+    }else{
+      withProgress(message = "Fold Change, FDR, and base mean cut-off",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(count))
+          meta <- data.frame(condition = factor(collist))
+        }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+        res <- results(dds, contrast = c("meta", as.character(input$selectFC[1]),as.character(input$selectFC[2])))
+        
+        data <- as.data.frame(multi_deg_norm_count())
+        collist <- gsub("\\_.+$", "", colnames(data))
+        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
+        res <- as.data.frame(res)
+        data2 <- merge(res,data, by=0)
+        res <- data2[,1:7]
+        rownames(res) <- res$Row.names
+        
+        sig_res_LRT <- res %>% 
+          data.frame() %>%
+          rownames_to_column(var="gene") %>%
+          as_tibble() %>%
+          filter(padj < input$fdr6) %>%
+          filter(abs(log2FoldChange) > log2(input$fc6))
+        return(sig_res_LRT)
+      })
+    }
+  })
+  
+  multi_pattern1_2 <- reactive({
+    sig_res_LRT <- multi_pattern1()
+    dds <- multi_dds()
+    if(is.null(sig_res_LRT)){
+      return(NULL)
+    }else{
+      withProgress(message = "Select most significant genes",{
+        clustering_sig_genes <- sig_res_LRT %>%
+          arrange(padj) %>%
+          head(n=input$topP)
+        rld <- rlogTransformation(dds)
+        rld_mat <- assay(rld)
+        cluster_rlog <- rld_mat[clustering_sig_genes$gene, ]
+        return(cluster_rlog)
+      })
+    }
+  })
+  
+  
+  multi_pattern2 <- reactive({
+    count <- multi_d_row_count_matrix()
+    meta <- multi_metadata()
+    cluster_rlog <- multi_pattern1_2()
+    if(is.null(cluster_rlog)|| length(input$selectFC) != 2){
+      return(NULL)
+    }else{
+      withProgress(message = "Performing a clustering analysis",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(count))
+          meta <- data.frame(condition = factor(collist,levels = unique(collist),ordered = TRUE), row.names = colnames(count))
+          clusters <- degPatterns(cluster_rlog, metadata = meta, time = "condition", plot = FALSE)
+        }else{
+          meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+          meta[,2] <- factor(meta[,2], levels = unique(meta[,2]),ordered = TRUE)
+          rownames(meta) <- colnames(count)
+          clusters <- degPatterns(cluster_rlog, metadata = meta, time = "condition", col=colnames(meta)[2], plot = FALSE)
+        }
+        
+        return(clusters)
+      })
+    }
+  })
+  
+  multi_boxplot_reactive <- reactive({
+    meta <- multi_metadata()
+    count <- multi_d_row_count_matrix()
+    cluster_rlog <- multi_pattern1_2()
+    clusters <- multi_pattern2()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      withProgress(message = "Boxplot",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(count))
+          meta <- data.frame(condition = factor(collist,levels = unique(collist),ordered = TRUE), row.names = colnames(count))
+        }else {
+          meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+          rownames(meta) <- colnames(count)
+          meta[,2] <- factor(meta[,2], levels = unique(meta[,2]),ordered = TRUE)
+        }
+        meta$condition <- factor(meta$condition, levels = unique(meta$condition),ordered = TRUE)
+        table <- rownames_to_column(as.data.frame(cluster_rlog), "genes") %>%
+          gather("sample", "normalized", -genes) %>%
+          right_join(distinct(clusters$df[,c("genes", "cluster")]),
+                     by = "genes") %>%
+          left_join(rownames_to_column(as.data.frame(meta), "sample"),
+                    by = "sample") %>%
+          as.data.frame()
+        colnames(table)[3] <- "expression"
+        table <- na.omit(table)
+        if (input$multi_data_file_type == "Row1"){
+          p <- degPlotCluster(table, time = "condition", process = TRUE)+ 
+            scale_color_brewer(palette = "Set1", direction=-1)+
+            theme_bw()+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        }
+        else{
+          p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
+            scale_color_brewer(palette = "Set1", direction=-1)+
+            theme_bw()+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        }
+        return(p)
+      })
+    }
+  })
+  
+  output$multi_boxplot <- renderPlot({
+    if(is.null(multi_boxplot_reactive())|| length(input$selectFC) != 2){
+      return(NULL)
+    }else{
+      print(multi_boxplot_reactive())
+    }
+  })
+  
+  output$multi_select_file1 <- renderUI({
+    clusters <- multi_pattern2()$df
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      selectInput("multi_selectfile1", "cluster_list", choices = c("not selected", unique(clusters$cluster)), selected = "not selected",multiple = F)
+    }
+  })
+  
+  multi_pattern_extract <- reactive({
+    data <- as.data.frame(multi_deg_norm_count())
+    count <- multi_d_row_count_matrix()
+    clusters <- multi_pattern2()$df
+    if(is.null(data) || is.null(clusters)){
+      return(NULL)
+    }else{
+      if(input$multi_selectfile1 == "not selected" || is.null(input$multi_selectfile1)){
+        return(NULL)
+      }else{
+        clusters$cluster <- paste0("Group",clusters$cluster)
+        cluster_name <- input$multi_selectfile1
+        clusterCount <- dplyr::filter(clusters, cluster == cluster_name)
+        clusterCount <- merge(clusterCount, data, by=0)
+        clusterCount <- clusterCount[,-2:-3]
+        rownames(clusterCount) <- clusterCount$Row.names
+        clusterCount <- clusterCount[,-1]
+        return(clusterCount)
+      }
+    }
+  })
+  
+  
+  output$multi_pattern1_list <- DT::renderDataTable({
+    if(is.null(multi_pattern2())){
+      return(NULL)
+    }else{
+      clusters <- multi_pattern2()$df
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      clusters
+    }
+  })
+  output$multi_pattern1_count <- DT::renderDataTable({
+    multi_pattern_extract()
+  })
+  output$download_deg_pattern_list = downloadHandler(
+    filename = function(){
+      paste0(download_multi_overview_dir(), "_DEG_count_up.txt")
+    },
+    content = function(file) {
+      clusters <- multi_pattern2()$df
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      write.table(clusters, file, quote = F, row.names = F, sep = "\t")})
+  
+  output$download_deg_pattern_count = downloadHandler(
+    filename = function(){
+      paste(paste(download_multi_overview_dir(), input$multi_selectfile1, sep = "_"), 
+            "_pattern_extracted.txt", sep = "_")
+    },
+    content = function(file) {write.table(multi_pattern_extract(), file, quote = F, row.names = T, sep = "\t")})
+  
+  
+  
+  
+  output$download_multi_boxplot = downloadHandler(
+    filename = function(){
+      paste0(download_multi_overview_dir(), "_pattern.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(is.null(multi_boxplot_reactive)|| length(input$selectFC) != 2){
+          return(NULL)
+        }else{
+          clusters <- multi_pattern2()$df
+          clusterNumber <- length(unique(clusters$cluster))
+          print(clusterNumber)
+          if ((clusterNumber > 81) && (clusterNumber <= 200))
+          {pdf_hsize <- 15
+          pdf_wsize <- 15}
+          if ((clusterNumber > 64) && (clusterNumber <= 81))
+          {pdf_hsize <- 14
+          pdf_wsize <- 13.5}
+          if ((clusterNumber > 49) && (clusterNumber <= 64))
+          {pdf_hsize <- 13
+          pdf_wsize <- 12}
+          if ((clusterNumber > 36) && (clusterNumber <= 49))
+          {pdf_hsize <- 11
+          pdf_wsize <- 10.5}
+          if ((clusterNumber > 25) && (clusterNumber <= 36))
+          {pdf_hsize <- 10
+          pdf_wsize <- 9}
+          if ((clusterNumber > 16) && (clusterNumber <= 25))
+          {pdf_hsize <- 8
+          pdf_wsize <- 7.5}
+          if ((clusterNumber > 12) && (clusterNumber <= 16))
+          {pdf_hsize <- 7
+          pdf_wsize <- 6}
+          if ((clusterNumber > 9) && (clusterNumber <= 12))
+          {pdf_hsize <- 7
+          pdf_wsize <- 6}
+          if ((clusterNumber > 6) && (clusterNumber <= 9))
+          {pdf_hsize <- 6
+          pdf_wsize <- 4.5}
+          if ((clusterNumber > 4) && (clusterNumber <= 6))
+          {pdf_hsize <- 6
+          pdf_wsize <- 6}
+          if (clusterNumber == 4)
+          {pdf_hsize <- 6
+          pdf_wsize <- 4}
+          if (clusterNumber == 3)
+          {pdf_hsize <- 4
+          pdf_wsize <- 6}
+          if (clusterNumber == 2)
+          {pdf_hsize <- 4
+          pdf_wsize <- 4}
+          if (clusterNumber == 1)
+          {pdf_hsize <- 4
+          pdf_wsize <- 2}
+          if (clusterNumber > 200)
+          {pdf_hsize <- 30
+          pdf_wsize <- 30}
+          pdf(file, height = pdf_hsize, width = pdf_wsize)
+          print(multi_boxplot_reactive()+
+                  theme(axis.text.x= element_text(size = 8),
+                        axis.text.y= element_text(size = 8),
+                        title = element_text(size = 8),text = element_text(size = 8)))
+          dev.off()
+        }
+        incProgress(1)
+      })
+    }
+  )
+  
+  #Multi kmeans-----------
+  output$selectFC2 <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC2", "Select a pair for fold change cut-off", c(multi_select()),
+                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  output$topP2 <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      sliderInput("topP2", "Most significant genes", min = 1,
+                  max=8000, step = 100,
+                  value = 2000)
+    }
+  })
+  
+  output$multi_kmeans_num <- renderUI({
+    if(is.null(multi_deg_norm_count())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing kmeans clustering",{
+        sliderInput("multi_kmeans_number", "k-means number", min = 1,
+                    max=20, step = 1,
+                    value = 2)
+      })
+    }
+  })
+  
+  output$multi_DEG_total2 <- renderText({
+    if(is.null(multi_deg_count())){
+      return(NULL)
+    }else{ 
+      print(paste0("The DEG number after the filteration: ", length(rownames(multi_deg_count1()))))
+    }
+  })
+  
+  multi_deg_count1 <- reactive({
+    data <- as.data.frame(multi_deg_norm_count())
+    count <- multi_d_row_count_matrix()
+    meta <- multi_metadata()
+    dds <- multi_dds()
+    if(is.null(dds) || length(input$selectFC2) != 2){
+      return(NULL)
+    }else{
+      if (input$multi_data_file_type == "Row1"){
+        collist <- gsub("\\_.+$", "", colnames(count))
+        meta <- data.frame(condition = factor(collist))
+      }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+      res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
+      sig_res_LRT <- res %>% 
+        data.frame() %>%
+        rownames_to_column(var="gene") %>%
+        as_tibble() %>%
+        filter(padj < input$fdr6) %>%
+        filter(abs(log2FoldChange) > log2(input$fc6))
+      return(sig_res_LRT)
+    }
+  })
+  
+  multi_deg_count <- reactive({
+    data <- as.data.frame(multi_deg_norm_count())
+    sig_res_LRT <- multi_deg_count1()
+    if(is.null(dds) || length(input$selectFC2) != 2){
+      return(NULL)
+    }else{
+      sig_res_LRT <- sig_res_LRT %>%
+        arrange(padj) %>%
+        head(n=input$topP2)
+      sig_res_LRT <- as.data.frame(sig_res_LRT)
+      rownames(sig_res_LRT) <- sig_res_LRT$gene
+      sig_res_LRT <- sig_res_LRT[,-1]
+      collist <- gsub("\\_.+$", "", colnames(data))
+      data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
+      data2 <- merge(data, sig_res_LRT,by=0)
+      rownames(data2) <- data2$Row.names
+      data2<- data2[,-1]
+      data2 <- data2[,1:length(collist)]
+      return(data2)
+    }
+  })
+  
+  multi_data_z <- reactive({
+    data <- multi_deg_count()
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      data.z <- genescale(data, axis = 1, method = "Z")
+      data.z <- na.omit(data.z)
+      return(data.z)
+    }
+  })
+  
+  multi_kmeans <- reactive({
+    data.z <- multi_data_z()
+    if(is.null(data.z)){
+      return(NULL)
+    }else{
+      withProgress(message = "k-means clustering",{
+        ht <- Heatmap(data.z, name = "z-score",
+                      column_order = colnames(data.z),
+                      clustering_method_columns = 'ward.D2',
+                      row_km= input$multi_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
+                      show_row_names = F)
+        ht <- draw(ht)
+        return(ht)
+      })
+    }
+  })
+  
+  multi_kmeans_cluster <- reactive({
+    ht <- multi_kmeans()
+    data.z <- multi_data_z()
+    data <- multi_deg_count()
+    if(is.null(ht) || is.null(data.z)){
+      return(NULL)
+    }else{
+      r.dend <- row_dend(ht)
+      rcl.list <- row_order(ht)
+      lapply(rcl.list, function(x) length(x))
+      Cluster <- NULL
+      if(!is.null(input$multi_kmeans_number)){
+        if(length(lapply(rcl.list, function(x) length(x))) != input$multi_kmeans_number){
+          return(NULL)
+        }else{
+          for (i in 1:length(row_order(ht))){ if (i == 1) {
+            clu <- t(t(row.names(data.z[row_order(ht)[[i]],])))
+            out <- cbind(clu, paste("cluster", i, sep=""))
+            colnames(out) <- c("GeneID", "Cluster")} else {
+              clu <- t(t(row.names(data.z[row_order(ht)[[i]],])))
+              clu <- cbind(clu, paste("cluster", i, sep=""))
+              out <- rbind(out, clu)}}
+          out <- as.data.frame(out)
+          rownames(out) <- out$GeneID
+          clusterCount <- merge(out, data, by=0)
+          rownames(clusterCount) <- clusterCount$GeneID
+          clusterCount <- clusterCount[,-1:-2]
+          return(clusterCount)
+        }
+      }else return(NULL)
+    }
+  })
+  
+  output$multi_kmeans_heatmap <- renderPlot({
+    ht <- multi_kmeans()
+    if(is.null(ht)){
+      return(NULL)
+    }else{
+      print(ht)
+    }
+  })
+  
+  multi_kmeans_box <- reactive({
+    res <- multi_kmeans_cluster()
+    ma <- as.data.frame(multi_deg_count())
+    meta <- multi_metadata()
+    if(is.null(ma) || is.null(res)){
+      return(NULL)
+    }else{
+      withProgress(message = "Boxplot",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(ma))
+          meta <- data.frame(condition = factor(collist),row.names = colnames(ma))
+        }else {
+          meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]), row.names = colnames(ma))
+          meta[,2] <- factor(meta[,2], levels = unique(meta[,2]),ordered = TRUE)
+        }
+        meta$condition <- factor(meta$condition, levels = unique(meta$condition),ordered = TRUE)  
+        res$Cluster <- gsub("cluster","",res$Cluster)
+        res<- data.frame(genes=rownames(res),cluster=res$Cluster)
+        table <- rownames_to_column(as.data.frame(ma), "genes") %>%
+          gather("sample", "expression", -genes) %>%
+          right_join(distinct(res[,c("genes", "cluster")]),
+                     by = "genes") %>%
+          left_join(rownames_to_column(as.data.frame(meta), "sample"),
+                    by = "sample") %>%
+          as.data.frame()
+        table$cluster = as.integer(table$cluster)
+        table<-na.omit(table)
+        if (input$multi_data_file_type == "Row1"){
+          p <- degPlotCluster(table, time = "condition", process = TRUE)+ 
+            scale_color_brewer(palette = "Set1", direction=-1)+
+            theme_bw()+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        }
+        else{
+          p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
+            scale_color_brewer(palette = "Set1", direction=-1)+
+            theme_bw()+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        }
+        return(p)
+      })
+    }
+  })
+  output$multi_kmeans_boxplot<- renderPlot({
+    if(is.null(multi_kmeans_box())|| length(input$selectFC2) != 2){
+      return(NULL)
+    }else{
+      print(multi_kmeans_box())
+    }
+  })
+  
+  output$download_multi_kmeans_boxplot = downloadHandler(
+    filename = function(){
+      paste0(download_multi_overview_dir(), "_kmeans_boxplot.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(is.null(multi_kmeans_box())|| length(input$selectFC2) != 2){
+          return(NULL)
+        }else{
+          clusters <- multi_kmeans_cluster()
+          clusterNumber <- length(unique(clusters$Cluster))
+          print(clusterNumber)
+          if ((clusterNumber > 81) && (clusterNumber <= 200))
+          {pdf_hsize <- 15
+          pdf_wsize <- 15}
+          if ((clusterNumber > 64) && (clusterNumber <= 81))
+          {pdf_hsize <- 14
+          pdf_wsize <- 13.5}
+          if ((clusterNumber > 49) && (clusterNumber <= 64))
+          {pdf_hsize <- 13
+          pdf_wsize <- 12}
+          if ((clusterNumber > 36) && (clusterNumber <= 49))
+          {pdf_hsize <- 11
+          pdf_wsize <- 10.5}
+          if ((clusterNumber > 25) && (clusterNumber <= 36))
+          {pdf_hsize <- 10
+          pdf_wsize <- 9}
+          if ((clusterNumber > 16) && (clusterNumber <= 25))
+          {pdf_hsize <- 8
+          pdf_wsize <- 7.5}
+          if ((clusterNumber > 12) && (clusterNumber <= 16))
+          {pdf_hsize <- 7
+          pdf_wsize <- 6}
+          if ((clusterNumber > 9) && (clusterNumber <= 12))
+          {pdf_hsize <- 7
+          pdf_wsize <- 6}
+          if ((clusterNumber > 6) && (clusterNumber <= 9))
+          {pdf_hsize <- 6
+          pdf_wsize <- 4.5}
+          if ((clusterNumber > 4) && (clusterNumber <= 6))
+          {pdf_hsize <- 6
+          pdf_wsize <- 6}
+          if (clusterNumber == 4)
+          {pdf_hsize <- 6
+          pdf_wsize <- 4}
+          if (clusterNumber == 3)
+          {pdf_hsize <- 4
+          pdf_wsize <- 6}
+          if (clusterNumber == 2)
+          {pdf_hsize <- 4
+          pdf_wsize <- 4}
+          if (clusterNumber == 1)
+          {pdf_hsize <- 4
+          pdf_wsize <- 2}
+          if (clusterNumber > 200)
+          {pdf_hsize <- 30
+          pdf_wsize <- 30}
+          pdf(file, height = pdf_hsize, width = pdf_wsize)
+          print(multi_kmeans_box()+
+                  theme(axis.text.x= element_text(size = 8),
+                        axis.text.y= element_text(size = 8),
+                        title = element_text(size = 8),text = element_text(size = 8)))
+          dev.off()
+        }
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$multi_kmeans_count_table <- DT::renderDataTable({
+    multi_kmeans_cluster()
+  })
+  
+  output$download_multi_kmeans_cluster = downloadHandler(
+    filename = function() {
+      paste0(download_multi_overview_dir(), "kmeans_count_table.txt")
+    },
+    content = function(file){write.table(multi_kmeans_cluster(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  output$download_multi_kmeans_heatmap = downloadHandler(
+    filename = function() {
+      paste0(download_multi_overview_dir(), paste(input$multi_kmeans_number,"kmeans_heatmap.pdf",sep = "_"))
+    },
+    content = function(file){
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 10, width = 7)
+        print(multi_kmeans())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$multi_select_file2 <- renderUI({
+    clusters <- multi_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("multi_selectfile2", "cluster_list", choices = c("not selected", unique(clusters$Cluster)), selected = "not selected",multiple = F)
+    }
+  })
+  
+  multi_kmeans_pattern_extract <- reactive({
+    count <- multi_d_row_count_matrix()
+    clusters <- multi_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      if(input$multi_selectfile2 == "not selected" || is.null(input$multi_selectfile2)){
+        return(NULL)
+      }else{
+        cluster_name <- input$multi_selectfile2
+        clusterCount <- dplyr::filter(clusters, Cluster == cluster_name)
+        clusterCount <- clusterCount[,-1]
+        return(clusterCount)
+      }
+    }
+  })
+  
+  output$multi_pattern2_count <- DT::renderDataTable({
+    multi_kmeans_pattern_extract()
+  })
+  
+  output$download_deg_kmeans_pattern_count = downloadHandler(
+    filename = function() {
+      paste(paste(download_multi_overview_dir(),input$multi_selectfile2, sep = "_"), 
+            "kmeans_count_table.txt", sep = "_")
+    },
+    content = function(file){write.table(multi_kmeans_pattern_extract(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
+  #Multi DEG enrichment------------
+  output$multi_Spe1 <- renderText({
+    if(input$Species6 == "not selected") print("Please select 'Species'")
+  })
+  multi_Hallmark_set <- reactive({
+    if(input$Species6 != "not selected"){
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+        return(NULL)
+      }else{
+        switch (input$Species6,
+                "Mus musculus" = species <- "Mus musculus",
+                "Homo sapiens" = species <- "Homo sapiens",
+                "Rattus norvegicus" = species <- "Rattus norvegicus",
+                "Xenopus laevis" = species <- "Xenopus laevis",
+                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+        if(input$Gene_set6 == "MSigDB Hallmark"){
+          H_t2g <- msigdbr(species = species, category = "H") %>%
+            dplyr::select(gs_name, entrez_gene) 
+        }
+        if(input$Gene_set6 == "Transcription factor targets"){
+          H_t2g <- msigdbr(species = species, category = "C3")
+          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
+            dplyr::select(gs_name, entrez_gene)
+        }
+        return(H_t2g)
+      }
+    }else return(NULL)
+  })
+  
+  output$selectEnrich_pair <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      selectizeInput("selectEnrich_pair", "Select a pair for GSEA", c(multi_select()),
+                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  
+  multi_enrich_pairFC <- reactive({
+    count <- multi_d_row_count_matrix()
+    meta <- multi_metadata()
+    dds <- multi_dds()
+    if(is.null(dds) || length(input$selectEnrich_pair) != 2){
+      return(NULL)
+    }else{
+      if (input$multi_data_file_type == "Row1"){
+        collist <- gsub("\\_.+$", "", colnames(count))
+        meta <- data.frame(condition = factor(collist))
+      }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+      res <- results(dds, contrast = c("meta", as.character(input$selectEnrich_pair[1]),as.character(input$selectEnrich_pair[2])))
+      sig_res_LRT <- res %>% 
+        data.frame()%>%
+        rownames_to_column(var="Row.names")
+      sig_res_LRT$log2FoldChange <- -1 * sig_res_LRT$log2FoldChange 
+      
+      if(str_detect(rownames(count)[1], "ENS")){
+        if(input$Species6 != "not selected"){
+          my.symbols <- rownames(sig_res_LRT)
+          gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                          keytype = "ENSEMBL",
+                                          columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+          colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
+          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+          data <- merge(sig_res_LRT, gene_IDs, by="Row.names")
+          data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = " - ")
+        }
+      }else{
+        if(input$Species6 != "not selected"){
+          my.symbols <- sig_res_LRT$Row.names
+          gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("SYMBOL", "ENTREZID"))
+          colnames(gene_IDs) <- c("Row.names", "ENTREZID")
+          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+          data <- merge(sig_res_LRT, gene_IDs, by="Row.names")
+        }
+      }
+      return(data)
+    }
+  })
+  
+  multi_enrichment_1_gsea <- reactive({
+    if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
+      data <- multi_enrich_pairFC()
+      count <- multi_deg_norm_count()
+      data <- na.omit(data)
+      geneList <- data$log2FoldChange
+      names(geneList) = as.character(data$ENTREZID)
+      geneList <- sort(geneList, decreasing = TRUE)
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+        if(input$Gene_set6 == "KEGG"){
+          withProgress(message = "KEGG GSEA",{
+            kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
+                           organism = org_code6(), keyType = "kegg",
+                           exponent = 1, eps = 0, pAdjustMethod = "BH",
+                           minGSSize = 50, maxGSSize = 500, by = "fgsea",
+                           use_internal_data = FALSE, verbose = F)
+          })
+        }
+        if(input$Gene_set6 == "GO"){
+          withProgress(message = "GO GSEA takes a few minutes",{
+            kk3 <- gseGO(geneList = geneList, pvalueCutoff = 0.05,
+                         OrgDb = org6(), exponent = 1, eps = 0,
+                         pAdjustMethod = "BH", minGSSize = 50,
+                         maxGSSize = 500, by = "fgsea", verbose = F)
+            incProgress(1)
+          })
+        }
+        if (length(as.data.frame(kk3)$ID) == 0) {
+          kk3 <- NULL
+        } else{
+          kk3 <- setReadable(kk3, org6(), 'ENTREZID')
+        }
+        return(kk3)
+      }else{
+        withProgress(message = "GSEA",{
+          H_t2g <- multi_Hallmark_set()
+          em3 <- GSEA(geneList, TERM2GENE = H_t2g,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+                      minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F)
+          if (length(as.data.frame(em3)$ID) == 0) {
+            em4 <- NA
+          } else{
+            em4 <- setReadable(em3, org6(), 'ENTREZID')
+          }
+          return(em4)
+          incProgress(1)
+        })
+      }
+    }else return(NULL)
+  })
+  
+  
+  # Multi DEG enrichment plot ------------------------------------------------------------------------------
+  multi_enrich1_keggGO <- reactive({
+    if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+        kk4 <- multi_enrichment_1_gsea()
+        if (length(as.data.frame(kk4)$ID) == 0) {
+          p4 <- NULL
+        } else{
+          if (length(as.data.frame(kk4)$ID) >= 5){
+            p4 <- as.grob(gseaplot2(kk4, 1:5, pvalue_table = F))
+          }else{
+            p4 <- as.grob(gseaplot2(kk4, 1:length(kk4$ID), pvalue_table = F))
+          }
+        }
+        p <- plot_grid(p4, nrow = 1)
+        return(p)
+      }
+    }else return(NULL)
+  })
+  
+  multi_enrich1_H <- reactive({
+    if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
+      if(input$Gene_set6 == "MSigDB Hallmark" || input$Gene_set6 == "Transcription factor targets"){
+        H_t2g <- multi_Hallmark_set()
+        em3 <- multi_enrichment_1_gsea()
+        if (length(as.data.frame(em3)$ID) == 0) {
+          p4 <- NULL
+        } else{
+          if (length(as.data.frame(em3)$ID) >= 5){
+            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F))
+          }else{
+            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F))
+          }
+        }
+        p <- plot_grid(p4, nrow = 1)
+        return(p)
+      }
+    }else return(NULL)
+  })
+  
+  output$multi_enrichment1 <- renderPlot({
+    if(!is.null(input$Gene_set6)){
+      if(is.null(multi_enrich_pairFC())){
+        return(NULL)
+      }else{
+        withProgress(message = "Plot results",{
+          if(input$Species6 != "not selected"){
+            if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+              print(multi_enrich1_keggGO())
+            }else{
+              print(multi_enrich1_H())
+            }
+          }
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$Gene_set6 <- renderUI({
+    selectInput('Gene_set6', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+  })
+  
+  output$multi_GSEA_result <- DT::renderDataTable({
+    if(is.null(dds) || length(input$selectEnrich_pair) != 2){
+      return(NULL)
+    }else{
+      as.data.frame(multi_enrichment_1_gsea())
+    }
+  })
+  
+  output$download_multi_enrichment = downloadHandler(
+    filename = function(){
+      paste(download_multi_overview_dir(), paste0(input$Gene_set6,"-GSEA.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+          p1 <- multi_enrich1_keggGO()
+        }else{
+          p1 <- multi_enrich1_H()
+        }
+        pdf(file, height = 5, width = 7)
+        print(plot_grid(p1, nrow =1))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$download_multi_GSEA_table = downloadHandler(
+    filename = function() {
+      paste(download_multi_overview_dir(), paste0(input$Gene_set6,"-GSEA.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(multi_enrichment_1_gsea()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  #multi DEG enrichment 2--------
+  multi_Hallmark_set2 <- reactive({
+    if(input$Species6 != "not selected"){
+      if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        return(NULL)
+      }else{
+        switch (input$Species6,
+                "Mus musculus" = species <- "Mus musculus",
+                "Homo sapiens" = species <- "Homo sapiens",
+                "Rattus norvegicus" = species <- "Rattus norvegicus",
+                "Xenopus laevis" = species <- "Xenopus laevis",
+                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+        if(input$Gene_set7 == "MSigDB Hallmark"){
+          H_t2g <- msigdbr(species = species, category = "H") %>%
+            dplyr::select(gs_name, entrez_gene) 
+        }
+        if(input$Gene_set7 == "Transcription factor targets"){
+          H_t2g <- msigdbr(species = species, category = "C3")
+          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
+            dplyr::select(gs_name, entrez_gene)
+        }
+        return(H_t2g)
+      }
+    }else return(NULL)
+  })
+  
+  multi_Hallmark_set3 <- reactive({
+    if(input$Species6 != "not selected"){
+      if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        return(NULL)
+      }else{
+        switch (input$Species6,
+                "Mus musculus" = species <- "Mus musculus",
+                "Homo sapiens" = species <- "Homo sapiens",
+                "Rattus norvegicus" = species <- "Rattus norvegicus",
+                "Xenopus laevis" = species <- "Xenopus laevis",
+                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+        if(input$Gene_set8 == "MSigDB Hallmark"){
+          H_t2g <- msigdbr(species = species, category = "H") %>%
+            dplyr::select(gs_name, entrez_gene) 
+        }
+        if(input$Gene_set8 == "Transcription factor targets"){
+          H_t2g <- msigdbr(species = species, category = "C3")
+          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
+            dplyr::select(gs_name, entrez_gene)
+        }
+        return(H_t2g)
+      }
+    }else return(NULL)
+  })
+  
+  
+  output$Gene_set7 <- renderUI({
+    selectInput('Gene_set7', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+  })
+  
+  output$Gene_set8 <- renderUI({
+    selectInput('Gene_set8', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+  })
+  
+  output$multi_Spe <- renderText({
+    if(input$Species6 == "not selected") print("Please select 'Species'")
+  })
+  output$multi_Spe2 <- renderText({
+    if(input$Species6 == "not selected") print("Please select 'Species'")
+  })
+  
+  output$multi_whichGroup1_1 <- renderUI({
+    clusters <- multi_pattern2()$df
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      selectInput("multi_whichGroup1_1", "cluster_list", choices = c(unique(clusters$cluster)), multiple = TRUE)
+    }
+  })
+  
+  output$multi_whichGroup2_1 <- renderUI({
+    clusters <- multi_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("multi_whichGroup2_1", "cluster_list", choices = c(unique(clusters$Cluster)),multiple = TRUE)
+    }
+  })
+  
+  output$multi_whichGroup1_2 <- renderUI({
+    clusters <- multi_pattern2()$df
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      selectInput("multi_whichGroup1_2", "cluster_list", choices = c("not selected", unique(clusters$cluster)), selected = "not selected" ,multiple = F)
+    }
+  })
+  
+  output$multi_whichGroup2_2 <- renderUI({
+    clusters <- multi_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("multi_whichGroup2_2", "cluster_list", choices = c("not selected", unique(clusters$Cluster)), selected = "not selected", multiple = F)
+    }
+  })
+  
+  multi_enrich_input1 <- reactive({
+    if(is.null(input$multi_whichGroup1_1)){
+      return(NULL)
+    }else{
+      clusters <- multi_pattern2()$df
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      cluster_name <- input$multi_whichGroup1_1
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, cluster == name)
+        clusterCount2 <- data.frame(GeneID = rownames(clusterCount2), Group = clusterCount2$cluster)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  multi_enrich_input2 <- reactive({
+    if(is.null(input$multi_whichGroup2_1)){
+      return(NULL)
+    }else{
+      clusters <- multi_kmeans_cluster()
+      cluster_name <- input$multi_whichGroup2_1
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, Cluster == name)
+        clusterCount2 <- data.frame(GeneID = rownames(clusterCount2), Group = clusterCount2$Cluster)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  multi_enrich_viewer1 <- reactive({
+    df <- multi_enrich_input1()
+    if(is.null(df) || input$Species6 == "not selected"){
+      return(NULL)
+    }else{
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org6(), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+  })
+  
+  multi_enrich_viewer11 <- reactive({
+    df <- multi_enrich_input2()
+    if(is.null(df) || input$Species6 == "not selected"){
+      return(NULL)
+    }else{
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org6(), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+  })
+  
+  multi_enrich_viewer2 <- reactive({
+    if(!is.null(input$Gene_set7)){
+      data3 <- multi_enrich_viewer1()
+      if(is.null(data3)){
+        return(NULL)
+      }else{
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+          if(input$Gene_set7 == "KEGG"){
+            withProgress(message = "KEGG enrichment analysis",{
+              formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                                fun="enrichKEGG", organism=org_code6()), silent = T)
+              incProgress(1)
+            })
+          }
+          if(input$Gene_set7 == "GO"){
+            withProgress(message = "GO enrichment analysis",{
+              formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                                fun="enrichGO", OrgDb=org6()), silent =T)
+              incProgress(1)
+            })
+          }
+          if (length(as.data.frame(formula_res)$Description) == 0) {
+            formula_res <- NULL
+          }else{
+            formula_res <-setReadable(formula_res, org6(), 'ENTREZID')
+          }
+          return(formula_res)
+        }else{
+          withProgress(message = "enrichment analysis",{
+            H_t2g <- multi_Hallmark_set2()
+            df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+            colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+            for (name in unique(data3$Group)) {
+              em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+              if (length(as.data.frame(em)$ID) != 0) {
+                if(length(colnames(as.data.frame(em))) == 9){
+                  cnet1 <- as.data.frame(setReadable(em, org6(), 'ENTREZID'))
+                  cnet1$Group <- name
+                  df <- rbind(df, cnet1)
+                }
+              }
+            }
+            if(length(df$ID) !=0){
+              df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
+              df$GeneRatio <- parse_ratio(df$GeneRatio)
+              return(df)
+            }else return(NULL)
+          })
+        }
+      }
+    }
+  })
+  
+  multi_enrich_viewer12 <- reactive({
+    if(!is.null(input$Gene_set8)){
+      data3 <- multi_enrich_viewer11()
+      if(is.null(data3)){
+        return(NULL)
+      }else{
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+          if(input$Gene_set8 == "KEGG"){
+            withProgress(message = "KEGG enrichment analysis",{
+              formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                                fun="enrichKEGG", organism=org_code6()), silent = T)
+              incProgress(1)
+            })
+          }
+          if(input$Gene_set8 == "GO"){
+            withProgress(message = "GO enrichment analysis",{
+              formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
+                                                fun="enrichGO", OrgDb=org6()), silent =T)
+              incProgress(1)
+            })
+          }
+          if (length(as.data.frame(formula_res)$Description) == 0) {
+            formula_res <- NULL
+          }else{
+            formula_res <-setReadable(formula_res, org6(), 'ENTREZID')
+          }
+          return(formula_res)
+        }else{
+          withProgress(message = "enrichment analysis",{
+            H_t2g <- multi_Hallmark_set3()
+            df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+            colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+            for (name in unique(data3$Group)) {
+              em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+              if (length(as.data.frame(em)$ID) != 0) {
+                if(length(colnames(as.data.frame(em))) == 9){
+                  cnet1 <- as.data.frame(setReadable(em, org6(), 'ENTREZID'))
+                  cnet1$Group <- name
+                  df <- rbind(df, cnet1)
+                }
+              }
+            }
+            if(length(df$ID) !=0){
+              df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
+              df$GeneRatio <- parse_ratio(df$GeneRatio)
+              return(df)
+            }else return(NULL)
+          })
+        }
+      }
+    }
+  })
+  
+  multi_enrich_keggGO <- reactive({
+    if(!is.null(input$Gene_set7)){
+      formula_res <- multi_enrich_viewer2()
+      if(is.null(formula_res)){
+        return(NULL)
+      }else{
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+          if ((length(as.data.frame(formula_res)$Description) == 0) ||
+              length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
+          }
+          p <- plot_grid(p1)
+          return(p)
+        }
+      }
+    }
+  })
+  
+  multi_enrich_keggGO2 <- reactive({
+    if(!is.null(input$Gene_set8)){
+      formula_res <- multi_enrich_viewer12()
+      if(is.null(formula_res)){
+        return(NULL)
+      }else{
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+          if ((length(as.data.frame(formula_res)$Description) == 0) ||
+              length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
+          }
+          p <- plot_grid(p1)
+          return(p)
+        }
+      }
+    }
+  })
+  
+  multi_enrich_H <- reactive({
+    if(!is.null(input$Gene_set7)){
+      data3 <- multi_enrich_viewer1()
+      if(is.null(data3)){
+        return(NULL)
+      }else{
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+          return(NULL)
+        }else{
+          H_t2g <- multi_Hallmark_set2()
+          df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+          colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          for (name in unique(data3$Group)) {
+            em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            if (length(as.data.frame(em)$ID) != 0) {
+              if(length(colnames(as.data.frame(em))) == 9){
+                cnet1 <- as.data.frame(setReadable(em, org6(), 'ENTREZID'))
+                cnet1$Group <- name
+                cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
+                if (length(cnet1$pvalue) > 5){
+                  cnet1 <- cnet1[1:5,]
+                }
+                df <- rbind(df, cnet1)
+              }
+            }
+          }
+          if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "") 
+            df$GeneRatio <- parse_ratio(df$GeneRatio)
+            p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
+                            geom_point(aes(color=qvalue,size=GeneRatio)) +
+                            scale_color_continuous(low="red", high="blue",
+                                                   guide=guide_colorbar(reverse=TRUE)) +
+                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+            p <- plot_grid(p1)
+            return(p)
+          }
+        }}
+    }
+  })
+  
+  multi_enrich_H2 <- reactive({
+    if(!is.null(input$Gene_set8)){
+      data3 <- multi_enrich_viewer11()
+      if(is.null(data3)){
+        return(NULL)
+      }else{
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+          return(NULL)
+        }else{
+          H_t2g <- multi_Hallmark_set3()
+          df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+          colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          for (name in unique(data3$Group)) {
+            em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            if (length(as.data.frame(em)$ID) != 0) {
+              if(length(colnames(as.data.frame(em))) == 9){
+                cnet1 <- as.data.frame(setReadable(em, org6(), 'ENTREZID'))
+                cnet1$Group <- name
+                cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
+                if (length(cnet1$pvalue) > 5){
+                  cnet1 <- cnet1[1:5,]
+                }
+                df <- rbind(df, cnet1)
+              }
+            }
+          }
+          if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "") 
+            df$GeneRatio <- parse_ratio(df$GeneRatio)
+            p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
+                            geom_point(aes(color=qvalue,size=GeneRatio)) +
+                            scale_color_continuous(low="red", high="blue",
+                                                   guide=guide_colorbar(reverse=TRUE)) +
+                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+            p <- plot_grid(p1)
+            return(p)
+          }
+        }}
+    }
+  })
+  
+  output$multi_enrichment3 <- renderPlot({
+    if(!is.null(input$Gene_set7)){
+      if(is.null(multi_enrich_viewer2())){
+        return(NULL)
+      }else{
+        withProgress(message = "Plot results",{
+          if(input$Species6 != "not selected"){
+            if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+              print(multi_enrich_keggGO())
+            }else{
+              print(multi_enrich_H())
+            }
+          }
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  output$multi_enrichment5 <- renderPlot({
+    if(!is.null(input$Gene_set8)){
+      if(is.null(multi_enrich_viewer12())){
+        return(NULL)
+      }else{
+        withProgress(message = "Plot results",{
+          if(input$Species6 != "not selected"){
+            if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+              print(multi_enrich_keggGO2())
+            }else{
+              print(multi_enrich_H2())
+            }
+          }
+          incProgress(1)
+        })
+      }
+    }
+  })
+  
+  multi_enrich_input3 <- reactive({
+    if(is.null(input$multi_whichGroup1_2) || input$multi_whichGroup1_2 == "not selected"){
+      return(NULL)
+    }else{
+      clusters <- multi_pattern2()$df
+      clusters$cluster <- paste0("Group",clusters$cluster)
+      cluster_name <- input$multi_whichGroup1_2
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, cluster == name)
+        clusterCount2 <- data.frame(GeneID = rownames(clusterCount2), Group = clusterCount2$cluster)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  multi_enrich_input4 <- reactive({
+    if(is.null(input$multi_whichGroup2_2) || input$multi_whichGroup2_2 == "not selected"){
+      return(NULL)
+    }else{
+      clusters <- multi_kmeans_cluster()
+      cluster_name <- input$multi_whichGroup2_2
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, Cluster == name)
+        clusterCount2 <- data.frame(GeneID = rownames(clusterCount2), Group = clusterCount2$Cluster)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  multi_enrich_viewer3 <- reactive({
+    df <- multi_enrich_input3()
+    if(is.null(df) || input$Species6 == "not selected"){
+      return(NULL)
+    }else{
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org6(), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+  })
+  
+  multi_enrich_viewer13 <- reactive({
+    df <- multi_enrich_input4()
+    if(is.null(df) || input$Species6 == "not selected"){
+      return(NULL)
+    }else{
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org6(), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+  })
+  
+  multi_enrich2 <- reactive({
+    if(!is.null(input$Gene_set7)){
+      data <- multi_enrich_viewer3()
+      group <- input$multi_whichGroup1_2
+      if(is.null(data) || is.null(group)){
+        return(NULL)
+      }else{
+        data2 <- dplyr::filter(data, Group == group)
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+          if(input$Gene_set7 == "KEGG"){
+            kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code6(),
+                              pvalueCutoff = 0.05)
+          }
+          if(input$Gene_set7 == "GO"){
+            kk1 <- enrichGO(data2$ENTREZID, OrgDb = org6(),
+                            pvalueCutoff = 0.05)
+          }
+        }else{
+          H_t2g <- multi_Hallmark_set2()
+          kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+          if (class(kk1) == "try-error") kk1 <- NA
+        }
+        if(length(as.data.frame(kk1)$ID) == 0){
+          cnet1 <- NULL
+        } else {
+          cnet1 <- setReadable(kk1, org6(), 'ENTREZID')
+        }
+        if (length(as.data.frame(cnet1)$ID) == 0) {
+          p2 <- NULL
+        } else{
+          p2 <- try(as.grob(cnetplot(cnet1,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,
+                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+          if(length(class(p2)) == 1){
+            if(class(p2) == "try-error") p2 <- NULL
+          }else{p2 <- as.grob(cnetplot(cnet1,
+                                       cex_label_gene = 0.7, cex_label_category = 0.75,
+                                       cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
+        }
+        p <- plot_grid(p2)
+        return(p)
+      }
+    }
+  })
+  
+  multi_enrich12 <- reactive({
+    if(!is.null(input$Gene_set8)){
+      data <- multi_enrich_viewer13()
+      group <- input$multi_whichGroup2_2
+      if(is.null(data) || is.null(group)){
+        return(NULL)
+      }else{
+        data2 <- dplyr::filter(data, Group == group)
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+          if(input$Gene_set8 == "KEGG"){
+            kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code6(),
+                              pvalueCutoff = 0.05)
+          }
+          if(input$Gene_set8 == "GO"){
+            kk1 <- enrichGO(data2$ENTREZID, OrgDb = org6(),
+                            pvalueCutoff = 0.05)
+          }
+        }else{
+          H_t2g <- multi_Hallmark_set3()
+          kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+          if (class(kk1) == "try-error") kk1 <- NA
+        }
+        if(length(as.data.frame(kk1)$ID) == 0){
+          cnet1 <- NULL
+        } else {
+          cnet1 <- setReadable(kk1, org6(), 'ENTREZID')
+        }
+        if (length(as.data.frame(cnet1)$ID) == 0) {
+          p2 <- NULL
+        } else{
+          p2 <- try(as.grob(cnetplot(cnet1,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,
+                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+          if(length(class(p2)) == 1){
+            if(class(p2) == "try-error") p2 <- NULL
+          }else{p2 <- as.grob(cnetplot(cnet1,
+                                       cex_label_gene = 0.7, cex_label_category = 0.75,
+                                       cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
+        }
+        p <- plot_grid(p2)
+        return(p)
+      }
+    }
+  })
+  
+  output$multi_enrichment4 <- renderPlot({
+    if(!is.null(input$Gene_set7)){
+      if(is.null(multi_enrich_input3())){
+        return(NULL)
+      }else{
+        if(input$Species6 != "not selected"){
+          withProgress(message = "cnet plot",{
+            p <- multi_enrich2()
+            print(p)
+            incProgress(1)
+          })
+        }else return(NULL)
+      }
+    }
+  })
+  
+  output$multi_enrichment6 <- renderPlot({
+    if(!is.null(input$Gene_set8)){
+      if(is.null(multi_enrich_input4())){
+        return(NULL)
+      }else{
+        if(input$Species6 != "not selected"){
+          withProgress(message = "cnet plot",{
+            p <- multi_enrich12()
+            print(p)
+            incProgress(1)
+          })
+        }else return(NULL)
+      }
+    }
+  })
+  
+  output$download_multi_cluster_enrichment = downloadHandler(
+    filename = function(){
+      paste(download_multi_overview_dir(), paste0(input$Gene_set7,"_divisive_enrichment.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+          p1 <- multi_enrich_keggGO()
+        }else{
+          p1 <- multi_enrich_H()
+        }
+        pdf(file, height = 6, width = 8)
+        print(p1)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$download_multi_cluster_enrichment2 = downloadHandler(
+    filename = function(){
+      paste(download_multi_overview_dir(), paste0(input$Gene_set8,"_kmeans_enrichment.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+          p1 <- multi_enrich_keggGO2()
+        }else{
+          p1 <- multi_enrich_H2()
+        }
+        pdf(file, height = 6, width = 8)
+        print(p1)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$download_multi_enrichment_cnet = downloadHandler(
+    filename = function(){
+      paste(download_multi_overview_dir(), paste0(input$Gene_set7,"_divisive_cnet.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        p <- multi_enrich2()
+        pdf(file, height = 6, width = 6)
+        print(p)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$download_multi_enrichment_cnet2 = downloadHandler(
+    filename = function(){
+      paste(download_multi_overview_dir(), paste0(input$Gene_set8,"_kmeans_cnet.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        p <- multi_enrich12()
+        pdf(file, height = 6, width = 6)
+        print(p)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$multi_enrichment_result <- DT::renderDataTable({
+    as.data.frame(multi_enrich_viewer2())
+  })
+  
+  output$multi_enrichment_result2 <- DT::renderDataTable({
+    as.data.frame(multi_enrich_viewer12())
+  })
+  
+  output$download_multi_enrichment_table = downloadHandler(
+    filename = function() {
+      paste(download_multi_overview_dir(), paste0(input$Gene_set7,"_divisive_enrichment.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(multi_enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  output$download_multi_enrichment_table2 = downloadHandler(
+    filename = function() {
+      paste(download_multi_overview_dir(), paste0(input$Gene_set8,"_kmeans_enrichment.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(multi_enrich_viewer12()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  #Multi PCA ------------------------------------------------------------------------------
+  multiPCAdata <- reactive({
+    if(is.null(multi_d_row_count_matrix())){
+      return(NULL)
+    }else{
+      data <- multi_deg_norm_count()
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
+      pca <- prcomp(data, scale. = T)
+      label<- colnames(data)
+      label<- gsub("\\_.+$", "", label)
+      lab_x <- paste(summary(pca)$importance[2,1]*100,
+                     "% of variance)", sep = "")
+      lab_x <- paste("PC1 (", lab_x, sep = "")
+      lab_y <- paste(summary(pca)$importance[2,2]*100,
+                     "% of variance)", sep = "")
+      lab_y <- paste("PC2 (", lab_y, sep = "")
+      pca$rotation <- as.data.frame(pca$rotation)
+      return(pca$rotation)
+    }
+  })
+  
+  multi_pca_plot <- reactive({
+    data <- multi_deg_norm_count()
+    withProgress(message = "PCA",{
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
+      pca <- prcomp(data, scale. = T)
+      label<- colnames(data)
+      label<- gsub("\\_.+$", "", label)
+      lab_x <- paste(summary(pca)$importance[2,1]*100,
+                     "% of variance)", sep = "")
+      lab_x <- paste("PC1 (", lab_x, sep = "")
+      lab_y <- paste(summary(pca)$importance[2,2]*100,
+                     "% of variance)", sep = "")
+      lab_y <- paste("PC2 (", lab_y, sep = "")
+      pca$rotation <- as.data.frame(pca$rotation)
+      g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
+                                    y=pca$rotation[,2],
+                                    col=label, label = label)) +
+        geom_point()+
+        theme(panel.background =element_rect(fill=NA,color=NA),
+              panel.border = element_rect(fill = NA)) +
+        xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
+        theme(legend.position="none", aspect.ratio=1)
+      rho <- cor(data,method="spearman")
+      d <- dist(1-rho)
+      mds <- as.data.frame(cmdscale(d))
+      label<-colnames(data)
+      label<-gsub("\\_.+$", "", label)
+      g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
+                            col = label, label = label)) +
+        geom_point()+
+        theme(panel.background =element_rect(fill=NA,color=NA),
+              panel.border = element_rect(fill = NA)) +
+        xlab("dim 1") + ylab("dim 2") +
+        geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
+      x <- NULL
+      y <- NULL
+      xend <- NULL
+      yend <- NULL
+      data.t <- t(data)
+      hc <- hclust(dist(data.t), "ward.D2")
+      dendr <- dendro_data(hc, type="rectangle")
+      g3 <- ggplot() +
+        geom_segment(data=segment(dendr),
+                     aes(x=x, y=y, xend=xend, yend=yend)) +
+        geom_text(data=label(dendr),
+                  aes(x, y, label=label, hjust=0), size=3) +
+        theme(legend.position = "none",
+              axis.line.x=element_blank(),
+              axis.text.x=element_blank(),
+              axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
+              axis.title.x=element_blank(),axis.text.y=element_blank(),
+              panel.grid.minor.x=element_blank(),
+              axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
+        coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
+      p2 <- plot_grid(g1, g2, g3, nrow = 1)
+      return(p2)
+    })
+  })
+  
+  output$download_multi_PCA = downloadHandler(
+    filename = function(){
+      paste0(download_multi_overview_dir(), "_PCA-MDS-dendrogram.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 9)
+        print(pair_pca_plot())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$multi_PCA <- renderPlot({
+    if(is.null(multi_d_row_count_matrix())){
+      return(NULL)
+    }else{
+      print(multi_pca_plot())
+    }
+  })
+  
+  output$multi_PCA_data <- DT::renderDataTable({
+    multiPCAdata()
+  })
+  
+  output$download_multi_PCA_table = downloadHandler(
+    filename = function() {
+      paste0(download_multi_overview_dir(), "_PCA_table.txt")
+    },
+    content = function(file){write.table(multiPCAdata(), file, row.names = T, sep = "\t", quote = F)}
+  )
+  
   # 3 conditions ------------------------------------------------------------------------------
   org2 <- reactive({
     if(input$Species2 != "not selected"){
@@ -5044,7 +7323,7 @@ output$download_pair_deg_count_down = downloadHandler(
   gene_list <- reactive({
     data <- input$file10$datapath
     if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
-    if(is.null(input$file10) && input$goButton3 > 0 )  data = "data/example10.txt"
+    if(is.null(input$file10) && input$goButton3 > 0 )  data = "data/enrich_example.txt"
     if(tools::file_ext(data) == "xlsx") df <- read.xls(data, header=TRUE, row.names = 1)
     if(tools::file_ext(data) == "csv") df <- read.csv(data, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(data) == "txt") df <- read.table(data, header=TRUE, sep = "\t", row.names = 1)
@@ -5582,8 +7861,25 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   })
 
-  norm_data_z <- reactive({
+  output$kmeans_cv <- renderUI({
+      sliderInput("kmeans_cv", "Most variable genes:", min = 0,
+                  max=8000, step = 100,
+                  value = 2000)
+  })
+  
+  
+  norm_count_matrix_cutoff2 <- reactive({
     data <- d_norm_count_matrix_cutofff()
+    if(is.null(data) || is.null(input$kmeans_cv)){
+      return(NULL)
+    }else{
+      data2 <- data[order(apply(data,1,mad), decreasing = T)[1:input$kmeans_cv],]
+      return(data2)
+    }
+  })
+  
+  norm_data_z <- reactive({
+    data <- norm_count_matrix_cutoff2()
     if(is.null(data)){
       return(NULL)
     }else{
@@ -5602,7 +7898,7 @@ output$download_pair_deg_count_down = downloadHandler(
         ht <- Heatmap(data.z, name = "z-score",
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
-                      row_km= input$norm_kmeans_number, cluster_row_slices = F, row_km_repeats = 1000,
+                      row_km= input$norm_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
                       show_row_names = F)
         ht <- draw(ht)
         return(ht)
@@ -5613,7 +7909,7 @@ output$download_pair_deg_count_down = downloadHandler(
   norm_kmeans_cluster <- reactive({
     ht <- norm_kmeans()
     data.z <- norm_data_z()
-    data <- d_norm_count_matrix_cutofff()
+    data <- norm_count_matrix_cutoff2()
     if(is.null(ht) || is.null(data.z)){
       return(NULL)
     }else{

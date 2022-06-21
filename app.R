@@ -387,7 +387,10 @@ ui<- fluidPage(
                           fluidRow(
                             column(4, downloadButton("download_multi_PCA", "Download clustering analysis"))
                           ),
-                          plotOutput("multi_PCA"),
+                          div(
+                            plotOutput("multi_PCA", height = "100%"),
+                            style = "height: calc(100vh  - 100px)"
+                          ),
                           bsCollapse(id="input_collapse_multi_DEG",open="DEG_panel",multiple = TRUE,
                                      bsCollapsePanel(title="DEG_result:",
                                                      value="DEG_panel",
@@ -3618,7 +3621,7 @@ output$download_pair_deg_count_down = downloadHandler(
   multi_pattern1_2 <- reactive({
     sig_res_LRT <- multi_pattern1()
     dds <- multi_dds()
-    if(is.null(sig_res_LRT)){
+    if(length(sig_res_LRT$gene) == 0){
       return(NULL)
     }else{
       withProgress(message = "Select most significant genes",{
@@ -3894,6 +3897,14 @@ output$download_pair_deg_count_down = downloadHandler(
         meta <- data.frame(condition = factor(collist))
       }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
       res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
+      
+      collist <- gsub("\\_.+$", "", colnames(data))
+      data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
+      res <- as.data.frame(res)
+      data2 <- merge(res,data, by=0)
+      res <- data2[,1:7]
+      rownames(res) <- res$Row.names
+      
       sig_res_LRT <- res %>% 
         data.frame() %>%
         rownames_to_column(var="gene") %>%
@@ -5181,7 +5192,53 @@ output$download_pair_deg_count_down = downloadHandler(
     }
   })
   
+  multi_heat <- reactive({
+    data <- as.data.frame(multi_deg_norm_count())
+    meta <- multi_metadata()
+    dds <- multi_dds()
+    if(is.null(dds)){
+      return(NULL)
+    }else{
+      withProgress(message = "DEG heatmap",{
+        if (input$multi_data_file_type == "Row1"){
+          collist <- gsub("\\_.+$", "", colnames(data))
+          meta <- data.frame(condition = factor(collist))
+        }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+        res <- results(dds)
+        
+        collist <- gsub("\\_.+$", "", colnames(data))
+        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
+        res <- as.data.frame(res)
+        data2 <- merge(res,data, by=0)
+        res <- data2[,1:7]
+        rownames(res) <- res$Row.names
+        
+        sig_res_LRT <- res %>% 
+          data.frame() %>%
+          rownames_to_column(var="gene") %>%
+          as_tibble() %>%
+          filter(padj < input$fdr6)
+        data <- data %>% 
+          data.frame() %>%
+          rownames_to_column(var="gene")
+        data <- merge(data, sig_res_LRT, by = "gene")
+        rownames(data) <- data$gene
+        data <- data[,2:(1+length(collist))]
+        if(length(rownames(data)) == 0){
+          ht <- NULL
+        }else{
+        data.z <- genescale(data, axis=1, method="Z")
+        ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
+                              clustering_method_columns = 'ward.D2',
+                              show_row_names = F, show_row_dend = T))
+        return(ht)
+        }
+      })
+    }
+  })
+  
   multi_pca_plot <- reactive({
+    ht <- multi_heat()
     data <- multi_deg_norm_count()
     withProgress(message = "PCA",{
       if(length(grep("SYMBOL", colnames(data))) != 0){
@@ -5237,7 +5294,11 @@ output$download_pair_deg_count_down = downloadHandler(
               panel.grid.minor.x=element_blank(),
               axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
         coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
-      p2 <- plot_grid(g1, g2, g3, nrow = 1)
+      if(is.null(ht)){
+        p2 <- gridExtra::grid.arrange(gridExtra::arrangeGrob(g1, g2, g3, ncol = 1), ncol = 2)
+      }else{
+      p2 <- gridExtra::grid.arrange(gridExtra::arrangeGrob(g1, g2, g3, ncol = 1), ht, ncol = 2)
+      }
       return(p2)
     })
   })
@@ -5248,8 +5309,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
-        print(pair_pca_plot())
+        pdf(file, height = 9, width = 7)
+        print(multi_pca_plot())
         dev.off()
         incProgress(1)
       })

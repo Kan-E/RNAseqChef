@@ -67,12 +67,12 @@ ui<- fluidPage(
                            h4(strong("Pair-wise DEG")),
                            "Detects and visualizes differentially expressed genes",
                            img(src="Pair-wise_DEG.png", width = 600,height = 300),br(),hr(),
-                           h4(strong("Multi DEG")),
-                           "Detects and visualizes differentially expressed genes by DESeq2 LRT following clustering analysis",
-                           img(src="Multi DEG.png", width = 600,height = 682),br(),hr(),
                            h4(strong("3 conditions DEG")),
                            "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",
-                           img(src="3cond_DEG.png", width = 600,height = 475)),
+                           img(src="3cond_DEG.png", width = 600,height = 475),br(),hr(),
+                           h4(strong("Multi DEG")),
+                           "Detects and visualizes differentially expressed genes by DESeq2 LRT following clustering analysis",
+                           img(src="Multi DEG.png", width = 600,height = 682)),
                     column(6,hr(),
                            h4(strong("Venn diagram")),
                            "Detects and visualizes the overlap between DEGs from multiple datasets",
@@ -302,6 +302,190 @@ ui<- fluidPage(
              ) # main panel
            ) #sidebarLayout
   ), #tabPanel
+  # 3conditions -------------------------------------
+  tabPanel("3 conditions DEG",
+           sidebarLayout(
+             
+             # sidebar_3conditions---------------------------------
+             sidebarPanel(
+               radioButtons('data_file_type2','Input:',
+                            c('Raw_count_matrix'="Row3",
+                              'Option: Raw_count_matrix + Metadata'="Row4"
+                            ),selected = "Row3"),
+               # Conditional panels appear based on input.data_file_type selection
+               conditionalPanel(condition="input.data_file_type2=='Row3'",
+                                strong("Count matrix format: "),br(),
+                                "The replication number is represented by the underbar.",br(),
+                                "Do not use it for anything else.", br(),
+                                fileInput("file4",
+                                          label = "Select a raw count matrix file (txt, csv)",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%")
+               ),
+               conditionalPanel(condition="input.data_file_type2=='Row4'",
+                                strong("Count matrix format: "),br(),
+                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
+                                "the metadata.", br(),
+                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                fileInput("file5",
+                                          label = "Select a raw count matrix file (txt, csv)",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%"),
+                                fileInput("file6",
+                                          label = "Select a metadata file to define samples for the following analysis",
+                                          accept = c("txt", "csv"),
+                                          multiple = FALSE,
+                                          width = "80%")
+               ),
+               fluidRow(
+                 column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
+                                                                "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+               h4("Cut-off conditions:"),
+               fluidRow(
+                 column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
+                 column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
+                 column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
+               ),
+               "Option: Normalized count file:",br(),
+               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
+               fileInput("norm_file2",
+                         label = "Select a normalized count file",
+                         accept = c("txt", "csv"),
+                         multiple = FALSE,
+                         width = "80%"),
+               actionButton("goButton2", "example data (mouse)"),
+               tags$head(tags$style("#goButton{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                         tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                         ))
+             ), #sidebarPanel
+             
+             # Main Panel -------------------------------------
+             mainPanel(
+               tabsetPanel(
+                 type = "tabs",
+                 tabPanel("Input 3 conditions Data",
+                          bsCollapse(id="input_collapse_panel2",open="Row_count_panel2",multiple = FALSE,
+                                     bsCollapsePanel(title="Raw_count_matrix:",
+                                                     value="Row_count_panel2",
+                                                     dataTableOutput('Row_count_matrix2')
+                                     ),
+                                     bsCollapsePanel(title="Metadata:",
+                                                     value="Metadata_panel2",
+                                                     dataTableOutput('Metadata2')
+                                     ),
+                                     bsCollapsePanel(title="Defined_raw_count_matrix:",
+                                                     value="D_row_count_matrix_panel2",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
+                                                     ),
+                                                     dataTableOutput('D_Row_count_matrix2')
+                                     )
+                          )
+                 ),
+                 tabPanel("Result overview",
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
+                          ),
+                          plotOutput("PCA2"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
+                            column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
+                          ),
+                          plotOutput("scatter_1"),
+                          dataTableOutput("DEG_result2_1"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
+                            column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
+                          ),
+                          plotOutput("scatter_2"),
+                          dataTableOutput("DEG_result2_2"),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
+                            column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
+                          ),
+                          plotOutput("scatter_3"),
+                          dataTableOutput("DEG_result2_3"),
+                          bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
+                                     bsCollapsePanel(title="Normalized_Count_matrix:",
+                                                     value="norm_panel2",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_norm_count", "Download normalized count"))
+                                                     ),
+                                                     dataTableOutput("Normalized_Count_matrix2")
+                                     ),
+                                     bsCollapsePanel(title="PCA:",
+                                                     value="PCA3_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_pca_table", "Download PCA table"))
+                                                     ),
+                                                     dataTableOutput("PCA3_data")
+                                     )
+                          )),
+                 tabPanel("GOI profiling",
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_scatter", "Download scatter plot")),
+                            column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
+                          ),
+                          fluidRow(
+                            column(4, htmlOutput("GOI2"))
+                          ),
+                          plotOutput("cond3_GOIheatmap"),
+                          div(
+                            plotOutput("cond3_GOIboxplot", height = "100%"),
+                            style = "height: calc(100vh  - 100px)"
+                          ),
+                          fluidRow(
+                            column(4, downloadButton("download_3cond_GOIbox", "Download boxplot"))
+                          )
+                 ),
+                 tabPanel("Enrichment analysis",
+                          fluidRow(
+                            column(4, textOutput("Spe2"),
+                                   tags$head(tags$style("#Spe2{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
+                            column(4, htmlOutput("Gene_set2")),
+                            column(4, downloadButton("download_cond3_enrichment", "Download"))
+                          ),
+                          plotOutput("keggenrichment2_1"),
+                          plotOutput("keggenrichment2_2"),
+                          plotOutput("keggenrichment2_3"),
+                          bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
+                                     bsCollapsePanel(title="Enrichment result1:",
+                                                     value="ORA3_1_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table1", "Download enrichment result table 1"))
+                                                     ),
+                                                     dataTableOutput('enrichment3_result_1')
+                                     ),
+                                     bsCollapsePanel(title="Enrichment result2:",
+                                                     value="ORA3_2_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table2", "Download enrichment result table 2"))
+                                                     ),
+                                                     dataTableOutput('enrichment3_result_2')
+                                     ),
+                                     bsCollapsePanel(title="Enrichment result3:",
+                                                     value="ORA3_3_panel",
+                                                     fluidRow(
+                                                       column(4, downloadButton("download_cond3_enrichment_table3", "Download enrichment result table 3"))
+                                                     ),
+                                                     dataTableOutput('enrichment3_result_3')
+                                     )
+                          ))
+               )
+             ) # main panel
+           ) #sidebarLayout
+  ), #tabPanel
   # Multi DEG -------------------------------------
   tabPanel("Multi DEG",
            sidebarLayout(
@@ -414,7 +598,7 @@ ui<- fluidPage(
                                                      dataTableOutput("multi_PCA_data")
                                      )
                           )),
-                 tabPanel("Divisive analysis clustering",
+                 tabPanel("Divisive clustering",
                           fluidRow(
                             column(4, downloadButton("download_multi_boxplot", "Download boxplots"))
                           ),
@@ -864,190 +1048,6 @@ ui<- fluidPage(
   ),
   #Instruction--------------------------
   navbarMenu("More",
-             # 3conditions -------------------------------------
-             tabPanel("3 conditions DEG",
-                      sidebarLayout(
-                        
-                        # sidebar_3conditions---------------------------------
-                        sidebarPanel(
-                          radioButtons('data_file_type2','Input:',
-                                       c('Raw_count_matrix'="Row3",
-                                         'Option: Raw_count_matrix + Metadata'="Row4"
-                                       ),selected = "Row3"),
-                          # Conditional panels appear based on input.data_file_type selection
-                          conditionalPanel(condition="input.data_file_type2=='Row3'",
-                                           strong("Count matrix format: "),br(),
-                                           "The replication number is represented by the underbar.",br(),
-                                           "Do not use it for anything else.", br(),
-                                           fileInput("file4",
-                                                     label = "Select a raw count matrix file (txt, csv)",
-                                                     accept = c("txt", "csv"),
-                                                     multiple = FALSE,
-                                                     width = "80%")
-                          ),
-                          conditionalPanel(condition="input.data_file_type2=='Row4'",
-                                           strong("Count matrix format: "),br(),
-                                           "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
-                                           "the metadata.", br(),
-                                           "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
-                                           fileInput("file5",
-                                                     label = "Select a raw count matrix file (txt, csv)",
-                                                     accept = c("txt", "csv"),
-                                                     multiple = FALSE,
-                                                     width = "80%"),
-                                           fileInput("file6",
-                                                     label = "Select a metadata file to define samples for the following analysis",
-                                                     accept = c("txt", "csv"),
-                                                     multiple = FALSE,
-                                                     width = "80%")
-                          ),
-                          fluidRow(
-                            column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
-                                                                           "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
-                          h4("Cut-off conditions:"),
-                          fluidRow(
-                            column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
-                            column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
-                            column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
-                          ),
-                          "Option: Normalized count file:",br(),
-                          "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
-                          fileInput("norm_file2",
-                                    label = "Select a normalized count file",
-                                    accept = c("txt", "csv"),
-                                    multiple = FALSE,
-                                    width = "80%"),
-                          actionButton("goButton2", "example data (mouse)"),
-                          tags$head(tags$style("#goButton{color: black;
-                                 font-size: 12px;
-                                 font-style: italic;
-                                 }"),
-                                    tags$style("
-          body {
-            padding: 0 !important;
-          }"
-                                    ))
-                        ), #sidebarPanel
-                        
-                        # Main Panel -------------------------------------
-                        mainPanel(
-                          tabsetPanel(
-                            type = "tabs",
-                            tabPanel("Input 3 conditions Data",
-                                     bsCollapse(id="input_collapse_panel2",open="Row_count_panel2",multiple = FALSE,
-                                                bsCollapsePanel(title="Raw_count_matrix:",
-                                                                value="Row_count_panel2",
-                                                                dataTableOutput('Row_count_matrix2')
-                                                ),
-                                                bsCollapsePanel(title="Metadata:",
-                                                                value="Metadata_panel2",
-                                                                dataTableOutput('Metadata2')
-                                                ),
-                                                bsCollapsePanel(title="Defined_raw_count_matrix:",
-                                                                value="D_row_count_matrix_panel2",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
-                                                                ),
-                                                                dataTableOutput('D_Row_count_matrix2')
-                                                )
-                                     )
-                            ),
-                            tabPanel("Result overview",
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
-                                     ),
-                                     plotOutput("PCA2"),
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
-                                       column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
-                                     ),
-                                     plotOutput("scatter_1"),
-                                     dataTableOutput("DEG_result2_1"),
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
-                                       column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
-                                     ),
-                                     plotOutput("scatter_2"),
-                                     dataTableOutput("DEG_result2_2"),
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
-                                       column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
-                                     ),
-                                     plotOutput("scatter_3"),
-                                     dataTableOutput("DEG_result2_3"),
-                                     bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
-                                                bsCollapsePanel(title="Normalized_Count_matrix:",
-                                                                value="norm_panel2",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_norm_count", "Download normalized count"))
-                                                                ),
-                                                                dataTableOutput("Normalized_Count_matrix2")
-                                                ),
-                                                bsCollapsePanel(title="PCA:",
-                                                                value="PCA3_panel",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_pca_table", "Download PCA table"))
-                                                                ),
-                                                                dataTableOutput("PCA3_data")
-                                                )
-                                     )),
-                            tabPanel("GOI profiling",
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_scatter", "Download scatter plot")),
-                                       column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
-                                     ),
-                                     fluidRow(
-                                       column(4, htmlOutput("GOI2"))
-                                     ),
-                                     plotOutput("cond3_GOIheatmap"),
-                                     div(
-                                       plotOutput("cond3_GOIboxplot", height = "100%"),
-                                       style = "height: calc(100vh  - 100px)"
-                                     ),
-                                     fluidRow(
-                                       column(4, downloadButton("download_3cond_GOIbox", "Download boxplot"))
-                                     )
-                            ),
-                            tabPanel("Enrichment analysis",
-                                     fluidRow(
-                                       column(4, textOutput("Spe2"),
-                                              tags$head(tags$style("#Spe2{color: red;
-                                 font-size: 20px;
-            font-style: bold;
-            }"))),
-                                       column(4, htmlOutput("Gene_set2")),
-                                       column(4, downloadButton("download_cond3_enrichment", "Download"))
-                                     ),
-                                     plotOutput("keggenrichment2_1"),
-                                     plotOutput("keggenrichment2_2"),
-                                     plotOutput("keggenrichment2_3"),
-                                     bsCollapse(id="input_collapse_3_enrich",open="ORA3_1_panel",multiple = TRUE,
-                                                bsCollapsePanel(title="Enrichment result1:",
-                                                                value="ORA3_1_panel",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_enrichment_table1", "Download enrichment result table 1"))
-                                                                ),
-                                                                dataTableOutput('enrichment3_result_1')
-                                                ),
-                                                bsCollapsePanel(title="Enrichment result2:",
-                                                                value="ORA3_2_panel",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_enrichment_table2", "Download enrichment result table 2"))
-                                                                ),
-                                                                dataTableOutput('enrichment3_result_2')
-                                                ),
-                                                bsCollapsePanel(title="Enrichment result3:",
-                                                                value="ORA3_3_panel",
-                                                                fluidRow(
-                                                                  column(4, downloadButton("download_cond3_enrichment_table3", "Download enrichment result table 3"))
-                                                                ),
-                                                                dataTableOutput('enrichment3_result_3')
-                                                )
-                                     ))
-                          )
-                        ) # main panel
-                      ) #sidebarLayout
-             ), #tabPanel
              tabPanel("Volcano navi",
                       sidebarLayout(
                         # volcano navi---------------------------------

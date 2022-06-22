@@ -11,7 +11,7 @@ To run this app locally on your machine, R environment setup is required.
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel","ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW","qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db","org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter","ComplexHeatmap","shinyBS","plotly","shinyjs","devtools")
+pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel","ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW","qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db","org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter","ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport")
 
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
@@ -82,6 +82,9 @@ ComplexHeatmap (for heatmap and k-means clustering)
 ggplot2 and ggpubr (for boxplot and scater plot)
 - H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 - Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr
+
+DEGreport (for divisive clustering analysis)
+- Pantano L (2022). DEGreport: Report of DEG analysis. R package version 1.32.0, http://lpantano.github.io/DEGreport
 
 venn (for venn diagram analysis)
 - Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn

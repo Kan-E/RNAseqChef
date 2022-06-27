@@ -112,7 +112,7 @@ ui<- fluidPage(
                                 strong("Count matrix format: "),br(),
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
-                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file1",
                                           label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
@@ -196,7 +196,7 @@ ui<- fluidPage(
                                      bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                      value="D_row_count_matrix_panel",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_pair_d_row_count", "Download difined raw count"))
+                                                       column(4, downloadButton("download_pair_d_row_count", "Download defined raw count"))
                                                      ),
                                                      dataTableOutput('D_Row_count_matrix')
                                      )
@@ -327,7 +327,7 @@ ui<- fluidPage(
                                 strong("Count matrix format: "),br(),
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
-                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file5",
                                           label = "Select a raw count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
@@ -384,7 +384,7 @@ ui<- fluidPage(
                                      bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                      value="D_row_count_matrix_panel2",
                                                      fluidRow(
-                                                       column(4, downloadButton("download_cond3_d_row_count", "Download difined row count"))
+                                                       column(4, downloadButton("download_cond3_d_row_count", "Download defined row count"))
                                                      ),
                                                      dataTableOutput('D_Row_count_matrix2')
                                      )
@@ -864,7 +864,7 @@ ui<- fluidPage(
                                 strong("Count matrix format: "),br(),
                                 "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
                                 "the metadata.", br(),
-                                "The replication number is represented by the underbar in the characteristics of metadata.",br(),br(),
+                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file8",
                                           label = "Select a normalized count matrix file (txt, csv)",
                                           accept = c("txt", "csv"),
@@ -927,7 +927,7 @@ ui<- fluidPage(
                                    bsCollapsePanel(title="Defined_normalized_count_matrix:",
                                                    value="D_norm_count_matrix_panel",
                                                    fluidRow(
-                                                     column(4, downloadButton("download_d_norm_count", "Download difined normalized count"))
+                                                     column(4, downloadButton("download_d_norm_count", "Download defined normalized count"))
                                                    ),
                                                    dataTableOutput('d_norm_count')
                                    )
@@ -1279,7 +1279,7 @@ row_count_matrix <- reactive({
         row_t <- t(row)
         colname <- colnames(meta)
         data <- merge(meta, row_t, by=0, sort = F)
-        rownames(data) <- data$characteristics
+        rownames(data) <- data[,2]
         data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
         data2_t <- t(data2)
         data3 <- apply(data2_t, 2, as.numeric)
@@ -2312,8 +2312,15 @@ output$download_pair_deg_count_down = downloadHandler(
         }
         if (class(formula_res) == "try-error") {
           formula_res <- NULL
-        }else
           return(formula_res)
+        }else{
+          if (length(as.data.frame(formula_res)$ID) == 0) {
+            formula_res <- NULL
+          }else{
+          formula_res <- setReadable(formula_res, org1(), 'ENTREZID')
+          }
+          return(formula_res)
+        }
       }else{
         withProgress(message = "enrichment analysis",{
         H_t2g <- Hallmark_set()
@@ -5431,7 +5438,7 @@ output$download_pair_deg_count_down = downloadHandler(
         row_t <- t(row)
         colname <- colnames(meta)
         data <- merge(meta, row_t, by=0, sort = F)
-        rownames(data) <- data$characteristics
+        rownames(data) <- data[,2]
         data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
         data2_t <- t(data2)
         data3 <- apply(data2_t, 2, as.numeric)
@@ -7419,7 +7426,7 @@ output$download_pair_deg_count_down = downloadHandler(
           row_t <- t(row)
           colname <- colnames(meta)
           data <- merge(meta, row_t, by=0, sort = F)
-          rownames(data) <- data$characteristics
+          rownames(data) <- data[,2]
           data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
           data2_t <- t(data2)
           data3 <- apply(data2_t, 2, as.numeric)

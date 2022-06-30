@@ -8445,9 +8445,9 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "data/enrich_example.txt"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
+      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",")
+      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t")
       return(df)
     }
   })
@@ -8462,7 +8462,7 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(data) || input$Species4 == "not selected"){
       return(NULL)
     }else{
-      df <- data.frame(GeneID = rownames(data), Group = data[,1])
+      df <- data.frame(GeneID = data[,1], Group = data[,2])
       my.symbols <- df$GeneID
       if(str_detect(df$GeneID[1], "ENS")){
         gene_IDs<-AnnotationDbi::select(org4(),keys = my.symbols,

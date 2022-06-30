@@ -37,6 +37,7 @@ library(plotly,verbose=FALSE)
 library('shinyjs', verbose = FALSE)
 library(BiocManager)
 options(repos = BiocManager::repositories())
+msigdbr_species <- msigdbr_species()$species_name
 
 ui<- fluidPage(
   tags$head(includeHTML(("google-analytics.html"))),
@@ -1132,6 +1133,24 @@ ui<- fluidPage(
                         )
                       ) #sidebarLayout
              ),
+             tabPanel("MSigDB gene list",
+                      sidebarLayout(
+                        # MSigDB gene list---------------------------------
+                        sidebarPanel(
+                          selectInput("msigdbr_Species", "Species", c("", msigdbr_species), selected = "not selected"),
+                          selectizeInput("msigdbr_gene_set", label="Name of gene set", choices = '')
+                          #sidebarPanel
+                        ),
+                        
+                        # Main Panel -------------------------------------
+                        mainPanel(
+                          fluidRow(
+                            column(4, downloadButton("download_msigdbr_list", "Download"))
+                          ),
+                          dataTableOutput('msigdbr_geneset')
+                        )
+                      ) #sidebarLayout
+             ),
              tabPanel("Reference",
                       fluidRow(
                         column(10,
@@ -1243,6 +1262,7 @@ row_count_matrix <- reactive({
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+    rownames(df) <- gsub("-",".",rownames(df))
     return(df)
     }
   })
@@ -1277,9 +1297,10 @@ row_count_matrix <- reactive({
         return(NULL)
       } else {
         row_t <- t(row)
+        meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
         colname <- colnames(meta)
         data <- merge(meta, row_t, by=0, sort = F)
-        rownames(data) <- data[,2]
+        rownames(data) <- data$characteristics
         data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
         data2_t <- t(data2)
         data3 <- apply(data2_t, 2, as.numeric)
@@ -2096,47 +2117,47 @@ output$download_pair_deg_count_down = downloadHandler(
         }
         rowlist <- rownames(data2)
         if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 15
-        pdf_wsize <- 15}
+        {pdf_hsize <- 22.5
+        pdf_wsize <- 22.5}
         if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 20.25
+        pdf_wsize <- 20.25}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 18
+        pdf_wsize <- 18}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 15.75
+        pdf_wsize <- 15.75}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
         {pdf_hsize <- 13.5
         pdf_wsize <- 13.5}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 12
-        pdf_wsize <- 12}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 10.5
-        pdf_wsize <- 10.5}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 11.5
+        pdf_wsize <- 11.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
         {pdf_hsize <- 9
         pdf_wsize <- 9}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
         {pdf_hsize <- 7.5
-        pdf_wsize <- 7.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 6.75}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 6
+        pdf_wsize <- 9}
+        if (length(rowlist) == 4)
         {pdf_hsize <- 6
         pdf_wsize <- 6}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 5
-        pdf_wsize <- 6}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 5
-        pdf_wsize <- 4.5}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 4
-        pdf_wsize <- 6}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 4
-        pdf_wsize <- 4}
         if (length(rowlist) == 3)
-        {pdf_hsize <- 2
-        pdf_wsize <- 6}
+        {pdf_hsize <- 3
+        pdf_wsize <- 9}
         if (length(rowlist) == 2)
-        {pdf_hsize <- 2
-        pdf_wsize <- 4}
+        {pdf_hsize <- 3
+        pdf_wsize <- 6}
         if (length(rowlist) == 1)
-        {pdf_hsize <- 2
-        pdf_wsize <- 2}
+        {pdf_hsize <- 3
+        pdf_wsize <- 3}
         if (length(rowlist) > 200)
         {pdf_hsize <- 30
         pdf_wsize <- 30}
@@ -3538,6 +3559,7 @@ output$download_pair_deg_count_down = downloadHandler(
     }
     dir_name <- paste0(dir_name, paste0("_fdr", input$fdr6))
     dir_name <- paste0(dir_name, paste0("_basemean", input$basemean6))
+    dir_name <- paste0(dir_name, paste0("_fc", input$fc6))
     return(dir_name)
   })
   #multi DEG vis---------------------------
@@ -4066,7 +4088,7 @@ output$download_pair_deg_count_down = downloadHandler(
   
   output$download_multi_kmeans_boxplot = downloadHandler(
     filename = function(){
-      paste0(download_multi_overview_dir(), "_kmeans_boxplot.pdf")
+      paste0(download_multi_overview_dir(), paste(input$multi_kmeans_number,"kmeans_boxplot.pdf",sep = "_"))
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
@@ -5402,6 +5424,7 @@ output$download_pair_deg_count_down = downloadHandler(
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+    rownames(df) <- gsub("-",".",rownames(df))
     return(df)
     }
   })
@@ -5436,9 +5459,10 @@ output$download_pair_deg_count_down = downloadHandler(
         return(NULL)
       } else {
         row_t <- t(row)
+        meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
         colname <- colnames(meta)
         data <- merge(meta, row_t, by=0, sort = F)
-        rownames(data) <- data[,2]
+        rownames(data) <- data$characteristics
         data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
         data2_t <- t(data2)
         data3 <- apply(data2_t, 2, as.numeric)
@@ -6635,47 +6659,47 @@ output$download_pair_deg_count_down = downloadHandler(
         data <- cond3_GOIcount()
         rowlist <- rownames(data)
         if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 15
-        pdf_wsize <- 15}
+        {pdf_hsize <- 22.5
+        pdf_wsize <- 22.5}
         if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 20.25
+        pdf_wsize <- 20.25}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 18
+        pdf_wsize <- 18}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 15.75
+        pdf_wsize <- 15.75}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
         {pdf_hsize <- 13.5
         pdf_wsize <- 13.5}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 12
-        pdf_wsize <- 12}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 10.5
-        pdf_wsize <- 10.5}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 11.5
+        pdf_wsize <- 11.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
         {pdf_hsize <- 9
         pdf_wsize <- 9}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
         {pdf_hsize <- 7.5
-        pdf_wsize <- 7.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 6.75}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 6
+        pdf_wsize <- 9}
+        if (length(rowlist) == 4)
         {pdf_hsize <- 6
         pdf_wsize <- 6}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 5
-        pdf_wsize <- 6}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 5
-        pdf_wsize <- 4.5}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 4
-        pdf_wsize <- 6}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 4
-        pdf_wsize <- 4}
         if (length(rowlist) == 3)
-        {pdf_hsize <- 2
-        pdf_wsize <- 6}
+        {pdf_hsize <- 3
+        pdf_wsize <- 9}
         if (length(rowlist) == 2)
-        {pdf_hsize <- 2
-        pdf_wsize <- 4}
+        {pdf_hsize <- 3
+        pdf_wsize <- 6}
         if (length(rowlist) == 1)
-        {pdf_hsize <- 2
-        pdf_wsize <- 2}
+        {pdf_hsize <- 3
+        pdf_wsize <- 3}
         if (length(rowlist) > 200)
         {pdf_hsize <- 30
         pdf_wsize <- 30}
@@ -7381,11 +7405,12 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       tmp <- input$file9$datapath
-      if(is.null(input$file9) && input$goButton == 0) return(NULL)
-      if(is.null(input$file9) && input$goButton > 0 )  tmp = "data/example9.csv"
+      if(is.null(input$file9) && input$goButton3 == 0) return(NULL)
+      if(is.null(input$file9) && input$goButton3 > 0 )  tmp = "data/example9.csv"
       if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
       if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
       if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      rownames(df) <- gsub("-",".",rownames(df))
       return(df)
     }
   })
@@ -7424,9 +7449,10 @@ output$download_pair_deg_count_down = downloadHandler(
           return(NULL)
         } else {
           row_t <- t(row)
+          meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
           colname <- colnames(meta)
           data <- merge(meta, row_t, by=0, sort = F)
-          rownames(data) <- data[,2]
+          rownames(data) <- data$characteristics
           data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
           data2_t <- t(data2)
           data3 <- apply(data2_t, 2, as.numeric)
@@ -7851,47 +7877,47 @@ output$download_pair_deg_count_down = downloadHandler(
         data <- norm_GOIcount()
         rowlist <- rownames(data)
         if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 15
-        pdf_wsize <- 15}
+        {pdf_hsize <- 22.5
+        pdf_wsize <- 22.5}
         if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 20.25
+        pdf_wsize <- 20.25}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 18
+        pdf_wsize <- 18}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 15.75
+        pdf_wsize <- 15.75}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
         {pdf_hsize <- 13.5
         pdf_wsize <- 13.5}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 12
-        pdf_wsize <- 12}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 10.5
-        pdf_wsize <- 10.5}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 11.5
+        pdf_wsize <- 11.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
         {pdf_hsize <- 9
         pdf_wsize <- 9}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
         {pdf_hsize <- 7.5
-        pdf_wsize <- 7.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 6.75}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 6
+        pdf_wsize <- 9}
+        if (length(rowlist) == 4)
         {pdf_hsize <- 6
         pdf_wsize <- 6}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 5
-        pdf_wsize <- 6}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 5
-        pdf_wsize <- 4.5}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 4
-        pdf_wsize <- 6}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 4
-        pdf_wsize <- 4}
         if (length(rowlist) == 3)
-        {pdf_hsize <- 2
-        pdf_wsize <- 6}
+        {pdf_hsize <- 3
+        pdf_wsize <- 9}
         if (length(rowlist) == 2)
-        {pdf_hsize <- 2
-        pdf_wsize <- 4}
+        {pdf_hsize <- 3
+        pdf_wsize <- 6}
         if (length(rowlist) == 1)
-        {pdf_hsize <- 2
-        pdf_wsize <- 2}
+        {pdf_hsize <- 3
+        pdf_wsize <- 3}
         if (length(rowlist) > 200)
         {pdf_hsize <- 30
         pdf_wsize <- 30}
@@ -9090,47 +9116,47 @@ output$download_pair_deg_count_down = downloadHandler(
         data <- deg_GOIcount()
         rowlist <- rownames(data)
         if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 15
-        pdf_wsize <- 15}
+        {pdf_hsize <- 22.5
+        pdf_wsize <- 22.5}
         if ((length(rowlist) > 64) && (length(rowlist) <= 81))
+        {pdf_hsize <- 20.25
+        pdf_wsize <- 20.25}
+        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
+        {pdf_hsize <- 18
+        pdf_wsize <- 18}
+        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
+        {pdf_hsize <- 15.75
+        pdf_wsize <- 15.75}
+        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
         {pdf_hsize <- 13.5
         pdf_wsize <- 13.5}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 12
-        pdf_wsize <- 12}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 10.5
-        pdf_wsize <- 10.5}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
+        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        {pdf_hsize <- 11.5
+        pdf_wsize <- 11.5}
+        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
         {pdf_hsize <- 9
         pdf_wsize <- 9}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
+        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
         {pdf_hsize <- 7.5
-        pdf_wsize <- 7.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
+        pdf_wsize <- 9}
+        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
+        {pdf_hsize <- 7.5
+        pdf_wsize <- 6.75}
+        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
+        {pdf_hsize <- 6
+        pdf_wsize <- 9}
+        if (length(rowlist) == 4)
         {pdf_hsize <- 6
         pdf_wsize <- 6}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 5
-        pdf_wsize <- 6}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 5
-        pdf_wsize <- 4.5}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 4
-        pdf_wsize <- 6}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 4
-        pdf_wsize <- 4}
         if (length(rowlist) == 3)
-        {pdf_hsize <- 2
-        pdf_wsize <- 6}
+        {pdf_hsize <- 3
+        pdf_wsize <- 9}
         if (length(rowlist) == 2)
-        {pdf_hsize <- 2
-        pdf_wsize <- 4}
+        {pdf_hsize <- 3
+        pdf_wsize <- 6}
         if (length(rowlist) == 1)
-        {pdf_hsize <- 2
-        pdf_wsize <- 2}
+        {pdf_hsize <- 3
+        pdf_wsize <- 3}
         if (length(rowlist) > 200)
         {pdf_hsize <- 30
         pdf_wsize <- 30}
@@ -9156,6 +9182,50 @@ output$download_pair_deg_count_down = downloadHandler(
       })
     }
   )
+  
+  #msigdbr-----------------
+  msigdbr_list <- reactive({
+    if(input$msigdbr_Species == ""){
+      return(NULL)
+    }else{
+      withProgress(message = "Prepare gene sets",{
+        msigdbr_list <- msigdbr(species = input$msigdbr_Species)
+        return(msigdbr_list)
+      })
+    }
+  })
+  
+  msig_list <- reactive({
+    if(input$msigdbr_Species == "" || input$msigdbr_gene_set == ""){
+      return(NULL)
+    }else{
+      data <- msigdbr_list() %>% 
+        dplyr::filter(gs_name == input$msigdbr_gene_set) %>%
+        as.data.frame()
+      return(data)
+    }
+  }) 
+  
+  output$msigdbr_geneset <- renderDataTable({
+    msig_list()
+  })
+  
+  observe({
+    if(is.null(msigdbr_list())){
+      return(NULL)
+    }else{
+      withProgress(message = "Prepare a list of gene sets",{
+        msigdbr_gsname <- unique(msigdbr_list()$gs_name)
+      updateSelectizeInput(session, inputId = "msigdbr_gene_set",choices = c("", msigdbr_gsname)) 
+      })
+    }
+  })
+  
+  output$download_msigdbr_list = downloadHandler(
+    filename = function(){
+      paste0(input$msigdbr_gene_set, ".txt")
+    },
+    content = function(file) {write.table(msig_list(), file, quote = F, row.names = F, sep = "\t")})
 }
 
 

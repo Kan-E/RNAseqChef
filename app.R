@@ -4813,8 +4813,15 @@ output$download_pair_deg_count_down = downloadHandler(
           } else{
             df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "") 
             df$GeneRatio <- parse_ratio(df$GeneRatio)
-            p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
-                            geom_point(aes(color=qvalue,size=GeneRatio)) +
+            df <- dplyr::filter(df, !is.na(qvalue))
+            df <- dplyr::mutate(df, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+            df$x <- gsub(":","", df$x)
+            df <- dplyr::arrange(df, x)
+            idx <- order(df[["x"]], decreasing = FALSE)
+            df$Description <- factor(df$Description,
+                                     levels=rev(unique(df$Description[idx])))
+            p1 <- as.grob(ggplot(df, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+                            geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
                             scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
@@ -4856,8 +4863,15 @@ output$download_pair_deg_count_down = downloadHandler(
           } else{
             df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "") 
             df$GeneRatio <- parse_ratio(df$GeneRatio)
-            p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
-                            geom_point(aes(color=qvalue,size=GeneRatio)) +
+            df <- dplyr::filter(df, !is.na(qvalue))
+            df <- dplyr::mutate(df, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+            df$x <- gsub(":","", df$x)
+            df <- dplyr::arrange(df, x)
+            idx <- order(df[["x"]], decreasing = FALSE)
+            df$Description <- factor(df$Description,
+                                     levels=rev(unique(df$Description[idx])))
+            p1 <- as.grob(ggplot(df, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+                            geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
                             scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
@@ -8514,7 +8528,7 @@ output$download_pair_deg_count_down = downloadHandler(
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
           for (name in unique(data3$Group)) {
-            em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, qvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) != 0) {
               if(length(colnames(as.data.frame(em))) == 9){
                 cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
@@ -8568,7 +8582,7 @@ output$download_pair_deg_count_down = downloadHandler(
         df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
         colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
         for (name in unique(data3$Group)) {
-          em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+          em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, qvalueCutoff = 0.05)
           if (length(as.data.frame(em)$ID) != 0) {
             if(length(colnames(as.data.frame(em))) == 9){
               cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
@@ -8586,8 +8600,15 @@ output$download_pair_deg_count_down = downloadHandler(
         } else{
           df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "") 
           df$GeneRatio <- parse_ratio(df$GeneRatio)
-          p1 <- as.grob(ggplot(df, aes(x = Group,y=reorder(Description, GeneRatio)))+
-                          geom_point(aes(color=qvalue,size=GeneRatio)) +
+          df <- dplyr::filter(df, !is.na(qvalue))
+          df <- dplyr::mutate(df, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+          df$x <- gsub(":","", df$x)
+          df <- dplyr::arrange(df, x)
+          idx <- order(df[["x"]], decreasing = FALSE)
+          df$Description <- factor(df$Description,
+                                   levels=rev(unique(df$Description[idx])))
+          p1 <- as.grob(ggplot(df, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+                          geom_point() +
                           scale_color_continuous(low="red", high="blue",
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
@@ -8646,15 +8667,15 @@ output$download_pair_deg_count_down = downloadHandler(
       if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
         if(input$Gene_set3 == "KEGG"){
           kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code4(),
-                            pvalueCutoff = 0.05)
+                            qvalueCutoff = 0.05)
         }
         if(input$Gene_set3 == "GO"){
           kk1 <- enrichGO(data2$ENTREZID, OrgDb = org4(),
-                          pvalueCutoff = 0.05)
+                          qvalueCutoff = 0.05)
         }
       }else{
         H_t2g <- Hallmark_enrich()
-        kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, qvalueCutoff = 0.05))
         if (class(kk1) == "try-error") kk1 <- NA
       }
       if(length(as.data.frame(kk1)$ID) == 0){
@@ -8666,13 +8687,11 @@ output$download_pair_deg_count_down = downloadHandler(
         p2 <- NULL
       } else{
         p2 <- try(as.grob(cnetplot(cnet1,
-                                   cex_label_gene = 0.7, cex_label_category = 0.75,
+                                   cex_label_gene = 0.7, cex_label_category = 0.75,showCategory = 5,
                                    cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
         if(length(class(p2)) == 1){
           if(class(p2) == "try-error") p2 <- NULL
-        }else{p2 <- as.grob(cnetplot(cnet1,
-                                     cex_label_gene = 0.7, cex_label_category = 0.75,
-                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none"))}
+        }
       }
       p <- plot_grid(p2)
       return(p)

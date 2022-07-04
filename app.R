@@ -3346,6 +3346,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
       if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
       rownames(df) <- gsub("-",".",rownames(df))
+      df[,1] <- gsub("\\_.+$", "", df[,1])
+      df[,2] <- gsub("\\_.+$", "", df[,2])
       return(df)
     }
   })

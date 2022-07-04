@@ -36,6 +36,7 @@ library(shinyBS)
 library(plotly,verbose=FALSE)
 library('shinyjs', verbose = FALSE)
 library(BiocManager)
+library(clusterProfiler.dplyr)
 options(repos = BiocManager::repositories())
 msigdbr_species <- msigdbr_species()$species_name
 popoverTempate <- 
@@ -104,7 +105,6 @@ ui<- fluidPage(
                               'Option: Raw_count_matrix + Metadata'="Row2",
                               'Option: Batch mode (not displayed in the output panel)'="Row11"
                             ),selected = "Row1"),
-               # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type=='Row1'",
                                 fileInput("file3",
                                           strong(
@@ -116,8 +116,8 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon1", "Count matrix format:", 
-                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
-                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br><br>",
+                                                        img(src="input_format1.png", width = 400,height = 250)), 
                                           placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type=='Row2'",
@@ -136,8 +136,9 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon2", "Metadata format:", 
-                                          content=paste0("The first column is the sample name used in the raw count data. The second column is the corresponding sample name that matches the sample name in the first column.",
-                                                         img(src="input_format2.png", width = 400,height = 400)), 
+                                          content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
+                                                        "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
+                                                        img(src="input_format2.png", width = 400,height = 400)),
                                           placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type=='Row11'",
@@ -151,8 +152,9 @@ ui<- fluidPage(
                                           multiple = TRUE,
                                           width = "80%"),
                                 bsPopover("icon3", "Count matrix format:", 
-                                          content=paste0("The replication number is represented by the underline in the second column of metadata.",
-                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br>",
+                                                        "There is no limitation to the number of uploaded files.<br><br>",
+                                                        img(src="input_format1.png", width = 400,height = 250)), 
                                           placement = "right",options = list(container = "body")),
                ),
                radioButtons('DEG_method','DEG analysis method:',
@@ -350,8 +352,8 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon5", "Count matrix format:", 
-                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
-                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br><br>",
+                                                        img(src="input_format1.png", width = 400,height = 250)), 
                                           placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type2=='Row4'",
@@ -370,8 +372,9 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon6", "Metadata format:", 
-                                          content=paste0("The first column is the sample name used in the raw count data. The second column is the corresponding sample name that matches the sample name in the first column.",
-                                                         img(src="input_format2.png", width = 400,height = 400)), 
+                                          content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
+                                                        "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
+                                                        img(src="input_format2.png", width = 400,height = 400)),
                                           placement = "right",options = list(container = "body")),
                ),
                fluidRow(
@@ -546,8 +549,8 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon8", "Count matrix format:", 
-                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
-                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br><br>",
+                                                        img(src="input_format1.png", width = 400,height = 250)), 
                                           placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.multi_data_file_type=='Row2'",
@@ -566,8 +569,9 @@ ui<- fluidPage(
                                           multiple = FALSE,
                                           width = "80%"),
                                 bsPopover("icon9", "Metadata format:", 
-                                          content=paste0("The first column is the sample name used in the raw count data. The second and third columns are the corresponding sample conditions that match the sample name in the first column.",
-                                                         img(src="input_format_multi.png", width = 400,height = 400)), 
+                                          content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
+                                                        "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
+                                                        img(src="input_format2.png", width = 400,height = 400)),
                                           placement = "right",options = list(container = "body")),
                ),
                fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
@@ -907,22 +911,27 @@ ui<- fluidPage(
                             ),selected = "Row5"),
                # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type3=='Row5'",
-                                strong("Count matrix format: "),br(),
-                                "The replication number is represented by the underbar.",br(),
-                                "Do not use it for anything else.", br(),
                                 fileInput("file7",
-                                          label = "Select a normalized count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a normalized count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon11", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon11", "Count matrix format:", 
+                                          content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br><br>",
+                                                        img(src="input_format1.png", width = 400,height = 250)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type3=='Row6'",
-                                strong("Count matrix format: "),br(),
-                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
-                                "the metadata.", br(),
-                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file8",
-                                          label = "Select a normalized count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a normalized count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon12", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
@@ -930,7 +939,12 @@ ui<- fluidPage(
                                           label = "Select a metadata file to define samples for the following analysis",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon12", "Metadata format:", 
+                                          content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
+                                                        "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
+                                                        img(src="input_format2.png", width = 400,height = 400)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                fluidRow(
                  column(6, selectInput("Species3", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
@@ -1045,15 +1059,20 @@ ui<- fluidPage(
            sidebarLayout(
              # enrichment viewer---------------------------------
              sidebarPanel(
-               strong("Gene list format: "),br(),
-               "First column must be gene name (Gene symbol or ENSEMBL ID).",br(),
-               "Second column must be group or cluster name.",br(),
-               "You can use result files of venn diagram analysis and k-means clustering as input.",
                fileInput("enrich_data_file",
-                         label = "Select a gene list file (txt, csv, xlsx)",
+                         strong(
+                           span("Select a gene list file (txt, csv, xlsx)"),
+                           span(icon("info-circle"), id = "icon13", 
+                                options = list(template = popoverTempate))
+                         ),
                          accept = c("txt", "csv", "xlsx"),
                          multiple = FALSE,
                          width = "80%"),
+               bsPopover("icon13", "Gene list format: ", 
+                         content=paste("First column must be", strong("gene name"), "(Gene symbol or ENSEMBL ID).<br>", "Second column must be", strong("group or cluster name"),".<br>",
+                                       "You can use result files of venn diagram analysis and k-means clustering as input.<br><br>", 
+                                       img(src="input_format_enrich.png", width = 250,height = 400)), 
+                         placement = "right",options = list(container = "body")),
                fluidRow(
                  column(6, selectInput("Species4", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
                                                                 "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
@@ -1108,16 +1127,21 @@ ui<- fluidPage(
                       sidebarLayout(
                         # volcano navi---------------------------------
                         sidebarPanel(
-                          strong("File format: "),br(),
-                          "First column must be gene name (Gene symbol or ENSEMBL ID).",br(),
-                          "The file must contain", strong("log2FoldChange"), "and", 
-                          strong("padj"), "columns.",br(),
-                          "You can use a pair-wise DEG result file as input.",
                           fileInput("deg_file1",
-                                    label = "Select a pair-wise DEG result file",
+                                    strong(
+                                      span("Select a pair-wise DEG result file"),
+                                      span(icon("info-circle"), id = "icon14", 
+                                           options = list(template = popoverTempate))
+                                    ),
                                     accept = c("txt", "csv"),
                                     multiple = FALSE,
                                     width = "80%"),
+                          bsPopover("icon14", "File format: ", 
+                                    content=paste("First column must be gene name (Gene symbol or ENSEMBL ID).<br>", 
+                                                  "The file must contain", strong("log2FoldChange"), "and", strong("padj"), "columns.<br>",
+                                                  "You can use a pair-wise DEG result file as input.<br><br>", 
+                                                  img(src="input_format_volcano.png", width = 480,height = 230)), 
+                                    placement = "right",options = list(container = "body")),
                           radioButtons('volcano_inputType','Reverse number signs of log2FoldChange:',
                                        c('ON'="reverseON",
                                          'OFF'="reverseOFF"
@@ -2509,6 +2533,7 @@ output$download_pair_deg_count_down = downloadHandler(
           length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
         p1 <- NULL
       } else{
+        formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
         p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
       }
       kk4 <- enrichment_1_gsea()
@@ -4810,6 +4835,7 @@ output$download_pair_deg_count_down = downloadHandler(
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
             p1 <- NULL
           } else{
+            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
             p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
           }
           p <- plot_grid(p1)
@@ -4830,6 +4856,7 @@ output$download_pair_deg_count_down = downloadHandler(
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
             p1 <- NULL
           } else{
+            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
             p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
           }
           p <- plot_grid(p1)
@@ -6880,6 +6907,7 @@ output$download_pair_deg_count_down = downloadHandler(
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
             d <- NULL
           } else{
+            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
             d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
           }
         for (name in unique(data3$sig)) {
@@ -7086,6 +7114,7 @@ output$download_pair_deg_count_down = downloadHandler(
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
           d <- NULL
         } else{
+          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
           d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
         }
         for (name in unique(data3$sig)) {
@@ -7262,6 +7291,7 @@ output$download_pair_deg_count_down = downloadHandler(
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue))))==0) {
           d <- NULL
         } else{
+          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
           d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
         }}else d <- NULL
         for (name in unique(data3$sig)) {
@@ -8617,6 +8647,7 @@ output$download_pair_deg_count_down = downloadHandler(
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
           p1 <- NULL
         } else{
+          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
           p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
         }
         p <- plot_grid(p1)

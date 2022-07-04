@@ -38,6 +38,9 @@ library('shinyjs', verbose = FALSE)
 library(BiocManager)
 options(repos = BiocManager::repositories())
 msigdbr_species <- msigdbr_species()$species_name
+popoverTempate <- 
+  '<div class="popover popover-lg" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
+
 
 ui<- fluidPage(
   tags$head(includeHTML(("google-analytics.html"))),
@@ -49,6 +52,9 @@ ui<- fluidPage(
       ".navbar{margin:3px;}"
     )
   ),
+  tags$style(".popover{
+            max-width: 500px;
+          }"),
   navbarPage(
     footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
              p(("Copyright (C) 2022, code licensed under GPLv3"),align="center",width=4),
@@ -100,40 +106,54 @@ ui<- fluidPage(
                             ),selected = "Row1"),
                # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type=='Row1'",
-                                strong("Count matrix format: "),br(),
-                                "The replication number is represented by the underbar.",br(),
-                                "Do not use it for anything else.", br(),
                                 fileInput("file3",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon1", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon1", "Count matrix format:", 
+                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
+                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type=='Row2'",
-                                strong("Count matrix format: "),br(),
-                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
-                                "the metadata.", br(),
-                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file1",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon2", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
                                 fileInput("file2",
-                                          label = "Select a metadata file to define samples for the following analysis",
-                                          accept = c("txt", "csv"),
+                                          "Select a metadata file to define samples for the following analysis",
+                                          accept = c("txt", "csv","xlsx"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon2", "Metadata format:", 
+                                          content=paste0("The first column is the sample name used in the raw count data. The second column is the corresponding sample name that matches the sample name in the first column.",
+                                                         img(src="input_format2.png", width = 400,height = 400)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type=='Row11'",
-                                strong("Count matrix format: "),br(),
-                                "The replication number is represented by the underbar.",br(),
-                                "Do not use it for anything else.", br(),
                                 fileInput("file11",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select raw count matrix files (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon3", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = TRUE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon3", "Count matrix format:", 
+                                          content=paste0("The replication number is represented by the underline in the second column of metadata.",
+                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                radioButtons('DEG_method','DEG analysis method:',
                             c('DESeq2'="DESeq2",
@@ -156,13 +176,18 @@ ui<- fluidPage(
                  column(4, numericInput("fdr", "FDR", min   = 0, max   = 1, value = 0.05)),
                  column(4, numericInput("basemean", "Basemean", min   = 0, max   = NA, value = 0))
                ),
-               "Option: Normalized count file:",br(),
-               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
                fileInput("norm_file1",
-                         label = "Select a normalized count file",
+                         strong(
+                           span("Option: Select a normalized count file"),
+                           span(icon("info-circle"), id = "icon4", 
+                                options = list(template = popoverTempate))
+                         ),
                          accept = c("txt", "csv"),
                          multiple = TRUE,
                          width = "80%"),
+               bsPopover("icon4", "Option: Normalized count file:", 
+                         content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
+                         placement = "right",options = list(container = "body")),
                actionButton("goButton", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -315,22 +340,27 @@ ui<- fluidPage(
                             ),selected = "Row3"),
                # Conditional panels appear based on input.data_file_type selection
                conditionalPanel(condition="input.data_file_type2=='Row3'",
-                                strong("Count matrix format: "),br(),
-                                "The replication number is represented by the underbar.",br(),
-                                "Do not use it for anything else.", br(),
                                 fileInput("file4",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon5", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon5", "Count matrix format:", 
+                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
+                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.data_file_type2=='Row4'",
-                                strong("Count matrix format: "),br(),
-                                "You can use the matrix file whose column name is accession number, and extract the colums you want to analyze by using",
-                                "the metadata.", br(),
-                                "The replication number is represented by the underbar in the second column of metadata.",br(),br(),
                                 fileInput("file5",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon6", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
@@ -338,7 +368,11 @@ ui<- fluidPage(
                                           label = "Select a metadata file to define samples for the following analysis",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon6", "Metadata format:", 
+                                          content=paste0("The first column is the sample name used in the raw count data. The second column is the corresponding sample name that matches the sample name in the first column.",
+                                                         img(src="input_format2.png", width = 400,height = 400)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                fluidRow(
                  column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
@@ -349,13 +383,18 @@ ui<- fluidPage(
                  column(4, numericInput("fdr2", "FDR", min   = 0, max   = 0.05, value = 0.05)),
                  column(4, numericInput("basemean2", "Basemean", min   = 0, max   = NA, value = 1))
                ),
-               "Option: Normalized count file:",br(),
-               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
                fileInput("norm_file2",
-                         label = "Select a normalized count file",
+                         strong(
+                           span("Option: Select a normalized count file"),
+                           span(icon("info-circle"), id = "icon7", 
+                                options = list(template = popoverTempate))
+                         ),
                          accept = c("txt", "csv"),
                          multiple = FALSE,
                          width = "80%"),
+               bsPopover("icon7", "Option: Normalized count file:", 
+                         content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
+                         placement = "right",options = list(container = "body")),
                actionButton("goButton2", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -497,20 +536,27 @@ ui<- fluidPage(
                               'Raw_count_matrix + metadata (Two-factor multi-condition)'="Row2"
                             ),selected = "Row1"),
                conditionalPanel(condition="input.multi_data_file_type=='Row1'",
-                                strong("Count matrix format: "),br(),
-                                "The replication number is represented by the underbar.",br(),
-                                "Do not use it for anything else.", br(),
                                 fileInput("multi_file1",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon8", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon8", "Count matrix format:", 
+                                          content=paste0("The replication number is represented by the underline. Do not use it for anything else.",
+                                                         img(src="input_format1.png", width = 400,height = 250)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                conditionalPanel(condition="input.multi_data_file_type=='Row2'",
-                                strong("Count matrix format: "),br(),
-                                "Metadata is required for multi-condition multi-factor DEG analysis.",br(),br(),
                                 fileInput("multi_file2",
-                                          label = "Select a raw count matrix file (txt, csv)",
+                                          strong(
+                                            span("Select a raw count matrix file (txt, csv)"),
+                                            span(icon("info-circle"), id = "icon9", 
+                                                 options = list(template = popoverTempate))
+                                          ),
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
                                           width = "80%"),
@@ -518,7 +564,11 @@ ui<- fluidPage(
                                           label = "Select a metadata file to define samples for the following analysis",
                                           accept = c("txt", "csv"),
                                           multiple = FALSE,
-                                          width = "80%")
+                                          width = "80%"),
+                                bsPopover("icon9", "Metadata format:", 
+                                          content=paste0("The first column is the sample name used in the raw count data. The second and third columns are the corresponding sample conditions that match the sample name in the first column.",
+                                                         img(src="input_format_multi.png", width = 400,height = 400)), 
+                                          placement = "right",options = list(container = "body")),
                ),
                fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
                  column(6, selectInput("Species6", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
@@ -529,13 +579,18 @@ ui<- fluidPage(
                  column(4, numericInput("fdr6", "FDR", min   = 0, max   = 1, value = 0.05)),
                  column(4, numericInput("basemean6", "Basemean", min   = 0, max   = NA, value = 0))
                ),
-               "Option: Normalized count file:",br(),
-               "You can use normalized count (e.g. TPM count) for basemean cutoff and boxplot.",
                fileInput("multi_norm_file1",
-                         label = "Select a normalized count file",
+                         strong(
+                           span("Option: Select a normalized count file"),
+                           span(icon("info-circle"), id = "icon10", 
+                                options = list(template = popoverTempate))
+                         ),
                          accept = c("txt", "csv"),
                          multiple = TRUE,
                          width = "80%"),
+               bsPopover("icon10", "Option: Normalized count file:", 
+                         content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
+                         placement = "right",options = list(container = "body")),
                actionButton("goButton6", "example data (mouse)"),
                tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;

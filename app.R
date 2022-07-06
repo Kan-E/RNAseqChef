@@ -3740,6 +3740,9 @@ output$download_pair_deg_count_down = downloadHandler(
         
         data <- as.data.frame(multi_deg_norm_count())
         collist <- gsub("\\_.+$", "", colnames(data))
+        if(input$Species6 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")) data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
         data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
         res <- as.data.frame(res)
         data2 <- merge(res,data, by=0)
@@ -3889,11 +3892,21 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
       clusters <- multi_pattern2()$df
       clusters$cluster <- paste0("Group",clusters$cluster)
+      data <- as.data.frame(multi_deg_norm_count())
+      if(input$Species6 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")){
+          collist <- gsub("\\_.+$", "", colnames(data))
+          data2 <-merge(clusters,data, by=0)
+          data2 <- data2[,-1]
+          clusters <- data2[,-3:-(1+length(collist))]
+        }
+      }
       clusters
     }
   })
   output$multi_pattern1_count <- DT::renderDataTable({
-    multi_pattern_extract()
+    res <- multi_pattern_extract()
+    return(res)
   })
   output$download_deg_pattern_list = downloadHandler(
     filename = function(){
@@ -4038,6 +4051,9 @@ output$download_pair_deg_count_down = downloadHandler(
       res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
       
       collist <- gsub("\\_.+$", "", colnames(data))
+      if(input$Species6 != "not selected"){
+      if(str_detect(rownames(data)[1], "ENS")) data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
       data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
       res <- as.data.frame(res)
       data2 <- merge(res,data, by=0)
@@ -4066,6 +4082,10 @@ output$download_pair_deg_count_down = downloadHandler(
       sig_res_LRT <- as.data.frame(sig_res_LRT)
       rownames(sig_res_LRT) <- sig_res_LRT$gene
       sig_res_LRT <- sig_res_LRT[,-1]
+      
+      if(input$Species6 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")) data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
       collist <- gsub("\\_.+$", "", colnames(data))
       data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
       data2 <- merge(data, sig_res_LRT,by=0)
@@ -4265,7 +4285,16 @@ output$download_pair_deg_count_down = downloadHandler(
   )
   
   output$multi_kmeans_count_table <- DT::renderDataTable({
-    multi_kmeans_cluster()
+    clusters <- multi_kmeans_cluster()
+    data <- as.data.frame(multi_deg_norm_count())
+    if(input$Species6 != "not selected"){
+      if(str_detect(rownames(data)[1], "ENS")){
+        data <- data.frame(SYMBOL=data$SYMBOL, row.names = rownames(data))
+        clusters <-merge(clusters,data, by=0)
+        colnames(clusters)[1] <- "genes"
+      }
+    }
+    clusters
   })
   
   output$download_multi_kmeans_cluster = downloadHandler(
@@ -4315,7 +4344,20 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   output$multi_pattern2_count <- DT::renderDataTable({
-    multi_kmeans_pattern_extract()
+    if(input$multi_selectfile2 == "not selected" || is.null(input$multi_selectfile2)){
+      return(NULL)
+    }else{
+      clusters <- multi_kmeans_pattern_extract()
+      data <- as.data.frame(multi_deg_norm_count())
+    if(input$Species6 != "not selected"){
+      if(str_detect(rownames(data)[1], "ENS")){
+        data <- data.frame(SYMBOL=data$SYMBOL, row.names = rownames(data))
+        clusters <- merge(clusters,data, by=0)
+        colnames(clusters)[1] <- "genes"
+      }
+    }
+    clusters
+    }
   })
   
   output$download_deg_kmeans_pattern_count = downloadHandler(
@@ -4396,7 +4438,7 @@ output$download_pair_deg_count_down = downloadHandler(
       
       if(str_detect(rownames(count)[1], "ENS")){
         if(input$Species6 != "not selected"){
-          my.symbols <- rownames(sig_res_LRT)
+          my.symbols <- sig_res_LRT$Row.names
           gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
                                           keytype = "ENSEMBL",
                                           columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
@@ -5411,6 +5453,9 @@ output$download_pair_deg_count_down = downloadHandler(
         }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
         res <- results(dds)
         
+        if(input$Species6 != "not selected"){
+          if(str_detect(rownames(data)[1], "ENS")) data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
         collist <- gsub("\\_.+$", "", colnames(data))
         data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
         res <- as.data.frame(res)

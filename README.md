@@ -11,7 +11,7 @@ To run this app locally on your machine, R environment setup is required.
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel","ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW","qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db","org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter","ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools")
+pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel","ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW","qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db","org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter","ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea")
 
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
@@ -59,11 +59,12 @@ IHW, Independent hypothesis weighting, and qvalue (for fdr control method of des
 ggdendro (for dendrograms)
 - Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro
 
-clusterProfiler, DOSE, msigdbr (for enrichment analysis)
+clusterProfiler, DOSE, msigdbr, dorothea (for enrichment analysis)
 - T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141
 - Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609
 - Dolgalev I (2022). _msigdbr: MSigDB Gene Sets for Multiple Organisms in a Tidy Data Format_. R
   package version 7.5.1, <https://CRAN.R-project.org/package=msigdbr>.
+- Garcia-Alonso L, Holland CH, Ibrahim MM, Turei D, Saez-Rodriguez J. 'Benchmark and integration of resources for the estimation of human transcription factor activities.' Genome Research. 2019. DOI: 10.1101/gr.240663.118.
 
 AnnotationDbi, org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db, org.Xl.eg.db, org.Dm.eg.db, and org.Ce.eg.db (for genome wide annotation)
 - Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi

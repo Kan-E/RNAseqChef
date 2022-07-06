@@ -37,6 +37,7 @@ library(plotly,verbose=FALSE)
 library('shinyjs', verbose = FALSE)
 library(BiocManager)
 library(clusterProfiler.dplyr)
+library(dorothea)
 options(repos = BiocManager::repositories())
 msigdbr_species <- msigdbr_species()$species_name
 popoverTempate <- 
@@ -571,7 +572,7 @@ ui<- fluidPage(
                                 bsPopover("icon9", "Metadata format:", 
                                           content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
                                                         "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
-                                                        img(src="input_format2.png", width = 400,height = 400)),
+                                                        img(src="input_format_multi.png", width = 400,height = 400)),
                                           placement = "right",options = list(container = "body")),
                ),
                fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
@@ -1257,6 +1258,8 @@ ui<- fluidPage(
                                "- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
                                "- Dolgalev I (2022). _msigdbr: MSigDB Gene Sets for Multiple Organisms in a Tidy Data Format_. R
   package version 7.5.1, <https://CRAN.R-project.org/package=msigdbr>.", br(),
+                               "- Garcia-Alonso L, Holland CH, Ibrahim MM, Turei D, Saez-Rodriguez J. 'Benchmark and integration of resources for the estimation of human
+  transcription factor activities.' Genome Research. 2019. DOI: 10.1101/gr.240663.118.", br(),
                                "- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
                                "- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
                                "- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
@@ -2368,7 +2371,8 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   Hallmark_set <- reactive({
     if(input$Species != "not selected"){
-    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"&&
+       input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
       return(NULL)
       }else{
     switch (input$Species,
@@ -2387,6 +2391,16 @@ output$download_pair_deg_count_down = downloadHandler(
     H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
       dplyr::select(gs_name, entrez_gene)
         }
+        if(input$Gene_set == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species,  type = "DoRothEA regulon (activator)", org = org1())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species,  type = "DoRothEA regulon (repressor)", org = org1())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
     return(H_t2g)
       }
     }else return(NULL)
@@ -2395,7 +2409,8 @@ output$download_pair_deg_count_down = downloadHandler(
   enrichment_1_1 <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data3 <- data_degcount2()
-    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"&&
+       input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
         if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG enrichment analysis",{
           formula_res <- try(compareCluster(ENTREZID~group, data=data3,
@@ -2480,7 +2495,8 @@ output$download_pair_deg_count_down = downloadHandler(
     geneList <- data$log2FoldChange
     names(geneList) = as.character(data$ENTREZID)
     geneList <- sort(geneList, decreasing = TRUE)
-    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
+       input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
         if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG GSEA",{
           kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
@@ -2526,7 +2542,8 @@ output$download_pair_deg_count_down = downloadHandler(
   # pair-wise enrichment plot ------------------------------------------------------------------------------
   pair_enrich1_keggGO <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
+         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
       count <- deg_norm_count()
       formula_res <- enrichment_1_1()
       if ((length(as.data.frame(formula_res)$Description) == 0) ||
@@ -2554,7 +2571,8 @@ output$download_pair_deg_count_down = downloadHandler(
 
   pair_enrich1_H <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-    if(input$Gene_set == "MSigDB Hallmark" || input$Gene_set == "Transcription factor targets"){
+    if(input$Gene_set == "MSigDB Hallmark" || input$Gene_set == "Transcription factor targets" || 
+       input$Gene_set == "DoRothEA regulon (activator)" || input$Gene_set == "DoRothEA regulon (repressor)"){
       count <- deg_norm_count()
       formula_res <- enrichment_1_1()
       data3 <- data_degcount2()
@@ -2608,8 +2626,14 @@ output$download_pair_deg_count_down = downloadHandler(
         if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
           p1 <- NULL
         } else{
-          p1 <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
-                          geom_point(aes(color=qvalue,size=GeneRatio)) +
+          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+          data$x <- gsub(":","", data$x)
+          data <- dplyr::arrange(data, x)
+          idx <- order(data[["x"]], decreasing = FALSE)
+          data$Description <- factor(data$Description,
+                                   levels=rev(unique(data$Description[idx])))
+          p1 <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+                          geom_point() +
                           scale_color_continuous(low="red", high="blue",
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
@@ -2638,7 +2662,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Plot results",{
     if(input$Species != "not selected"){
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
+         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
       print(pair_enrich1_keggGO())
       }else{
         print(pair_enrich1_H())
@@ -2657,7 +2682,8 @@ output$download_pair_deg_count_down = downloadHandler(
     count <- deg_norm_count()
     upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
     downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
+       input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
         if(input$Gene_set == "KEGG"){
           kk1 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
                             pvalueCutoff = 0.05)
@@ -2742,7 +2768,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"){
+        if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
+           input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
           p1 <- pair_enrich1_keggGO()
         }else{
           p1 <- pair_enrich1_H()
@@ -2757,7 +2784,7 @@ output$download_pair_deg_count_down = downloadHandler(
   )
 
   output$Gene_set <- renderUI({
-    selectInput('Gene_set', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
 
   output$pair_enrichment_result <- DT::renderDataTable({
@@ -4305,7 +4332,8 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   multi_Hallmark_set <- reactive({
     if(input$Species6 != "not selected"){
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
+         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
         return(NULL)
       }else{
         switch (input$Species6,
@@ -4323,6 +4351,16 @@ output$download_pair_deg_count_down = downloadHandler(
           H_t2g <- msigdbr(species = species, category = "C3")
           H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
             dplyr::select(gs_name, entrez_gene)
+        }
+        if(input$Gene_set6 == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set6 == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
         }
         return(H_t2g)
       }
@@ -4390,7 +4428,8 @@ output$download_pair_deg_count_down = downloadHandler(
       geneList <- data$log2FoldChange
       names(geneList) = as.character(data$ENTREZID)
       geneList <- sort(geneList, decreasing = TRUE)
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
+         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set6 == "KEGG"){
           withProgress(message = "KEGG GSEA",{
             kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
@@ -4436,7 +4475,8 @@ output$download_pair_deg_count_down = downloadHandler(
   # Multi DEG enrichment plot ------------------------------------------------------------------------------
   multi_enrich1_keggGO <- reactive({
     if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
+         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
         kk4 <- multi_enrichment_1_gsea()
         if (length(as.data.frame(kk4)$ID) == 0) {
           p4 <- NULL
@@ -4455,7 +4495,8 @@ output$download_pair_deg_count_down = downloadHandler(
   
   multi_enrich1_H <- reactive({
     if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 == "MSigDB Hallmark" || input$Gene_set6 == "Transcription factor targets"){
+      if(input$Gene_set6 == "MSigDB Hallmark" || input$Gene_set6 == "Transcription factor targets" || 
+         input$Gene_set6 == "DoRothEA regulon (activator)" || input$Gene_set6 == "DoRothEA regulon (repressor)"){
         H_t2g <- multi_Hallmark_set()
         em3 <- multi_enrichment_1_gsea()
         if (length(as.data.frame(em3)$ID) == 0) {
@@ -4480,7 +4521,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Plot results",{
           if(input$Species6 != "not selected"){
-            if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+            if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
+               input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
               print(multi_enrich1_keggGO())
             }else{
               print(multi_enrich1_H())
@@ -4493,7 +4535,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   output$Gene_set6 <- renderUI({
-    selectInput('Gene_set6', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set6', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
   
   output$multi_GSEA_result <- DT::renderDataTable({
@@ -4510,7 +4552,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets"){
+        if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
+           input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
           p1 <- multi_enrich1_keggGO()
         }else{
           p1 <- multi_enrich1_H()
@@ -4533,7 +4576,8 @@ output$download_pair_deg_count_down = downloadHandler(
   #multi DEG enrichment 2--------
   multi_Hallmark_set2 <- reactive({
     if(input$Species6 != "not selected"){
-      if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+      if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+         input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
         return(NULL)
       }else{
         switch (input$Species6,
@@ -4552,6 +4596,16 @@ output$download_pair_deg_count_down = downloadHandler(
           H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
             dplyr::select(gs_name, entrez_gene)
         }
+        if(input$Gene_set7 == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set7 == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
         return(H_t2g)
       }
     }else return(NULL)
@@ -4559,7 +4613,8 @@ output$download_pair_deg_count_down = downloadHandler(
   
   multi_Hallmark_set3 <- reactive({
     if(input$Species6 != "not selected"){
-      if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+      if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+         input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
         return(NULL)
       }else{
         switch (input$Species6,
@@ -4578,6 +4633,16 @@ output$download_pair_deg_count_down = downloadHandler(
           H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
             dplyr::select(gs_name, entrez_gene)
         }
+        if(input$Gene_set8 == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set8 == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
         return(H_t2g)
       }
     }else return(NULL)
@@ -4585,11 +4650,11 @@ output$download_pair_deg_count_down = downloadHandler(
   
   
   output$Gene_set7 <- renderUI({
-    selectInput('Gene_set7', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set7', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
   
   output$Gene_set8 <- renderUI({
-    selectInput('Gene_set8', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set8', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
   
   output$multi_Spe <- renderText({
@@ -4724,7 +4789,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
           if(input$Gene_set7 == "KEGG"){
             withProgress(message = "KEGG enrichment analysis",{
               formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
@@ -4777,7 +4843,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
           if(input$Gene_set8 == "KEGG"){
             withProgress(message = "KEGG enrichment analysis",{
               formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
@@ -4830,7 +4897,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(formula_res)){
         return(NULL)
       }else{
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
           if ((length(as.data.frame(formula_res)$Description) == 0) ||
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
             p1 <- NULL
@@ -4851,7 +4919,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(formula_res)){
         return(NULL)
       }else{
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
           if ((length(as.data.frame(formula_res)$Description) == 0) ||
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
             p1 <- NULL
@@ -4872,7 +4941,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
           return(NULL)
         }else{
           H_t2g <- multi_Hallmark_set2()
@@ -4922,7 +4992,8 @@ output$download_pair_deg_count_down = downloadHandler(
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
           return(NULL)
         }else{
           H_t2g <- multi_Hallmark_set3()
@@ -4973,7 +5044,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Plot results",{
           if(input$Species6 != "not selected"){
-            if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+            if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+               input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
               print(multi_enrich_keggGO())
             }else{
               print(multi_enrich_H())
@@ -4992,7 +5064,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Plot results",{
           if(input$Species6 != "not selected"){
-            if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+            if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+               input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
               print(multi_enrich_keggGO2())
             }else{
               print(multi_enrich_H2())
@@ -5093,7 +5166,8 @@ output$download_pair_deg_count_down = downloadHandler(
         return(NULL)
       }else{
         data2 <- dplyr::filter(data, Group == group)
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
           if(input$Gene_set7 == "KEGG"){
             kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code6(),
                               pvalueCutoff = 0.05)
@@ -5138,7 +5212,8 @@ output$download_pair_deg_count_down = downloadHandler(
         return(NULL)
       }else{
         data2 <- dplyr::filter(data, Group == group)
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
           if(input$Gene_set8 == "KEGG"){
             kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code6(),
                               pvalueCutoff = 0.05)
@@ -5213,7 +5288,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets"){
+        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
+           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
           p1 <- multi_enrich_keggGO()
         }else{
           p1 <- multi_enrich_H()
@@ -5232,7 +5308,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets"){
+        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
+           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
           p1 <- multi_enrich_keggGO2()
         }else{
           p1 <- multi_enrich_H2()
@@ -6837,7 +6914,8 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(data4)){
       return(NULL)
     }else{
-      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+         input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set2 == "KEGG"){
           withProgress(message = "KEGG dotplot",{
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
@@ -6901,7 +6979,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
           formula_res <- enrichment3_1_1()
           if ((length(as.data.frame(formula_res)$Description) == 0) ||
               length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
@@ -6970,8 +7049,14 @@ output$download_pair_deg_count_down = downloadHandler(
         if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
           d <- NULL
         } else{
-          d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
-                          geom_point(aes(color=qvalue,size=GeneRatio)) +
+          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+          data$x <- gsub(":","", data$x)
+          data <- dplyr::arrange(data, x)
+          idx <- order(data[["x"]], decreasing = FALSE)
+          data$Description <- factor(data$Description,
+                                     levels=rev(unique(data$Description[idx])))
+          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+                          geom_point() +
                           scale_color_continuous(low="red", high="blue",
                                                  guide=guide_colorbar(reverse=TRUE)) +
                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
@@ -7042,6 +7127,16 @@ output$download_pair_deg_count_down = downloadHandler(
         H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
           dplyr::select(gs_name, entrez_gene)
       }
+        if(input$Gene_set2 == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species2,  type = "DoRothEA regulon (activator)", org = org2())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set2 == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species2,  type = "DoRothEA regulon (repressor)", org = org2())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
       return(H_t2g)
       }else return(NULL)
     })
@@ -7054,7 +7149,8 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(data4)){
       return(NULL)
     }else{
-      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+         input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set2 == "KEGG"){
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
         }
@@ -7108,7 +7204,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
         formula_res <- enrichment3_2_1()
         if ((length(as.data.frame(formula_res)$Description) == 0) ||
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
@@ -7170,11 +7267,17 @@ output$download_pair_deg_count_down = downloadHandler(
         if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
           d <- NULL
         } else{
-          d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
-                         geom_point(aes(color=qvalue,size=GeneRatio)) +
-                         scale_color_continuous(low="red", high="blue",
-                                                guide=guide_colorbar(reverse=TRUE)) +
-                         scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+          data$x <- gsub(":","", data$x)
+          data <- dplyr::arrange(data, x)
+          idx <- order(data[["x"]], decreasing = FALSE)
+          data$Description <- factor(data$Description,
+                                     levels=rev(unique(data$Description[idx])))
+          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+                          geom_point() +
+                          scale_color_continuous(low="red", high="blue",
+                                                 guide=guide_colorbar(reverse=TRUE)) +
+                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
 
         for (name in unique(data3$sig)) {
@@ -7230,7 +7333,8 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
     cnet_list <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set2 == "KEGG"){
           formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
         }
@@ -7284,7 +7388,8 @@ output$download_pair_deg_count_down = downloadHandler(
     }else{
     cnet_list <- list()
     cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets"){
+    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
+       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
         formula_res <- enrichment3_3_1()
         if(!is.null(formula_res)){
         if ((length(as.data.frame(formula_res)$Description) == 0) ||
@@ -7347,11 +7452,17 @@ output$download_pair_deg_count_down = downloadHandler(
         if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
           d <- NULL
         } else{
-          d <- as.grob(ggplot(data, aes(x = Cluster,y=reorder(Description, GeneRatio)))+
-                         geom_point(aes(color=qvalue,size=GeneRatio)) +
-                         scale_color_continuous(low="red", high="blue",
-                                                guide=guide_colorbar(reverse=TRUE)) +
-                         scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+          data$x <- gsub(":","", data$x)
+          data <- dplyr::arrange(data, x)
+          idx <- order(data[["x"]], decreasing = FALSE)
+          data$Description <- factor(data$Description,
+                                     levels=rev(unique(data$Description[idx])))
+          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+                          geom_point() +
+                          scale_color_continuous(low="red", high="blue",
+                                                 guide=guide_colorbar(reverse=TRUE)) +
+                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
         }}
 
         for (name in unique(data3$sig)) {
@@ -7400,7 +7511,7 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   output$Gene_set2 <- renderUI({
-    selectInput('Gene_set2', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set2', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
 
   output$enrichment3_result_1 <- DT::renderDataTable({
@@ -8492,7 +8603,8 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   Hallmark_enrich <- reactive({
     if(input$Species4 != "not selected"){
-      if(input$Gene_set3 != "MSigDB Hallmark" &&  input$Gene_set3 != "Transcription factor targets"){
+      if(input$Gene_set3 != "MSigDB Hallmark" &&  input$Gene_set3 != "Transcription factor targets" &&
+         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
         return(NULL)
       }else{
         switch (input$Species4,
@@ -8510,6 +8622,16 @@ output$download_pair_deg_count_down = downloadHandler(
           H_t2g <- msigdbr(species = species, category = "C3")
           H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
             dplyr::select(gs_name, entrez_gene)
+        }
+        if(input$Gene_set3 == "DoRothEA regulon (activator)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species4,  type = "DoRothEA regulon (activator)", org = org4())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+        }
+        if(input$Gene_set3 == "DoRothEA regulon (repressor)"){
+          H_t2g <- as_tibble(dorothea(species = input$Species4,  type = "DoRothEA regulon (repressor)", org = org4())) %>%
+            dplyr::select(gs_name, entrez_gene)
+          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
         }
         return(H_t2g)
       }
@@ -8588,7 +8710,8 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(data3)){
       return(NULL)
     }else{
-      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" && 
+         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set3 == "KEGG"){
           withProgress(message = "KEGG enrichment analysis",{
             formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
@@ -8642,7 +8765,8 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(formula_res)){
       return(NULL)
     }else{
-      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
+         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
         if ((length(as.data.frame(formula_res)$Description) == 0) ||
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
           p1 <- NULL
@@ -8663,7 +8787,8 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(data3)){
       return(NULL)
     }else{
-      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
+         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
         return(NULL)
       }else{
         H_t2g <- Hallmark_enrich()
@@ -8714,7 +8839,8 @@ output$download_pair_deg_count_down = downloadHandler(
       }else{
         withProgress(message = "Plot results",{
           if(input$Species4 != "not selected"){
-            if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+            if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
+               input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
               print(enrich_keggGO())
             }else{
               print(enrich_H())
@@ -8752,7 +8878,8 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       data2 <- dplyr::filter(data, Group == group)
-      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+      if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
+         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
         if(input$Gene_set3 == "KEGG"){
           kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code4(),
                             qvalueCutoff = 0.05)
@@ -8809,7 +8936,8 @@ output$download_pair_deg_count_down = downloadHandler(
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets"){
+        if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
+           input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
           p1 <- enrich_keggGO()
         }else{
           p1 <- enrich_H()
@@ -8837,7 +8965,7 @@ output$download_pair_deg_count_down = downloadHandler(
   )
 
   output$Gene_set3 <- renderUI({
-    selectInput('Gene_set3', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets"))
+    selectInput('Gene_set3', 'Gene Set', c("KEGG", "GO", "MSigDB Hallmark", "Transcription factor targets", "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)"))
   })
 
   output$enrichment_result <- DT::renderDataTable({
@@ -9335,9 +9463,46 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file) {write.table(msig_list(), file, quote = F, row.names = F, sep = "\t")})
 }
 
-
-
-
+dorothea <- function(species, type, org){
+  if(species == "Mus musculus"){
+    net <- dorothea::dorothea_mm
+  }else{
+    net <- dorothea::dorothea_hs
+  }
+  net2 <- net %>% filter(confidence != "D") %>% filter(confidence != "E")
+  if(type == "DoRothEA regulon (activator)") net2 <- net2%>% filter(mor == 1)
+  if(type == "DoRothEA regulon (repressor)") net2 <- net2%>% filter(mor == -1)
+  my.symbols <- gsub("\\..*","", net2$target)
+  gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+                                  keytype = "SYMBOL",
+                                  columns = c("SYMBOL", "ENTREZID"))
+  colnames(gene_IDs) <- c("target", "ENTREZID")
+  gene_IDs <- gene_IDs %>% distinct(target, .keep_all = T)
+  gene_IDs <- na.omit(gene_IDs)
+  net2 <- merge(net2, gene_IDs, by="target")
+  net3 <- data.frame(gs_name = net2$tf, entrez_gene = net2$ENTREZID, target = net2$target)
+  net3 <- dplyr::arrange(net3, gs_name)
+  if(species != "Mus musculus" && species != "Homo sapiens"){
+    genes <- net3$entrez_gene
+    switch (species,
+            "Rattus norvegicus" = set <- "rnorvegicus_gene_ensembl",
+            "Xenopus laevis" = set <- "xtropicalis_gene_ensembl",
+            "Drosophila melanogaster" = set <- "dmelanogaster_gene_ensembl",
+            "Caenorhabditis elegans" = set <- "celegans_gene_ensembl")
+    convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
+    human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
+    genes = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
+                                   values = genes ,mart = human,
+                                   attributesL = c("entrezgene_id"),
+                                   martL = convert, uniqueRows=T)
+   colnames(genes) <- c("entrez_gene", "converted_entrez_gene")
+   genes <- genes %>% distinct(converted_entrez_gene, .keep_all = T)
+   merge <- merge(net3, genes, by = "entrez_gene") 
+   net3 <- data.frame(gs_name = merge$gs_name, entrez_gene = merge$converted_entrez_gene)
+   net3 <- dplyr::arrange(net3, gs_name)
+  }
+  return(net3)
+}
 
 
 

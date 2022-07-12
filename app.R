@@ -1285,28 +1285,10 @@ server <- function(input, output, session) {
   options(shiny.maxRequestSize=30*1024^2)
   # pair-wise ------------------------------------------------------------------------------
 org1 <- reactive({
-  if(input$Species != "not selected"){
-    switch (input$Species,
-            "Mus musculus" = org <- org.Mm.eg.db,
-            "Homo sapiens" = org <- org.Hs.eg.db,
-            "Rattus norvegicus" = org <- org.Rn.eg.db,
-            "Xenopus laevis" = org <- org.Xl.eg.db,
-            "Drosophila melanogaster" = org <- org.Dm.eg.db,
-            "Caenorhabditis elegans" = org <- org.Ce.eg.db)
-    return(org)
-  }
+  return(org(Species = input$Species))
 })
 org_code1 <- reactive({
-  if(input$Species != "not selected"){
-    switch (input$Species,
-            "Mus musculus" = org_code <- "mmu",
-            "Homo sapiens" = org_code <- "hsa",
-            "Rattus norvegicus" = org_code <- "rno",
-            "Xenopus laevis" = org_code <- "xla",
-            "Drosophila melanogaster" = org_code <- "dme",
-            "Caenorhabditis elegans" = org_code <- "cel")
-    return(org_code)
-  }
+  return(org_code(Species = input$Species))
 })
 
 row_count_matrix <- reactive({
@@ -1314,23 +1296,12 @@ row_count_matrix <- reactive({
     if (input$data_file_type == "Row1"){
       tmp <- input$file3$datapath
       if(is.null(input$file3) && input$goButton > 0 )  tmp = "data/example1.txt"
-      if(is.null(tmp)) {
-        return(NULL)
-      }else{
-        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-        return(df)
-      }
+        return(read_df(tmp = tmp))
     }
     if (input$data_file_type == "Row2"){
       tmp <- input$file1$datapath
-      if(is.null(input$file1) && input$goButton == 0) return(NULL)
       if(is.null(input$file1) && input$goButton > 0 )  tmp = "data/example2.csv"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-      return(df)
+      return(read_df(tmp = tmp))
     }
   })
 })
@@ -1339,12 +1310,9 @@ row_count_matrix <- reactive({
       return(NULL)
     }else{
     tmp <- input$file2$datapath
-    if(is.null(input$file2) && input$goButton == 0) return(NULL)
     if(is.null(input$file2) && input$goButton > 0 )  tmp = "data/example3.csv"
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-    rownames(df) <- gsub("-",".",rownames(df))
+    df <- read_df(tmp = tmp)
+    if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
     return(df)
     }
   })
@@ -2198,52 +2166,7 @@ output$download_pair_deg_count_down = downloadHandler(
           rownames(data2) <- data2$Row.names
         }
         rowlist <- rownames(data2)
-        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 22.5
-        pdf_wsize <- 22.5}
-        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
-        {pdf_hsize <- 20.25
-        pdf_wsize <- 20.25}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 18
-        pdf_wsize <- 18}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 15.75
-        pdf_wsize <- 15.75}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
-        {pdf_hsize <- 13.5
-        pdf_wsize <- 13.5}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
-        {pdf_hsize <- 11.5
-        pdf_wsize <- 11.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
-        {pdf_hsize <- 9
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 6.75}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 6
-        pdf_wsize <- 9}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 6
-        pdf_wsize <- 6}
-        if (length(rowlist) == 3)
-        {pdf_hsize <- 3
-        pdf_wsize <- 9}
-        if (length(rowlist) == 2)
-        {pdf_hsize <- 3
-        pdf_wsize <- 6}
-        if (length(rowlist) == 1)
-        {pdf_hsize <- 3
-        pdf_wsize <- 3}
-        if (length(rowlist) > 200)
-        {pdf_hsize <- 30
-        pdf_wsize <- 30}
-        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
         print(pair_GOIbox())
         dev.off()
         incProgress(1)
@@ -2252,87 +2175,6 @@ output$download_pair_deg_count_down = downloadHandler(
   )
 
   # pair-wise PCA ------------------------------------------------------------------------------
-  pairPCAdata <- reactive({
-    if(is.null(d_row_count_matrix())){
-      return(NULL)
-    }else{
-    data <- deg_norm_count()
-    if(length(grep("SYMBOL", colnames(data))) != 0){
-      data <- data[, - which(colnames(data) == "SYMBOL")]
-    }
-    pca <- prcomp(data, scale. = T)
-    label<- colnames(data)
-    label<- gsub("\\_.+$", "", label)
-    lab_x <- paste(summary(pca)$importance[2,1]*100,
-                   "% of variance)", sep = "")
-    lab_x <- paste("PC1 (", lab_x, sep = "")
-    lab_y <- paste(summary(pca)$importance[2,2]*100,
-                   "% of variance)", sep = "")
-    lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    return(pca$rotation)
-    }
-  })
-
-  pair_pca_plot <- reactive({
-    data <- deg_norm_count()
-    if(length(grep("SYMBOL", colnames(data))) != 0){
-      data <- data[, - which(colnames(data) == "SYMBOL")]
-    }
-    pca <- prcomp(data, scale. = T)
-    label<- colnames(data)
-    label<- gsub("\\_.+$", "", label)
-    lab_x <- paste(summary(pca)$importance[2,1]*100,
-                   "% of variance)", sep = "")
-    lab_x <- paste("PC1 (", lab_x, sep = "")
-    lab_y <- paste(summary(pca)$importance[2,2]*100,
-                   "% of variance)", sep = "")
-    lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
-                                  y=pca$rotation[,2],
-                                  col=label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
-      theme(legend.position="none", aspect.ratio=1)
-    rho <- cor(data,method="spearman")
-    d <- dist(1-rho)
-    mds <- as.data.frame(cmdscale(d))
-    label<-colnames(data)
-    label<-gsub("\\_.+$", "", label)
-    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
-                          col = label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab("dim 1") + ylab("dim 2") +
-      geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
-    x <- NULL
-    y <- NULL
-    xend <- NULL
-    yend <- NULL
-    data.t <- t(data)
-    hc <- hclust(dist(data.t), "ward.D2")
-    dendr <- dendro_data(hc, type="rectangle")
-    g3 <- ggplot() +
-      geom_segment(data=segment(dendr),
-                   aes(x=x, y=y, xend=xend, yend=yend)) +
-      geom_text(data=label(dendr),
-                aes(x, y, label=label, hjust=0), size=3) +
-      theme(legend.position = "none",
-            axis.line.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
-            axis.title.x=element_blank(),axis.text.y=element_blank(),
-            panel.grid.minor.x=element_blank(),
-            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
-      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
-    p2 <- plot_grid(g1, g2, g3, nrow = 1)
-    return(p2)
-  })
-
   output$download_pair_PCA = downloadHandler(
     filename = function(){
       paste0(download_pair_overview_dir(), "_PCA-MDS-dendrogram.pdf")
@@ -2340,7 +2182,7 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file) {
       withProgress(message = "Preparing download",{
         pdf(file, height = 3.5, width = 9)
-        print(pair_pca_plot())
+        print(PCAplot(data = deg_norm_count()))
         dev.off()
         incProgress(1)
       })
@@ -2351,59 +2193,26 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
-    print(pair_pca_plot())
+    print(PCAplot(data = deg_norm_count()))
     }
   })
 
   output$pair_PCA_data <- DT::renderDataTable({
-    pairPCAdata()
+    PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count())
   })
 
   output$download_pair_PCA_table = downloadHandler(
     filename = function() {
       paste0(download_pair_overview_dir(), "_PCA_table.txt")
       },
-    content = function(file){write.table(pairPCAdata(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), file, row.names = T, sep = "\t", quote = F)}
   )
   # pair-wise enrichment ------------------------------------------------------------------------------
   output$Spe1 <- renderText({
     if(input$Species == "not selected") print("Please select 'Species'")
   })
   Hallmark_set <- reactive({
-    if(input$Species != "not selected"){
-    if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"&&
-       input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)"){
-      return(NULL)
-      }else{
-    switch (input$Species,
-            "Mus musculus" = species <- "Mus musculus",
-            "Homo sapiens" = species <- "Homo sapiens",
-            "Rattus norvegicus" = species <- "Rattus norvegicus",
-            "Xenopus laevis" = species <- "Xenopus laevis",
-            "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-            "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set == "MSigDB Hallmark"){
-          H_t2g <- msigdbr(species = species, category = "H") %>%
-            dplyr::select(gs_name, entrez_gene) 
-        }
-        if(input$Gene_set == "Transcription factor targets"){
-    H_t2g <- msigdbr(species = species, category = "C3")
-    H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-      dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species,  type = "DoRothEA regulon (activator)", org = org1())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species,  type = "DoRothEA regulon (repressor)", org = org1())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-    return(H_t2g)
-      }
-    }else return(NULL)
+    return(GeneList_for_enrichment(Species = input$Species, Gene_set = input$Gene_set, org = org1()))
   })
 
   enrichment_1_1 <- reactive({
@@ -3393,28 +3202,10 @@ output$download_pair_deg_count_down = downloadHandler(
   
   #multi DEG--------------------------
   org6 <- reactive({
-    if(input$Species6 != "not selected"){
-      switch (input$Species6,
-              "Mus musculus" = org <- org.Mm.eg.db,
-              "Homo sapiens" = org <- org.Hs.eg.db,
-              "Rattus norvegicus" = org <- org.Rn.eg.db,
-              "Xenopus laevis" = org <- org.Xl.eg.db,
-              "Drosophila melanogaster" = org <- org.Dm.eg.db,
-              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
-      return(org)
-    }
+    return(org(Species = input$Species6))
   })
   org_code6 <- reactive({
-    if(input$Species6 != "not selected"){
-      switch (input$Species6,
-              "Mus musculus" = org_code <- "mmu",
-              "Homo sapiens" = org_code <- "hsa",
-              "Rattus norvegicus" = org_code <- "rno",
-              "Xenopus laevis" = org_code <- "xla",
-              "Drosophila melanogaster" = org_code <- "dme",
-              "Caenorhabditis elegans" = org_code <- "cel")
-      return(org_code)
-    }
+    return(org_code(Species = input$Species6))
   })
   
   multi_row_count_matrix <- reactive({
@@ -3422,23 +3213,12 @@ output$download_pair_deg_count_down = downloadHandler(
       if (input$multi_data_file_type == "Row1"){
         tmp <- input$multi_file1$datapath
         if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = "data/example4.txt"
-        if(is.null(tmp)) {
-          return(NULL)
-        }else{
-          if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-          if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-          if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-          return(df)
-        }
+        return(read_df(tmp = tmp))
       }
       if (input$multi_data_file_type == "Row2"){
         tmp <- input$multi_file2$datapath
-        if(is.null(input$multi_file2) && input$goButton6 == 0) return(NULL)
         if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = "data/example8.txt"
-        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-        return(df)
+        return(read_df(tmp = tmp))
       }
     })
   })
@@ -3447,14 +3227,13 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       tmp <- input$multi_file3$datapath
-      if(is.null(input$multi_file3) && input$goButton6 == 0) return(NULL)
       if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = "data/example5.csv"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+      df <- read_df(tmp = tmp)
+      if(!is.null(df)){
       rownames(df) <- gsub("-",".",rownames(df))
       df[,1] <- gsub("\\_.+$", "", df[,1])
       df[,2] <- gsub("\\_.+$", "", df[,2])
+      }
       return(df)
     }
   })
@@ -3939,52 +3718,7 @@ output$download_pair_deg_count_down = downloadHandler(
           clusters <- multi_pattern2()$df
           clusterNumber <- length(unique(clusters$cluster))
           print(clusterNumber)
-          if ((clusterNumber > 81) && (clusterNumber <= 200))
-          {pdf_hsize <- 15
-          pdf_wsize <- 15}
-          if ((clusterNumber > 64) && (clusterNumber <= 81))
-          {pdf_hsize <- 14
-          pdf_wsize <- 13.5}
-          if ((clusterNumber > 49) && (clusterNumber <= 64))
-          {pdf_hsize <- 13
-          pdf_wsize <- 12}
-          if ((clusterNumber > 36) && (clusterNumber <= 49))
-          {pdf_hsize <- 11
-          pdf_wsize <- 10.5}
-          if ((clusterNumber > 25) && (clusterNumber <= 36))
-          {pdf_hsize <- 10
-          pdf_wsize <- 9}
-          if ((clusterNumber > 16) && (clusterNumber <= 25))
-          {pdf_hsize <- 8
-          pdf_wsize <- 7.5}
-          if ((clusterNumber > 12) && (clusterNumber <= 16))
-          {pdf_hsize <- 7
-          pdf_wsize <- 6}
-          if ((clusterNumber > 9) && (clusterNumber <= 12))
-          {pdf_hsize <- 7
-          pdf_wsize <- 6}
-          if ((clusterNumber > 6) && (clusterNumber <= 9))
-          {pdf_hsize <- 6
-          pdf_wsize <- 4.5}
-          if ((clusterNumber > 4) && (clusterNumber <= 6))
-          {pdf_hsize <- 6
-          pdf_wsize <- 6}
-          if (clusterNumber == 4)
-          {pdf_hsize <- 6
-          pdf_wsize <- 4}
-          if (clusterNumber == 3)
-          {pdf_hsize <- 4
-          pdf_wsize <- 6}
-          if (clusterNumber == 2)
-          {pdf_hsize <- 4
-          pdf_wsize <- 4}
-          if (clusterNumber == 1)
-          {pdf_hsize <- 4
-          pdf_wsize <- 2}
-          if (clusterNumber > 200)
-          {pdf_hsize <- 30
-          pdf_wsize <- 30}
-          pdf(file, height = pdf_hsize, width = pdf_wsize)
+          pdf(file, height = pdf_h(clusterNumber), width = pdf_w(clusterNumber))
           print(multi_boxplot_reactive()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -4227,52 +3961,7 @@ output$download_pair_deg_count_down = downloadHandler(
           clusters <- multi_kmeans_cluster()
           clusterNumber <- length(unique(clusters$Cluster))
           print(clusterNumber)
-          if ((clusterNumber > 81) && (clusterNumber <= 200))
-          {pdf_hsize <- 15
-          pdf_wsize <- 15}
-          if ((clusterNumber > 64) && (clusterNumber <= 81))
-          {pdf_hsize <- 14
-          pdf_wsize <- 13.5}
-          if ((clusterNumber > 49) && (clusterNumber <= 64))
-          {pdf_hsize <- 13
-          pdf_wsize <- 12}
-          if ((clusterNumber > 36) && (clusterNumber <= 49))
-          {pdf_hsize <- 11
-          pdf_wsize <- 10.5}
-          if ((clusterNumber > 25) && (clusterNumber <= 36))
-          {pdf_hsize <- 10
-          pdf_wsize <- 9}
-          if ((clusterNumber > 16) && (clusterNumber <= 25))
-          {pdf_hsize <- 8
-          pdf_wsize <- 7.5}
-          if ((clusterNumber > 12) && (clusterNumber <= 16))
-          {pdf_hsize <- 7
-          pdf_wsize <- 6}
-          if ((clusterNumber > 9) && (clusterNumber <= 12))
-          {pdf_hsize <- 7
-          pdf_wsize <- 6}
-          if ((clusterNumber > 6) && (clusterNumber <= 9))
-          {pdf_hsize <- 6
-          pdf_wsize <- 4.5}
-          if ((clusterNumber > 4) && (clusterNumber <= 6))
-          {pdf_hsize <- 6
-          pdf_wsize <- 6}
-          if (clusterNumber == 4)
-          {pdf_hsize <- 6
-          pdf_wsize <- 4}
-          if (clusterNumber == 3)
-          {pdf_hsize <- 4
-          pdf_wsize <- 6}
-          if (clusterNumber == 2)
-          {pdf_hsize <- 4
-          pdf_wsize <- 4}
-          if (clusterNumber == 1)
-          {pdf_hsize <- 4
-          pdf_wsize <- 2}
-          if (clusterNumber > 200)
-          {pdf_hsize <- 30
-          pdf_wsize <- 30}
-          pdf(file, height = pdf_hsize, width = pdf_wsize)
+          pdf(file, height = pdf_h(clusterNumber), width = pdf_w(clusterNumber))
           print(multi_kmeans_box()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -4373,40 +4062,7 @@ output$download_pair_deg_count_down = downloadHandler(
     if(input$Species6 == "not selected") print("Please select 'Species'")
   })
   multi_Hallmark_set <- reactive({
-    if(input$Species6 != "not selected"){
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
-         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)"){
-        return(NULL)
-      }else{
-        switch (input$Species6,
-                "Mus musculus" = species <- "Mus musculus",
-                "Homo sapiens" = species <- "Homo sapiens",
-                "Rattus norvegicus" = species <- "Rattus norvegicus",
-                "Xenopus laevis" = species <- "Xenopus laevis",
-                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set6 == "MSigDB Hallmark"){
-          H_t2g <- msigdbr(species = species, category = "H") %>%
-            dplyr::select(gs_name, entrez_gene) 
-        }
-        if(input$Gene_set6 == "Transcription factor targets"){
-          H_t2g <- msigdbr(species = species, category = "C3")
-          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-            dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set6 == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set6 == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        return(H_t2g)
-      }
-    }else return(NULL)
+    return(GeneList_for_enrichment(Species = input$Species6, Gene_set = input$Gene_set6, org = org6()))
   })
   
   output$selectEnrich_pair <- renderUI({
@@ -4617,77 +4273,11 @@ output$download_pair_deg_count_down = downloadHandler(
   
   #multi DEG enrichment 2--------
   multi_Hallmark_set2 <- reactive({
-    if(input$Species6 != "not selected"){
-      if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
-         input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)"){
-        return(NULL)
-      }else{
-        switch (input$Species6,
-                "Mus musculus" = species <- "Mus musculus",
-                "Homo sapiens" = species <- "Homo sapiens",
-                "Rattus norvegicus" = species <- "Rattus norvegicus",
-                "Xenopus laevis" = species <- "Xenopus laevis",
-                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set7 == "MSigDB Hallmark"){
-          H_t2g <- msigdbr(species = species, category = "H") %>%
-            dplyr::select(gs_name, entrez_gene) 
-        }
-        if(input$Gene_set7 == "Transcription factor targets"){
-          H_t2g <- msigdbr(species = species, category = "C3")
-          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-            dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set7 == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set7 == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        return(H_t2g)
-      }
-    }else return(NULL)
+    return(GeneList_for_enrichment(Species = input$Species6, Gene_set = input$Gene_set7, org = org6()))
   })
   
   multi_Hallmark_set3 <- reactive({
-    if(input$Species6 != "not selected"){
-      if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
-         input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)"){
-        return(NULL)
-      }else{
-        switch (input$Species6,
-                "Mus musculus" = species <- "Mus musculus",
-                "Homo sapiens" = species <- "Homo sapiens",
-                "Rattus norvegicus" = species <- "Rattus norvegicus",
-                "Xenopus laevis" = species <- "Xenopus laevis",
-                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set8 == "MSigDB Hallmark"){
-          H_t2g <- msigdbr(species = species, category = "H") %>%
-            dplyr::select(gs_name, entrez_gene) 
-        }
-        if(input$Gene_set8 == "Transcription factor targets"){
-          H_t2g <- msigdbr(species = species, category = "C3")
-          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-            dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set8 == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (activator)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set8 == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species6,  type = "DoRothEA regulon (repressor)", org = org6())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        return(H_t2g)
-      }
-    }else return(NULL)
+    return(GeneList_for_enrichment(Species = input$Species6, Gene_set = input$Gene_set8, org = org6()))
   })
   
   
@@ -5417,28 +5007,6 @@ output$download_pair_deg_count_down = downloadHandler(
   )
   
   #Multi PCA ------------------------------------------------------------------------------
-  multiPCAdata <- reactive({
-    if(is.null(multi_d_row_count_matrix())){
-      return(NULL)
-    }else{
-      data <- multi_deg_norm_count()
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-      pca <- prcomp(data, scale. = T)
-      label<- colnames(data)
-      label<- gsub("\\_.+$", "", label)
-      lab_x <- paste(summary(pca)$importance[2,1]*100,
-                     "% of variance)", sep = "")
-      lab_x <- paste("PC1 (", lab_x, sep = "")
-      lab_y <- paste(summary(pca)$importance[2,2]*100,
-                     "% of variance)", sep = "")
-      lab_y <- paste("PC2 (", lab_y, sep = "")
-      pca$rotation <- as.data.frame(pca$rotation)
-      return(pca$rotation)
-    }
-  })
-  
   multi_heat <- reactive({
     data <- as.data.frame(multi_deg_norm_count())
     meta <- multi_metadata()
@@ -5576,62 +5144,33 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   
   output$multi_PCA_data <- DT::renderDataTable({
-    multiPCAdata()
+    PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count())
   })
   
   output$download_multi_PCA_table = downloadHandler(
     filename = function() {
       paste0(download_multi_overview_dir(), "_PCA_table.txt")
     },
-    content = function(file){write.table(multiPCAdata(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), file, row.names = T, sep = "\t", quote = F)}
   )
   
   # 3 conditions ------------------------------------------------------------------------------
   org2 <- reactive({
-    if(input$Species2 != "not selected"){
-      switch (input$Species2,
-              "Mus musculus" = org <- org.Mm.eg.db,
-              "Homo sapiens" = org <- org.Hs.eg.db,
-              "Rattus norvegicus" = org <- org.Rn.eg.db,
-              "Xenopus laevis" = org <- org.Xl.eg.db,
-              "Drosophila melanogaster" = org <- org.Dm.eg.db,
-              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
-      return(org)
-    }
+    return(org(Species = input$Species2))
   })
   org_code2 <- reactive({
-    if(input$Species2 != "not selected"){
-      switch (input$Species2,
-              "Mus musculus" = org_code <- "mmu",
-              "Homo sapiens" = org_code <- "hsa",
-              "Rattus norvegicus" = org_code <- "rno",
-              "Xenopus laevis" = org_code <- "xla",
-              "Drosophila melanogaster" = org_code <- "dme",
-              "Caenorhabditis elegans" = org_code <- "cel")
-      return(org_code)
-    }
+    return(org_code(Species = input$Species2))
   })
 
     row_count_matrix2 <- reactive({
     if (input$data_file_type2 == "Row3"){
       tmp <- input$file4$datapath
       if(is.null(input$file4) && input$goButton2 > 0 )  tmp = "data/example4.txt"
-      if(is.null(tmp)) {
-        return(NULL)
-      }else{
-        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-        return(df)
-      }
+      return(read_df(tmp = tmp))
     }else{
       tmp <- input$file5$datapath
-      if(is.null(input$file5) && input$goButton2 == 0) return(NULL)
       if(is.null(input$file5) && input$goButton2 > 0 )  tmp = "data/example2.csv"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-      return(df)
+      return(read_df(tmp = tmp))
     }
   })
   metadata2 <- reactive({
@@ -5639,30 +5178,23 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
     tmp <- input$file6$datapath
-    if(is.null(input$file6) && input$goButton2 == 0) return(NULL)
     if(is.null(input$file6) && input$goButton2 > 0 )  tmp = "data/example6.csv"
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-    rownames(df) <- gsub("-",".",rownames(df))
+    df <- read_df(tmp = tmp)
+    if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
     return(df)
     }
   })
   norm_count_matrix2 <- reactive({
-    data <- input$norm_file2$datapath
-    if(is.null(input$norm_file2)) {
-      return(NULL)
-    }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-    if(input$Species2 != "not selected"){
-      if(str_detect(rownames(df)[1], "ENS")){
-        rownames(df) < gsub("\\..*","", rownames(df))
+    tmp <- input$norm_file2$datapath
+    df <- read_df(tmp = tmp)
+    if(!is.null(df)){
+      if(input$Species2 != "not selected"){
+        if(str_detect(rownames(df)[1], "ENS")){
+          rownames(df) < gsub("\\..*","", rownames(df))
+        }
       }
     }
     return(df)
-    }
   })
   
   d_row_count_matrix2 <- reactive({
@@ -5957,206 +5489,23 @@ output$download_pair_deg_count_down = downloadHandler(
 
   #3conditions DEG_1------------------------
   data_3degcount1_1 <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[1]
-      FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
-      FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
-      result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
-      result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern4"
-      Pattern2 <- "Pattern5"
-      result_FDR$FDR <- 1 - result_FDR$PPDE
-      result <- merge(result_Condm, result_FDR, by=0)
-      data$Row.names <- rownames(data)
-      data2 <- merge(data, result, by="Row.names")
-      result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-      sig <- rep(3, nrow(result))
-      sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-      sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-      data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                          FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-      if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-        new.levels <- c( paste0(specific,"_up"), paste0(specific,"_down"), "NS" )
-        col = c("red","blue", "darkgray")}
-      if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-        new.levels <- c(paste0(specific,"_up: "), "NS" )
-        col = c("red", "darkgray")}
-      if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-        new.levels <- c(paste0(specific,"_down: "), "NS" )
-        col = c("blue", "darkgray")}
-      if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-        new.levels <- c("NS")
-        col = "darkgray"}
-
-      data3$sig <- factor(data3$sig, labels = new.levels)
+    data3 <- data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                    result_FDR = deg_result2(), specific = 1,fc = input$fc2, 
+                    fdr = input$fdr2, basemean = input$basemean2)
       return(data3)
-    }
   })
 
   data_3degcount2_1 <- reactive({
-    data3 <- data_3degcount1_1()
-    if(is.null(data3)){
-      return(NULL)
-    }else{
-    if(length(unique(data3$sig)) == 1){
-      data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
-      return(data4)
-    } else {
-      data4 <- dplyr::filter(data3, sig != "NS")
-      if(str_detect(data4$Row.names[1], "ENS")){
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "ENSEMBL",
-                                          columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }else{
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }
-      return(data4)
-    }
-    }
+  return(data_3degcount2(data3 = data_3degcount1_1(), Species = input$Species2, org = org2()))
   })
 
   #3conditions scatter + heatmap_1
 
   cond3_scatter1_plot <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[1]
-    FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
-    FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
-    result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
-    result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
-    Pattern1 <- "Pattern4"
-    Pattern2 <- "Pattern5"
-    result_FDR$FDR <- 1 - result_FDR$PPDE
-    result <- merge(result_Condm, result_FDR, by=0)
-    data$Row.names <- rownames(data)
-    data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-    sig <- rep(3, nrow(result))
-    sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-    sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(paste0(specific,"_up: "), sum(sig == 1)), paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("red","blue", "darkgray")}
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(paste0(specific,"_up: "), sum(sig == 1)), "NS" )
-      col = c("red", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("blue", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-      new.levels <- c("NS")
-      col = "darkgray"}
-    data3$sig <- factor(data3$sig, labels = new.levels)
-    complete_data <- stats::na.omit(data3)
-    labs_data <- subset(complete_data, padj <= input$fdr2 & Row.names !=
-                          "" & (FC_x)*(FC_y) >= log2(input$fc2))
-    labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
-    labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data2 <- utils::head(labs_data, 20)
-    font.label <- data.frame(size=5, color="black", face = "plain")
-    set.seed(42)
-    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
-    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
-    }
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-    }
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
-    }
-    if(!is.null(labs_data)) {
-      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
-                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
-                                        force = 1, fontface = font.label$face,
-                                        size = font.label$size/2, color = font.label$color)
-    }
-    p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
-      geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p +
-      theme_bw()+ scale_color_manual(values = col)+
-      theme(legend.position = "top" , legend.title = element_blank(),
-            axis.text.x= ggplot2::element_text(size = 10),
-            axis.text.y= ggplot2::element_text(size = 10),
-            text = ggplot2::element_text(size = 10),
-            title = ggplot2::element_text(size = 10)) +
-      xlab(FC_xlab) + ylab(FC_ylab)
-
-    data4 <- data_3degcount2_1()
-    if(length(unique(data3$sig)) == 1){
-      ht <- NULL
-    }else{
-      data$Row.names <- rownames(data)
-      data5 <- merge(data, data4, by ="Row.names")
-      rownames(data5) <- data5$Row.names
-      data5 <- data5[,-1]
-      data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
-      data.z <- genescale(data5, axis=1, method="Z")
-      ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                            clustering_method_columns = 'ward.D2',
-                            show_row_names = F, show_row_dend = T))
-    }
-    p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
+                       result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 1,
+                       fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
     return(p)
-    }
   })
 
   output$scatter_1 <- renderPlot({
@@ -6183,206 +5532,22 @@ output$download_pair_deg_count_down = downloadHandler(
   )
   #3conditions DEG_2------------------------
   data_3degcount1_2 <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[2]
-    FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
-    FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
-    result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
-    result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
-    Pattern1 <- "Pattern4"
-    Pattern2 <- "Pattern5"
-    result_FDR$FDR <- 1 - result_FDR$PPDE
-    result <- merge(result_Condm, result_FDR, by=0)
-    data$Row.names <- rownames(data)
-    data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-    sig <- rep(3, nrow(result))
-    sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-    sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(specific,"_up"), paste0(specific,"_down"), "NS" )
-      col = c("red","blue", "darkgray")}
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(specific,"_up: "), "NS" )
-      col = c("red", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(specific,"_down: "), "NS" )
-      col = c("blue", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-      new.levels <- c("NS")
-      col = "darkgray"}
-
-    data3$sig <- factor(data3$sig, labels = new.levels)
+    data3 <- data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                             result_FDR = deg_result2(), specific = 2,fc = input$fc2, 
+                             fdr = input$fdr2, basemean = input$basemean2)
     return(data3)
-    }
   })
 
   data_3degcount2_2 <- reactive({
-    data3 <- data_3degcount1_2()
-    if(is.null(data3)){
-      return(NULL)
-    }else{
-    if(length(unique(data3$sig)) == 1){
-      data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
-      return(data4)
-    } else {
-      data4 <- dplyr::filter(data3, sig != "NS")
-      if(str_detect(data4$Row.names[1], "ENS")){
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "ENSEMBL",
-                                          columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }else{
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }
-      return(data4)
-    }
-    }
+    return(data_3degcount2(data3 = data_3degcount1_2(), Species = input$Species2, org = org2()))
   })
 
   #3conditions scatter + heatmap_2
   cond3_scatter2_plot <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[2]
-    FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
-    FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
-    result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
-    result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
-    Pattern1 <- "Pattern4"
-    Pattern2 <- "Pattern5"
-    result_FDR$FDR <- 1 - result_FDR$PPDE
-    result <- merge(result_Condm, result_FDR, by=0)
-    data$Row.names <- rownames(data)
-    data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-    sig <- rep(3, nrow(result))
-    sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-    sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(paste0(specific,"_up: "), sum(sig == 1)), paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("red","blue", "darkgray")}
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(paste0(specific,"_up: "), sum(sig == 1)), "NS" )
-      col = c("red", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("blue", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-      new.levels <- c("NS")
-      col = "darkgray"}
-    data3$sig <- factor(data3$sig, labels = new.levels)
-    complete_data <- stats::na.omit(data3)
-    labs_data <- subset(complete_data, padj <= input$fdr2 & Row.names !=
-                          "" & (FC_x)*(FC_y) >= log2(input$fc2))
-    labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
-    labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data2 <- utils::head(labs_data, 20)
-    font.label <- data.frame(size=5, color="black", face = "plain")
-    set.seed(42)
-    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
-    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
-    }
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-    }
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
-    }
-    if(!is.null(labs_data)) {
-      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
-                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
-                                        force = 1, fontface = font.label$face,
-                                        size = font.label$size/2, color = font.label$color)
-    }
-    p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
-      geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p +
-      theme_bw()+ scale_color_manual(values = col)+
-      theme(legend.position = "top" , legend.title = element_blank(),
-            axis.text.x= ggplot2::element_text(size = 10),
-            axis.text.y= ggplot2::element_text(size = 10),
-            text = ggplot2::element_text(size = 10),
-            title = ggplot2::element_text(size = 10)) +
-      xlab(FC_xlab) + ylab(FC_ylab)
-
-    data4 <- data_3degcount2_2()
-    if(length(unique(data3$sig)) == 1){
-      ht <- NULL
-    }else{
-      data$Row.names <- rownames(data)
-      data5 <- merge(data, data4, by ="Row.names")
-      rownames(data5) <- data5$Row.names
-      data5 <- data5[,-1]
-      data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
-      data.z <- genescale(data5, axis=1, method="Z")
-      ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                            clustering_method_columns = 'ward.D2',
-                            show_row_names = F, show_row_dend = T))
-    }
-
-    p<- plot_grid(p, ht, rel_widths = c(2, 1))
+    p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_2(),
+                            result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 2,
+                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
     return(p)
-    }
   })
 
   output$scatter_2 <- renderPlot({
@@ -6408,206 +5573,22 @@ output$download_pair_deg_count_down = downloadHandler(
 
   #3conditions DEG_3------------------------
   data_3degcount1_3 <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[3]
-    FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
-    FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
-    result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
-    result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
-    Pattern1 <- "Pattern4"
-    Pattern2 <- "Pattern5"
-    result_FDR$FDR <- 1 - result_FDR$PPDE
-    result <- merge(result_Condm, result_FDR, by=0)
-    data$Row.names <- rownames(data)
-    data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-    sig <- rep(3, nrow(result))
-    sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-    sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(specific,"_up"), paste0(specific,"_down"), "NS" )
-      col = c("red","blue", "darkgray")}
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(specific,"_up: "), "NS" )
-      col = c("red", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(specific,"_down: "), "NS" )
-      col = c("blue", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-      new.levels <- c("NS")
-      col = "darkgray"}
-
-    data3$sig <- factor(data3$sig, labels = new.levels)
+    data3 <- data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                             result_FDR = deg_result2(), specific = 1,fc = input$fc2, 
+                             fdr = input$fdr2, basemean = input$basemean2)
     return(data3)
-    }
   })
 
   data_3degcount2_3 <- reactive({
-    data3 <- data_3degcount1_3()
-    if(is.null(data3)){
-      return(NULL)
-    }else{
-    if(length(unique(data3$sig)) == 1){
-      data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
-      return(data4)
-    } else {
-      data4 <- dplyr::filter(data3, sig != "NS")
-      if(str_detect(data4$Row.names[1], "ENS")){
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "ENSEMBL",
-                                          columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }else{
-        if(input$Species2 != "not selected"){
-          my.symbols <- data4$Row.names
-          gene_IDs<-AnnotationDbi::select(org2(),keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("SYMBOL", "ENTREZID"))
-          colnames(gene_IDs) <- c("Row.names", "ENTREZID")
-          gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
-          data4 <- merge(data4, gene_IDs, by="Row.names")
-        }
-      }
-      return(data4)
-    }
-    }
+    return(data_3degcount2(data3 = data_3degcount1_3(), Species = input$Species2, org = org2()))
   })
 
   #3conditions scatter + heatmap_3
   cond3_scatter3_plot <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    collist <- factor(gsub("\\_.+$", "", colnames(data)))
-    vec <- c()
-    for (i in 1:length(unique(collist))) {
-      num <- length(collist[collist == unique(collist)[i]])
-      vec <- c(vec, num)
-    }
-    Cond_1 <- vec[1]
-    Cond_2 <- vec[2]
-    Cond_3 <- vec[3]
-    collist <- unique(collist)
-    result_Condm <- deg_result2_condmean()
-    result_FDR <- deg_result2()
-    if(str_detect(rownames(data)[1], "ENS")){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-    }
-    specific = collist[3]
-    FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
-    FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
-    result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
-    result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
-    Pattern1 <- "Pattern4"
-    Pattern2 <- "Pattern5"
-    result_FDR$FDR <- 1 - result_FDR$PPDE
-    result <- merge(result_Condm, result_FDR, by=0)
-    data$Row.names <- rownames(data)
-    data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > input$basemean2)
-    sig <- rep(3, nrow(result))
-    sig[which(result$FDR <= input$fdr2 & result$FC_x < log2(1/input$fc2) & result$FC_y < log2(1/input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
-    sig[which(result$FDR <= input$fdr2 & result$FC_x > log2(input$fc2) & result$FC_y > log2(input$fc2) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(paste0(specific,"_up: "), sum(sig == 1)), paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("red","blue", "darkgray")}
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(paste0(specific,"_up: "), sum(sig == 1)), "NS" )
-      col = c("red", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
-      col = c("blue", "darkgray")}
-    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
-      new.levels <- c("NS")
-      col = "darkgray"}
-    data3$sig <- factor(data3$sig, labels = new.levels)
-    complete_data <- stats::na.omit(data3)
-    labs_data <- subset(complete_data, padj <= input$fdr2 & Row.names !=
-                          "" & (FC_x)*(FC_y) >= log2(input$fc2))
-    labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
-    labs_data <- dplyr::filter(labs_data, sig != "NS")
-    labs_data2 <- utils::head(labs_data, 20)
-    font.label <- data.frame(size=5, color="black", face = "plain")
-    set.seed(42)
-    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
-    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
-    }
-    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
-    }
-    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
-    }
-    if(!is.null(labs_data)) {
-      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
-                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
-                                        force = 1, fontface = font.label$face,
-                                        size = font.label$size/2, color = font.label$color)
-    }
-    p <- p  + geom_hline(yintercept = c(-log2(input$fc2), log2(input$fc2)), linetype = c(2, 2), color = c("black", "black"))+
-      geom_vline(xintercept = c(-log2(input$fc2), log2(input$fc2)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p +
-      theme_bw()+ scale_color_manual(values = col)+
-      theme(legend.position = "top" , legend.title = element_blank(),
-            axis.text.x= ggplot2::element_text(size = 10),
-            axis.text.y= ggplot2::element_text(size = 10),
-            text = ggplot2::element_text(size = 10),
-            title = ggplot2::element_text(size = 10)) +
-      xlab(FC_xlab) + ylab(FC_ylab)
-
-    data4 <- data_3degcount2_3()
-    if(length(unique(data3$sig)) == 1){
-      ht <- NULL
-    }else{
-      data$Row.names <- rownames(data)
-      data5 <- merge(data, data4, by ="Row.names")
-      rownames(data5) <- data5$Row.names
-      data5 <- data5[,-1]
-      data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
-      data.z <- genescale(data5, axis=1, method="Z")
-      ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                            clustering_method_columns = 'ward.D2',
-                            show_row_names = F, show_row_dend = T))
-    }
-
-    p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_3(),
+                            result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 3,
+                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
     return(p)
-    }
   })
 
   output$scatter_3 <- renderPlot({
@@ -6633,97 +5614,11 @@ output$download_pair_deg_count_down = downloadHandler(
 
 
   #3conditions PCA--------------
-  PCA3data <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    if(length(grep("SYMBOL", colnames(data))) != 0){
-      data <- data[, - which(colnames(data) == "SYMBOL")]
-      data <- data[, - which(colnames(data) == "Unique_ID")]
-    }
-    pca <- prcomp(data, scale. = T)
-    label<- colnames(data)
-    label<- gsub("\\_.+$", "", label)
-    lab_x <- paste(summary(pca)$importance[2,1]*100,
-                   "% of variance)", sep = "")
-    lab_x <- paste("PC1 (", lab_x, sep = "")
-    lab_y <- paste(summary(pca)$importance[2,2]*100,
-                   "% of variance)", sep = "")
-    lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    return(pca$rotation)
-    }
-  })
-
-  cond3_pca <- reactive({
-    data <- deg_norm_count2()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-    if(length(grep("SYMBOL", colnames(data))) != 0){
-      data <- data[, - which(colnames(data) == "SYMBOL")]
-      data <- data[, - which(colnames(data) == "Unique_ID")]
-    }
-    pca <- prcomp(data, scale. = T)
-    label<- colnames(data)
-    label<- gsub("\\_.+$", "", label)
-    lab_x <- paste(summary(pca)$importance[2,1]*100,
-                   "% of variance)", sep = "")
-    lab_x <- paste("PC1 (", lab_x, sep = "")
-    lab_y <- paste(summary(pca)$importance[2,2]*100,
-                   "% of variance)", sep = "")
-    lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
-                                  y=pca$rotation[,2],
-                                  col=label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
-      theme(legend.position="none", aspect.ratio=1)
-    rho <- cor(data,method="spearman")
-    d <- dist(1-rho)
-    mds <- as.data.frame(cmdscale(d))
-    label<-colnames(data)
-    label<-gsub("\\_.+$", "", label)
-    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
-                          col = label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab("dim 1") + ylab("dim 2") +
-      geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
-    x <- NULL
-    y <- NULL
-    xend <- NULL
-    yend <- NULL
-    data.t <- t(data)
-    hc <- hclust(dist(data.t), "ward.D2")
-    dendr <- dendro_data(hc, type="rectangle")
-    g3 <- ggplot() +
-      geom_segment(data=segment(dendr),
-                   aes(x=x, y=y, xend=xend, yend=yend)) +
-      geom_text(data=label(dendr),
-                aes(x, y, label=label, hjust=0), size=3) +
-      theme(legend.position = "none",
-            axis.line.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
-            axis.title.x=element_blank(),axis.text.y=element_blank(),
-            panel.grid.minor.x=element_blank(),
-            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
-      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
-    p <- plot_grid(g1, g2, g3, nrow = 1)
-    }
-  })
-
   output$PCA2 <- renderPlot({
-    print(cond3_pca())
+    print(PCAplot(data = deg_norm_count2()))
   })
   output$PCA3_data <- DT::renderDataTable({
-    PCA3data()
+    PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2())
   })
 
   output$download_3cond_PCA = downloadHandler(
@@ -6733,10 +5628,17 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file) {
       withProgress(message = "Preparing download",{
         pdf(file, height = 3.5, width = 9)
-        print(cond3_pca_plot())
+        print(PCAplot(data = deg_norm_count2()))
         dev.off()
       })
     }
+  )
+  
+  output$download_cond3_pca_table = downloadHandler(
+    filename = function() {
+      paste0(download_cond3_dir(), "PCA_table.txt")
+    },
+    content = function(file){write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), file, row.names = T, sep = "\t", quote = F)}
   )
   #3conditions GOI------------------------------------------------------
   GOI_list2 <- reactive({
@@ -6878,52 +5780,7 @@ output$download_pair_deg_count_down = downloadHandler(
       withProgress(message = "Preparing download",{
         data <- cond3_GOIcount()
         rowlist <- rownames(data)
-        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 22.5
-        pdf_wsize <- 22.5}
-        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
-        {pdf_hsize <- 20.25
-        pdf_wsize <- 20.25}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 18
-        pdf_wsize <- 18}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 15.75
-        pdf_wsize <- 15.75}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
-        {pdf_hsize <- 13.5
-        pdf_wsize <- 13.5}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
-        {pdf_hsize <- 11.5
-        pdf_wsize <- 11.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
-        {pdf_hsize <- 9
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 6.75}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 6
-        pdf_wsize <- 9}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 6
-        pdf_wsize <- 6}
-        if (length(rowlist) == 3)
-        {pdf_hsize <- 3
-        pdf_wsize <- 9}
-        if (length(rowlist) == 2)
-        {pdf_hsize <- 3
-        pdf_wsize <- 6}
-        if (length(rowlist) == 1)
-        {pdf_hsize <- 3
-        pdf_wsize <- 3}
-        if (length(rowlist) > 200)
-        {pdf_hsize <- 30
-        pdf_wsize <- 30}
-        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
         print(cond3_GOIbox())
         dev.off()
 
@@ -6952,196 +5809,15 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   #3conditions enrichment_1 ------------------------------------------------------------------------------
   enrichment3_1_1 <- reactive({
-    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_1()
-    data3 <- data_3degcount1_1()
-    cnet_list <- list()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-         input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-        if(input$Gene_set2 == "KEGG"){
-          withProgress(message = "KEGG dotplot",{
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
-          incProgress()
-          })
-          }
-        if(input$Gene_set2 == "GO"){
-          withProgress(message = "GO dotplot",{
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org2()), silent = T)
-          incProgress()
-          })
-          }
-        if (class(formula_res) == "try-error") formula_res <- NA
-        return(formula_res)
-      }else{
-        withProgress(message = "dotplot",{
-        H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-        em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        if (length(as.data.frame(em)$ID) == 0) {
-          cnet1 <- NULL
-        } else {
-          cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-          cnet1$Cluster <- name
-          cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-        cnet_list[[name]] = cnet1
-        }
-          }
-        }
-          if (length(cnet_list) == 2){
-            cnet1 <- cnet_list[[1]]
-            cnet2 <- cnet_list[[2]]}
-          if (length(cnet_list) == 1){
-            cnet1 <- cnet_list[[1]]
-            cnet2 <- NULL}
-          if (length(cnet_list) == 0){
-            cnet1 <- NULL
-            cnet2 <- NULL}
-        if((length(cnet1) = 0 ) && (length(cnet2) = 0)) {
-          data <- NA
-        }else if(is.null(cnet2)) {
-          data <- cnet1
-          }else data <- rbind(cnet1, cnet2)
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
-        return(data)
-        incProgress()
-        })
-      }
-    }
-    }
+    return(enrichment3_1(data3 = data_3degcount1_1(),data4 = data_3degcount2_1(),
+                          Species = input$Species2, Gene_set = input$Gene_set2,
+                          org = org2(), org_code = org_code2(),H_t2g = Hallmark_cond3()))
   })
 
   keggEnrichment2_1 <- reactive({
-    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_1()
-    data3 <- data_3degcount1_1()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-    cnet_list <- list()
-    cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-          formula_res <- enrichment3_1_1()
-          if ((length(as.data.frame(formula_res)$Description) == 0) ||
-              length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
-            d <- NULL
-          } else{
-            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
-            d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
-          }
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            if(input$Gene_set2 == "KEGG"){
-              withProgress(message = "KEGG cnet plot",{
-              kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code2())
-              incProgress()
-              })
-            }
-            if(input$Gene_set2 == "GO"){
-              withProgress(message = "GO cnet plot",{
-              kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org2())
-              incProgress()
-              })
-            }
-              if (is.null(kk1)) {
-                cnet1 <- NULL
-              } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-              if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                  length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-                c <- NULL
-              } else{
-                c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                              cex_category = 0.75, colorEdge = TRUE)
-                c <- try(as.grob(c + guides(edge_color = "none")))
-                if(length(class(c)) == 1){
-                  if(class(c) == "try-error") c <- NULL
-                }
-                cnet_list[[name]] = c
-              }
-            }
-        }
-          }else{
-            
-            H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else {
-              cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-              cnet1$Cluster <- name
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet1 <- cnet1[1:5,]
-              cnet_list2[[name]] = cnet1
-            }
-          }
-        }
-        if (length(cnet_list2) == 0){
-          d <- NULL
-          }else{
-            if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
-            if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-            data <- dplyr::filter(data, !is.na(Cluster))
-            data <- dplyr::filter(data, !is.na(Description))
-            data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-            data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
-          d <- NULL
-        } else{
-          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
-          data$x <- gsub(":","", data$x)
-          data <- dplyr::arrange(data, x)
-          idx <- order(data[["x"]], decreasing = FALSE)
-          data$Description <- factor(data$Description,
-                                     levels=rev(unique(data$Description[idx])))
-          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
-                          geom_point() +
-                          scale_color_continuous(low="red", high="blue",
-                                                 guide=guide_colorbar(reverse=TRUE)) +
-                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }}
-            withProgress(message = "cnet plot",{
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-              c <- NULL
-            } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                            cex_category = 0.75, colorEdge = TRUE)
-              c <- try(as.grob(c + guides(edge_color = "none")))
-              if(length(class(c)) == 1){
-                if(class(c) == "try-error") c <- NULL
-              }
-              cnet_list[[name]] = c
-            }
-          }
-        }
-            incProgress()
-            })
-          }
-        if (length(cnet_list) == 2){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- cnet_list[[2]]}
-        if (length(cnet_list) == 1){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- NULL}
-        if (length(cnet_list) == 0){
-          cnet1 <- NULL
-          cnet2 <- NULL}
-      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
-    }
-    }else return(NULL)
+    return(keggEnrichment2(data3 = data_3degcount1_1(), data4 = data_3degcount2_1(), 
+                    Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_1_1(),
+                    H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
     })
   
   output$keggenrichment2_1 <- renderPlot({
@@ -7155,210 +5831,18 @@ output$download_pair_deg_count_down = downloadHandler(
 
   #3conditions enrichment_2 ------------------------------------------------------------------------------
     Hallmark_cond3 <- reactive({
-      if(input$Species2 != "not selected"){
-      switch (input$Species2,
-              "Mus musculus" = species <- "Mus musculus",
-              "Homo sapiens" = species <- "Homo sapiens",
-              "Rattus norvegicus" = species <- "Rattus norvegicus",
-              "Xenopus laevis" = species <- "Xenopus laevis",
-              "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-              "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set2 == "MSigDB Hallmark"){
-      H_t2g <- msigdbr(species = species, category = "H") %>%
-        dplyr::select(gs_name, entrez_gene)
-      }
-      if(input$Gene_set2 == "Transcription factor targets"){
-        H_t2g <- msigdbr(species = species, category = "C3")
-        H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-          dplyr::select(gs_name, entrez_gene)
-      }
-        if(input$Gene_set2 == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species2,  type = "DoRothEA regulon (activator)", org = org2())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set2 == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species2,  type = "DoRothEA regulon (repressor)", org = org2())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-      return(H_t2g)
-      }else return(NULL)
+      return(GeneList_for_enrichment(Species = input$Species2, Gene_set = input$Gene_set2, org = org2()))
     })
 
     enrichment3_2_1 <- reactive({
-      if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_2()
-    data3 <- data_3degcount1_2()
-    cnet_list <- list()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-      if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-         input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-        if(input$Gene_set2 == "KEGG"){
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
-        }
-        if(input$Gene_set2 == "GO"){
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org2()), silent = T)
-        }
-        if (class(formula_res) == "try-error") formula_res <- NA
-        return(formula_res)
-      }else{
-        H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else {
-              cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-              cnet1$Cluster <- name
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet_list[[name]] = cnet1
-            }
-          }
-        }
-        if (length(cnet_list) == 2){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- cnet_list[[2]]}
-        if (length(cnet_list) == 1){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- NULL}
-        if (length(cnet_list) == 0){
-          cnet1 <- NULL
-          cnet2 <- NULL}
-        if((length(cnet1) = 0 ) && (length(cnet2) = 0)) {
-          data <- NA
-        }else if(is.null(cnet2)) {
-          data <- cnet1
-        }else data <- rbind(cnet1, cnet2)
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
-        return(data)
-      }
-    }
-    }
+      return(enrichment3_1(data3 = data_3degcount1_2(),data4 = data_3degcount2_2(),
+                            Species = input$Species2, Gene_set = input$Gene_set2,
+                            org = org2(), org_code = org_code2(),H_t2g = Hallmark_cond3()))
   })
     keggEnrichment2_2 <- reactive({
-      if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_2()
-    data3 <- data_3degcount1_2()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-    cnet_list <- list()
-    cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-        formula_res <- enrichment3_2_1()
-        if ((length(as.data.frame(formula_res)$Description) == 0) ||
-            length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
-          d <- NULL
-        } else{
-          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
-          d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
-        }
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            if(input$Gene_set2 == "KEGG"){
-              kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code2())
-            }
-            if(input$Gene_set2 == "GO"){
-              kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org2())
-            }
-            if (is.null(kk1)) {
-              cnet1 <- NULL
-            } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-            if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-              c <- NULL
-            } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                            cex_category = 0.75, colorEdge = TRUE)
-              c <- try(as.grob(c + guides(edge_color = "none")))
-              if(length(class(c)) == 1){
-                if(class(c) == "try-error") c <- NULL
-              }
-              cnet_list[[name]] = c
-            }
-          }
-        }
-      }else{
-        H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else {
-              cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-              cnet1$Cluster <- name
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet1 <- cnet1[1:5,]
-              cnet_list2[[name]] = cnet1
-            }
-          }
-        }
-        if (length(cnet_list2) == 0){
-          d <- NULL
-        }else{
-          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
-          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-          data <- dplyr::filter(data, !is.na(Cluster))
-          data <- dplyr::filter(data, !is.na(Description))
-          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-          data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
-          d <- NULL
-        } else{
-          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
-          data$x <- gsub(":","", data$x)
-          data <- dplyr::arrange(data, x)
-          idx <- order(data[["x"]], decreasing = FALSE)
-          data$Description <- factor(data$Description,
-                                     levels=rev(unique(data$Description[idx])))
-          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
-                          geom_point() +
-                          scale_color_continuous(low="red", high="blue",
-                                                 guide=guide_colorbar(reverse=TRUE)) +
-                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }}
-
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-              c <- NULL
-            } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                            cex_category = 0.75, colorEdge = TRUE)
-              c <- try(as.grob(c + guides(edge_color = "none")))
-              if(length(class(c)) == 1){
-                if(class(c) == "try-error") c <- NULL
-              }
-              cnet_list[[name]] = c
-            }
-          }
-        }
-      }
-      if (length(cnet_list) == 2){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- cnet_list[[2]]}
-      if (length(cnet_list) == 1){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- NULL}
-      if (length(cnet_list) == 0){
-        cnet1 <- NULL
-        cnet2 <- NULL}
-      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
-      return(p)
-    }
-    }else return(NULL)
+      return(keggEnrichment2(data3 = data_3degcount1_2(), data4 = data_3degcount2_2(), 
+                             Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_2_1(),
+                             H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
   })
   
   output$keggenrichment2_2 <- renderPlot({
@@ -7371,179 +5855,15 @@ output$download_pair_deg_count_down = downloadHandler(
   })
   #3conditions enrichment_3 ------------------------------------------------------------------------------
   enrichment3_3_1 <- reactive({
-    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_3()
-    data3 <- data_3degcount1_3()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-    cnet_list <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-        if(input$Gene_set2 == "KEGG"){
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code2()), silent = T)
-        }
-        if(input$Gene_set2 == "GO"){
-          formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org2()), silent = T)
-        }
-        if (class(formula_res) == "try-error") formula_res <- NA
-        return(formula_res)
-      }else{
-        H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else {
-              cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-              cnet1$Cluster <- name
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet_list[[name]] = cnet1
-            }
-          }
-        }
-        if (length(cnet_list) == 2){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- cnet_list[[2]]}
-        if (length(cnet_list) == 1){
-          cnet1 <- cnet_list[[1]]
-          cnet2 <- NULL}
-        if (length(cnet_list) == 0){
-          cnet1 <- NULL
-          cnet2 <- NULL}
-        if((length(cnet1) = 0 ) && (length(cnet2) = 0)) {
-          data <- NA
-        }else if(is.null(cnet2)) {
-          data <- cnet1
-        }else data <- rbind(cnet1, cnet2)
-        data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
-        return(data)
-      }
-    }
-    }
+    data <- enrichment3_1(data3 = data_3degcount1_3(),data4 = data_3degcount2_3(),
+                          Species = input$Species2, Gene_set = input$Gene_set2,
+                          org = org2(), org_code = org_code2(),H_t2g = Hallmark_cond3())
+    return(data)
   })
   keggEnrichment2_3 <- reactive({
-    if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
-    data4 <- data_3degcount2_3()
-    data3 <- data_3degcount1_3()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
-    cnet_list <- list()
-    cnet_list2 <- list()
-    if(input$Gene_set2 != "MSigDB Hallmark" && input$Gene_set2 != "Transcription factor targets" &&
-       input$Gene_set2 != "DoRothEA regulon (activator)" && input$Gene_set2 != "DoRothEA regulon (repressor)"){
-        formula_res <- enrichment3_3_1()
-        if(!is.null(formula_res)){
-        if ((length(as.data.frame(formula_res)$Description) == 0) ||
-            length(which(!is.na(unique(as.data.frame(formula_res)$qvalue))))==0) {
-          d <- NULL
-        } else{
-          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
-          d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
-        }}else d <- NULL
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            if(input$Gene_set2 == "KEGG"){
-              kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code2())
-            }
-            if(input$Gene_set2 == "GO"){
-              kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org2())
-            }
-            if (is.null(kk1)) {
-              cnet1 <- NULL
-            } else cnet1 <- setReadable(kk1, org2(), 'ENTREZID')
-            if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-              c <- NULL
-            } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                            cex_category = 0.75, colorEdge = TRUE)
-              c <- try(as.grob(c + guides(edge_color = "none")))
-              if(length(class(c)) == 1){
-                if(class(c) == "try-error") c <- NULL
-              }
-              cnet_list[[name]] = c
-            }
-          }
-        }
-      }else{
-        H_t2g <- Hallmark_cond3()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else {
-              cnet1 <- as.data.frame(setReadable(em, org2(), 'ENTREZID'))
-              cnet1$Cluster <- name
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet1 <- cnet1[1:5,]
-              cnet_list2[[name]] = cnet1
-            }
-          }
-        }
-        if (length(cnet_list2) == 0){
-          d <- NULL
-        }else{
-          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
-          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-          data <- dplyr::filter(data, !is.na(Cluster))
-          data <- dplyr::filter(data, !is.na(Description))
-          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-          data$GeneRatio <- parse_ratio(data$GeneRatio)
-        if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
-          d <- NULL
-        } else{
-          data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
-          data$x <- gsub(":","", data$x)
-          data <- dplyr::arrange(data, x)
-          idx <- order(data[["x"]], decreasing = FALSE)
-          data$Description <- factor(data$Description,
-                                     levels=rev(unique(data$Description[idx])))
-          d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
-                          geom_point() +
-                          scale_color_continuous(low="red", high="blue",
-                                                 guide=guide_colorbar(reverse=TRUE)) +
-                          scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
-        }}
-
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-            if (length(as.data.frame(em)$ID) == 0) {
-              cnet1 <- NULL
-            } else cnet1 <- setReadable(em, org2(), 'ENTREZID')
-            if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-              c <- NULL
-            } else{
-              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                            cex_category = 0.75, colorEdge = TRUE)
-              c <- try(as.grob(c + guides(edge_color = "none")))
-              if(length(class(c)) == 1){
-                if(class(c) == "try-error") c <- NULL
-              }
-              cnet_list[[name]] = c
-            }
-          }
-        }
-      }
-      if (length(cnet_list) == 2){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- cnet_list[[2]]}
-      if (length(cnet_list) == 1){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- NULL}
-      if (length(cnet_list) == 0){
-        cnet1 <- NULL
-        cnet2 <- NULL}
-      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
-      return(p)
-    }
-    }else return(NULL)
+    return(keggEnrichment2(data3 = data_3degcount1_3(), data4 = data_3degcount2_3(), 
+                           Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_3_1(),
+                           H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
   })
   
   output$keggenrichment2_3 <- renderPlot({
@@ -7608,28 +5928,10 @@ output$download_pair_deg_count_down = downloadHandler(
   #normalized count analysis
   #norm_count_input-------------------
   org3 <- reactive({
-    if(input$Species3 != "not selected"){
-      switch (input$Species3,
-              "Mus musculus" = org <- org.Mm.eg.db,
-              "Homo sapiens" = org <- org.Hs.eg.db,
-              "Rattus norvegicus" = org <- org.Rn.eg.db,
-              "Xenopus laevis" = org <- org.Xl.eg.db,
-              "Drosophila melanogaster" = org <- org.Dm.eg.db,
-              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
-      return(org)
-    }
+    return(org(Species = input$Species3))
   })
   org_code3 <- reactive({
-    if(input$Species3 != "not selected"){
-      switch (input$Species3,
-              "Mus musculus" = org_code <- "mmu",
-              "Homo sapiens" = org_code <- "hsa",
-              "Rattus norvegicus" = org_code <- "rno",
-              "Xenopus laevis" = org_code <- "xla",
-              "Drosophila melanogaster" = org_code <- "dme",
-              "Caenorhabditis elegans" = org_code <- "cel")
-      return(org_code)
-    }
+    return(org_code(Species = input$Species3))
   })
 
   norm_count_input <- reactive({
@@ -7637,22 +5939,11 @@ output$download_pair_deg_count_down = downloadHandler(
       if (input$data_file_type3 == "Row5"){
         tmp <- input$file7$datapath
         if(is.null(input$file7) && input$goButton3 > 0 )  tmp = "data/example7.txt"
-        if(is.null(tmp)) {
-          return(NULL)
-        }else{
-          if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-          if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-          if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-          return(df)
-        }
+        return(read_df(tmp = tmp))
       }else{
         tmp <- input$file8$datapath
-        if(is.null(input$file8) && input$goButton3 == 0) return(NULL)
         if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "data/example7.txt"
-        if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-        if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-        if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-        return(df)
+        return(read_df(tmp = tmp))
       }
       incProgress(1)
     })
@@ -7662,12 +5953,9 @@ output$download_pair_deg_count_down = downloadHandler(
       return(NULL)
     }else{
       tmp <- input$file9$datapath
-      if(is.null(input$file9) && input$goButton3 == 0) return(NULL)
       if(is.null(input$file9) && input$goButton3 > 0 )  tmp = "data/example9.csv"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-      rownames(df) <- gsub("-",".",rownames(df))
+      df <- read_df(tmp = tmp)
+      if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
     }
   })
@@ -7675,9 +5963,7 @@ output$download_pair_deg_count_down = downloadHandler(
     data <- input$file10$datapath
     if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
     if(is.null(input$file10) && input$goButton3 > 0 )  data = "data/enrich_example.txt"
-    if(tools::file_ext(data) == "xlsx") df <- read.xls(data, header=TRUE, row.names = 1)
-    if(tools::file_ext(data) == "csv") df <- read.csv(data, header=TRUE, sep = ",", row.names = 1)
-    if(tools::file_ext(data) == "txt") df <- read.table(data, header=TRUE, sep = "\t", row.names = 1)
+    df <- read_df(tmp = data)
     gene <-c(rownames(df))
     df <- as.data.frame(gene, row.names = gene)
     return(df)
@@ -7825,81 +6111,6 @@ output$download_pair_deg_count_down = downloadHandler(
   })
 
   #norm clustering--------------------
-  normPCAdata <- reactive({
-    data <- d_norm_count_matrix_cutofff()
-    if(is.null(data)){
-      return(NULL)
-    }else{
-      pca <- prcomp(data, scale. = T)
-      label<- colnames(data)
-      label<- gsub("\\_.+$", "", label)
-      lab_x <- paste(summary(pca)$importance[2,1]*100,
-                     "% of variance)", sep = "")
-      lab_x <- paste("PC1 (", lab_x, sep = "")
-      lab_y <- paste(summary(pca)$importance[2,2]*100,
-                     "% of variance)", sep = "")
-      lab_y <- paste("PC2 (", lab_y, sep = "")
-      pca$rotation <- as.data.frame(pca$rotation)
-      return(pca$rotation)
-    }
-  })
-
-  norm_pca_plot <- reactive({
-    data <- d_norm_count_matrix_cutofff()
-    pca <- prcomp(data, scale. = T)
-    label<- colnames(data)
-    label<- gsub("\\_.+$", "", label)
-    lab_x <- paste(summary(pca)$importance[2,1]*100,
-                   "% of variance)", sep = "")
-    lab_x <- paste("PC1 (", lab_x, sep = "")
-    lab_y <- paste(summary(pca)$importance[2,2]*100,
-                   "% of variance)", sep = "")
-    lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
-                                  y=pca$rotation[,2],
-                                  col=label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
-      theme(legend.position="none", aspect.ratio=1)
-    rho <- cor(data,method="spearman")
-    d <- dist(1-rho)
-    mds <- as.data.frame(cmdscale(d))
-    label<-colnames(data)
-    label<-gsub("\\_.+$", "", label)
-    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
-                          col = label, label = label)) +
-      geom_point()+
-      theme(panel.background =element_rect(fill=NA,color=NA),
-            panel.border = element_rect(fill = NA)) +
-      xlab("dim 1") + ylab("dim 2") +
-      geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
-    x <- NULL
-    y <- NULL
-    xend <- NULL
-    yend <- NULL
-    data.t <- t(data)
-    hc <- hclust(dist(data.t), "ward.D2")
-    dendr <- dendro_data(hc, type="rectangle")
-    g3 <- ggplot() +
-      geom_segment(data=segment(dendr),
-                   aes(x=x, y=y, xend=xend, yend=yend)) +
-      geom_text(data=label(dendr),
-                aes(x, y, label=label, hjust=0), size=3) +
-      theme(legend.position = "none",
-            axis.line.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
-            axis.title.x=element_blank(),axis.text.y=element_blank(),
-            panel.grid.minor.x=element_blank(),
-            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
-      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
-    p2 <- plot_grid(g1, g2, g3, nrow = 1)
-    return(p2)
-  })
-
   output$download_norm_PCA = downloadHandler(
     filename = function(){
       paste0(download_norm_dir(), "PCA-MDS-dendrogram.pdf")
@@ -7907,7 +6118,7 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file) {
       withProgress(message = "Preparing download",{
         pdf(file, height = 3.5, width = 9)
-        print(norm_pca_plot())
+        print(PCAplot(data = d_norm_count_matrix_cutofff()))
         dev.off()
       })
     }
@@ -7918,13 +6129,13 @@ output$download_pair_deg_count_down = downloadHandler(
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      print(norm_pca_plot())
+      print(PCAplot(data = d_norm_count_matrix_cutofff()))
     }
     })
   })
 
   output$norm_PCA_table <- DT::renderDataTable({
-    normPCAdata()
+    PCAdata(row_count = d_norm_count_matrix_cutofff(),deg_norm_count = d_norm_count_matrix_cutofff())
   })
   output$d_norm_count_cutoff <- DT::renderDataTable({
     d_norm_count_cutoff_uniqueID()
@@ -7934,7 +6145,7 @@ output$download_pair_deg_count_down = downloadHandler(
     filename = function() {
       paste0(download_norm_dir(), "PCA_table.txt")
     },
-    content = function(file){write.table(normPCAdata(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = d_norm_count_matrix_cutofff(), deg_norm_count = d_norm_count_matrix_cutofff()), file, row.names = T, sep = "\t", quote = F)}
   )
 
   norm_heat <- reactive({
@@ -8133,52 +6344,7 @@ output$download_pair_deg_count_down = downloadHandler(
       withProgress(message = "Preparing download",{
         data <- norm_GOIcount()
         rowlist <- rownames(data)
-        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 22.5
-        pdf_wsize <- 22.5}
-        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
-        {pdf_hsize <- 20.25
-        pdf_wsize <- 20.25}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 18
-        pdf_wsize <- 18}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 15.75
-        pdf_wsize <- 15.75}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
-        {pdf_hsize <- 13.5
-        pdf_wsize <- 13.5}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
-        {pdf_hsize <- 11.5
-        pdf_wsize <- 11.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
-        {pdf_hsize <- 9
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 6.75}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 6
-        pdf_wsize <- 9}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 6
-        pdf_wsize <- 6}
-        if (length(rowlist) == 3)
-        {pdf_hsize <- 3
-        pdf_wsize <- 9}
-        if (length(rowlist) == 2)
-        {pdf_hsize <- 3
-        pdf_wsize <- 6}
-        if (length(rowlist) == 1)
-        {pdf_hsize <- 3
-        pdf_wsize <- 3}
-        if (length(rowlist) > 200)
-        {pdf_hsize <- 30
-        pdf_wsize <- 30}
-        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
         print(norm_GOIbox())
         dev.off()
         incProgress(1)
@@ -8396,15 +6562,8 @@ output$download_pair_deg_count_down = downloadHandler(
 
   count_for_venn <- reactive({
     tmp <- input$file_for_venn$datapath
-    if(is.null(input$file_for_venn) && input$goButton_venn == 0){
-      return(NULL)
-    }else{
-      if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "data/example7.txt"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
-      return(df)
-    }
+    if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "data/example7.txt"
+    return(read_df(tmp = tmp))
   })
 
   overlap_extract <- reactive({
@@ -8647,64 +6806,13 @@ output$download_pair_deg_count_down = downloadHandler(
     if(input$Species4 == "not selected") print("Please select 'Species'")
   })
   Hallmark_enrich <- reactive({
-    if(input$Species4 != "not selected"){
-      if(input$Gene_set3 != "MSigDB Hallmark" &&  input$Gene_set3 != "Transcription factor targets" &&
-         input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)"){
-        return(NULL)
-      }else{
-        switch (input$Species4,
-                "Mus musculus" = species <- "Mus musculus",
-                "Homo sapiens" = species <- "Homo sapiens",
-                "Rattus norvegicus" = species <- "Rattus norvegicus",
-                "Xenopus laevis" = species <- "Xenopus laevis",
-                "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-                "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-        if(input$Gene_set3 == "MSigDB Hallmark"){
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set3 == "Transcription factor targets"){
-          H_t2g <- msigdbr(species = species, category = "C3")
-          H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-            dplyr::select(gs_name, entrez_gene)
-        }
-        if(input$Gene_set3 == "DoRothEA regulon (activator)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species4,  type = "DoRothEA regulon (activator)", org = org4())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        if(input$Gene_set3 == "DoRothEA regulon (repressor)"){
-          H_t2g <- as_tibble(dorothea(species = input$Species4,  type = "DoRothEA regulon (repressor)", org = org4())) %>%
-            dplyr::select(gs_name, entrez_gene)
-          H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-        }
-        return(H_t2g)
-      }
-    }else return(NULL)
+    return(GeneList_for_enrichment(Species = input$Species4, Gene_set = input$Gene_set3, org = org4()))
   })
   org4 <- reactive({
-    if(input$Species4 != "not selected"){
-      switch (input$Species4,
-              "Mus musculus" = org <- org.Mm.eg.db,
-              "Homo sapiens" = org <- org.Hs.eg.db,
-              "Rattus norvegicus" = org <- org.Rn.eg.db,
-              "Xenopus laevis" = org <- org.Xl.eg.db,
-              "Drosophila melanogaster" = org <- org.Dm.eg.db,
-              "Caenorhabditis elegans" = org <- org.Ce.eg.db)
-      return(org)
-    }
+      return(org(Species = input$Species4))
   })
   org_code4 <- reactive({
-    if(input$Species4 != "not selected"){
-      switch (input$Species4,
-              "Mus musculus" = org_code <- "mmu",
-              "Homo sapiens" = org_code <- "hsa",
-              "Rattus norvegicus" = org_code <- "rno",
-              "Xenopus laevis" = org_code <- "xla",
-              "Drosophila melanogaster" = org_code <- "dme",
-              "Caenorhabditis elegans" = org_code <- "cel")
-      return(org_code)
-    }
+    return(org_code(Species = input$Species4))
   })
 
   enrich_input <- reactive({
@@ -8987,7 +7095,7 @@ output$download_pair_deg_count_down = downloadHandler(
         }else{
           p1 <- enrich_H()
         }
-        pdf(file, height = 6, width = 8)
+        pdf(file, height = 5, width = 6.5)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)
@@ -9026,26 +7134,10 @@ output$download_pair_deg_count_down = downloadHandler(
 
   #volcano navi------------------------------------------------------
   org5 <- reactive({
-    if(input$Species5 != "not selected"){
-      switch (input$Species5,
-              "mouse" = org <- org.Mm.eg.db,
-              "human" = org <- org.Hs.eg.db,
-              "rat" = org <- org.Rn.eg.db,
-              "fly" = org <- org.Dm.eg.db,
-              "worm" = org <- org.Ce.eg.db)
-      return(org)
-    }
+      return(org(Species = input$Species5))
   })
   org_code5 <- reactive({
-    if(input$Species5 != "not selected"){
-      switch (input$Species5,
-              "mouse" = org_code <- "mmu",
-              "human" = org_code <- "hsa",
-              "rat" = org_code <- "rno",
-              "fly" = org_code <- "dme",
-              "worm" = org_code <- "cel")
-      return(org_code)
-    }
+    return(org_code(Species = input$Species5))
   })
   
   degresult <- reactive({
@@ -9395,52 +7487,7 @@ output$download_pair_deg_count_down = downloadHandler(
       withProgress(message = "Preparing download",{
         data <- deg_GOIcount()
         rowlist <- rownames(data)
-        if ((length(rowlist) > 81) && (length(rowlist) <= 200))
-        {pdf_hsize <- 22.5
-        pdf_wsize <- 22.5}
-        if ((length(rowlist) > 64) && (length(rowlist) <= 81))
-        {pdf_hsize <- 20.25
-        pdf_wsize <- 20.25}
-        if ((length(rowlist) > 49) && (length(rowlist) <= 64))
-        {pdf_hsize <- 18
-        pdf_wsize <- 18}
-        if ((length(rowlist) > 36) && (length(rowlist) <= 49))
-        {pdf_hsize <- 15.75
-        pdf_wsize <- 15.75}
-        if ((length(rowlist) > 25) && (length(rowlist) <= 36))
-        {pdf_hsize <- 13.5
-        pdf_wsize <- 13.5}
-        if ((length(rowlist) > 16) && (length(rowlist) <= 25))
-        {pdf_hsize <- 11.5
-        pdf_wsize <- 11.5}
-        if ((length(rowlist) > 12) && (length(rowlist) <= 16))
-        {pdf_hsize <- 9
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 9) && (length(rowlist) <= 12))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 9}
-        if ((length(rowlist) > 6) && (length(rowlist) <= 9))
-        {pdf_hsize <- 7.5
-        pdf_wsize <- 6.75}
-        if ((length(rowlist) > 4) && (length(rowlist) <= 6))
-        {pdf_hsize <- 6
-        pdf_wsize <- 9}
-        if (length(rowlist) == 4)
-        {pdf_hsize <- 6
-        pdf_wsize <- 6}
-        if (length(rowlist) == 3)
-        {pdf_hsize <- 3
-        pdf_wsize <- 9}
-        if (length(rowlist) == 2)
-        {pdf_hsize <- 3
-        pdf_wsize <- 6}
-        if (length(rowlist) == 1)
-        {pdf_hsize <- 3
-        pdf_wsize <- 3}
-        if (length(rowlist) > 200)
-        {pdf_hsize <- 30
-        pdf_wsize <- 30}
-        pdf(file, height = pdf_hsize, width = pdf_wsize)
+        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
         print(deg_GOIbox())
         dev.off()
         incProgress(1)
@@ -9508,6 +7555,16 @@ output$download_pair_deg_count_down = downloadHandler(
     content = function(file) {write.table(msig_list(), file, quote = F, row.names = F, sep = "\t")})
 }
 
+read_df <- function(tmp){
+  if(is.null(tmp)) {
+    return(NULL)
+  }else{
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
+    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
+    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+    return(df)
+  }
+}
 dorothea <- function(species, type, org){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
@@ -9548,7 +7605,588 @@ dorothea <- function(species, type, org){
   }
   return(net3)
 }
-
+org <- function(Species){
+  if(Species != "not selected"){
+    switch (Species,
+            "Mus musculus" = org <- org.Mm.eg.db,
+            "Homo sapiens" = org <- org.Hs.eg.db,
+            "Rattus norvegicus" = org <- org.Rn.eg.db,
+            "Xenopus laevis" = org <- org.Xl.eg.db,
+            "Drosophila melanogaster" = org <- org.Dm.eg.db,
+            "Caenorhabditis elegans" = org <- org.Ce.eg.db)
+    return(org)
+  }
+}
+org_code <- function(Species){
+  if(Species != "not selected"){
+    switch (Species,
+            "Mus musculus" = org_code <- "mmu",
+            "Homo sapiens" = org_code <- "hsa",
+            "Rattus norvegicus" = org_code <- "rno",
+            "Xenopus laevis" = org_code <- "xla",
+            "Drosophila melanogaster" = org_code <- "dme",
+            "Caenorhabditis elegans" = org_code <- "cel")
+    return(org_code)
+  }
+}
+PCAdata <- function(row_count, deg_norm_count){
+  if(is.null(row_count)){
+    return(NULL)
+  }else{
+    data <- deg_norm_count
+    if(length(grep("SYMBOL", colnames(data))) != 0){
+      data <- data[, - which(colnames(data) == "SYMBOL")]
+    }
+    pca <- prcomp(data, scale. = T)
+    label<- colnames(data)
+    label<- gsub("\\_.+$", "", label)
+    lab_x <- paste(summary(pca)$importance[2,1]*100,
+                   "% of variance)", sep = "")
+    lab_x <- paste("PC1 (", lab_x, sep = "")
+    lab_y <- paste(summary(pca)$importance[2,2]*100,
+                   "% of variance)", sep = "")
+    lab_y <- paste("PC2 (", lab_y, sep = "")
+    pca$rotation <- as.data.frame(pca$rotation)
+    return(pca$rotation)
+  } 
+}
+PCAplot <- function(data){
+    if(length(grep("SYMBOL", colnames(data))) != 0){
+      data <- data[, - which(colnames(data) == "SYMBOL")]
+    }
+    pca <- prcomp(data, scale. = T)
+    label<- colnames(data)
+    label<- gsub("\\_.+$", "", label)
+    lab_x <- paste(summary(pca)$importance[2,1]*100,
+                   "% of variance)", sep = "")
+    lab_x <- paste("PC1 (", lab_x, sep = "")
+    lab_y <- paste(summary(pca)$importance[2,2]*100,
+                   "% of variance)", sep = "")
+    lab_y <- paste("PC2 (", lab_y, sep = "")
+    pca$rotation <- as.data.frame(pca$rotation)
+    g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
+                                  y=pca$rotation[,2],
+                                  col=label, label = label)) +
+      geom_point()+
+      theme(panel.background =element_rect(fill=NA,color=NA),
+            panel.border = element_rect(fill = NA)) +
+      xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
+      theme(legend.position="none", aspect.ratio=1)
+    rho <- cor(data,method="spearman")
+    d <- dist(1-rho)
+    mds <- as.data.frame(cmdscale(d))
+    label<-colnames(data)
+    label<-gsub("\\_.+$", "", label)
+    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
+                          col = label, label = label)) +
+      geom_point()+
+      theme(panel.background =element_rect(fill=NA,color=NA),
+            panel.border = element_rect(fill = NA)) +
+      xlab("dim 1") + ylab("dim 2") +
+      geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
+    x <- NULL
+    y <- NULL
+    xend <- NULL
+    yend <- NULL
+    data.t <- t(data)
+    hc <- hclust(dist(data.t), "ward.D2")
+    dendr <- dendro_data(hc, type="rectangle")
+    g3 <- ggplot() +
+      geom_segment(data=segment(dendr),
+                   aes(x=x, y=y, xend=xend, yend=yend)) +
+      geom_text(data=label(dendr),
+                aes(x, y, label=label, hjust=0), size=3) +
+      theme(legend.position = "none",
+            axis.line.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
+            axis.title.x=element_blank(),axis.text.y=element_blank(),
+            panel.grid.minor.x=element_blank(),
+            axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
+      coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
+    p2 <- plot_grid(g1, g2, g3, nrow = 1)
+    return(p2)
+}
+pdf_h <- function(rowlist){
+  if ((length(rowlist) > 81) && (length(rowlist) <= 200)) pdf_hsize <- 22.5
+  if ((length(rowlist) > 64) && (length(rowlist) <= 81)) pdf_hsize <- 20.25
+  if ((length(rowlist) > 49) && (length(rowlist) <= 64)) pdf_hsize <- 18
+  if ((length(rowlist) > 36) && (length(rowlist) <= 49)) pdf_hsize <- 15.75
+  if ((length(rowlist) > 25) && (length(rowlist) <= 36)) pdf_hsize <- 13.5
+  if ((length(rowlist) > 16) && (length(rowlist) <= 25)) pdf_hsize <- 11.5
+  if ((length(rowlist) > 12) && (length(rowlist) <= 16)) pdf_hsize <- 9
+  if ((length(rowlist) > 9) && (length(rowlist) <= 12)) pdf_hsize <- 7.5
+  if ((length(rowlist) > 6) && (length(rowlist) <= 9)) pdf_hsize <- 7.5
+  if ((length(rowlist) > 4) && (length(rowlist) <= 6)) pdf_hsize <- 6
+  if (length(rowlist) == 4) pdf_hsize <- 6
+  if (length(rowlist) == 3) pdf_hsize <- 3
+  if (length(rowlist) == 2) pdf_hsize <- 3
+  if (length(rowlist) == 1) pdf_hsize <- 3
+  if (length(rowlist) > 200) pdf_hsize <- 30
+  return(pdf_hsize)
+}
+pdf_w <- function(rowlist){
+  if ((length(rowlist) > 81) && (length(rowlist) <= 200)) pdf_wsize <- 22.5
+  if ((length(rowlist) > 64) && (length(rowlist) <= 81)) pdf_wsize <- 20.25
+  if ((length(rowlist) > 49) && (length(rowlist) <= 64)) pdf_wsize <- 18
+  if ((length(rowlist) > 36) && (length(rowlist) <= 49)) pdf_wsize <- 15.75
+  if ((length(rowlist) > 25) && (length(rowlist) <= 36)) pdf_wsize <- 13.5
+  if ((length(rowlist) > 16) && (length(rowlist) <= 25)) pdf_wsize <- 11.5
+  if ((length(rowlist) > 12) && (length(rowlist) <= 16)) pdf_wsize <- 9
+  if ((length(rowlist) > 9) && (length(rowlist) <= 12)) pdf_wsize <- 9
+  if ((length(rowlist) > 6) && (length(rowlist) <= 9)) pdf_wsize <- 6.75
+  if ((length(rowlist) > 4) && (length(rowlist) <= 6)) pdf_wsize <- 9
+  if (length(rowlist) == 4) pdf_wsize <- 6
+  if (length(rowlist) == 3) pdf_wsize <- 9
+  if (length(rowlist) == 2) pdf_wsize <- 6
+  if (length(rowlist) == 1) pdf_wsize <- 3
+  if (length(rowlist) > 200) pdf_wsize <- 30
+  return(pdf_wsize)
+}
+data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, basemean){
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      collist <- factor(gsub("\\_.+$", "", colnames(data)))
+      vec <- c()
+      for (i in 1:length(unique(collist))) {
+        num <- length(collist[collist == unique(collist)[i]])
+        vec <- c(vec, num)
+      }
+      Cond_1 <- vec[1]
+      Cond_2 <- vec[2]
+      Cond_3 <- vec[3]
+      collist <- unique(collist)
+      if(str_detect(rownames(data)[1], "ENS")){
+        if(length(grep("SYMBOL", colnames(data))) != 0){
+          data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
+      }
+      if(specific == 1) {specific == collist[1]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern4"
+      Pattern2 <- "Pattern5"
+      }
+      if(specific == 2) {specific == collist[2]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern3"
+      Pattern2 <- "Pattern5"
+      }
+      if(specific == 3) {specific == collist[3]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
+      Pattern1 <- "Pattern2"
+      Pattern2 <- "Pattern5"
+      }
+      result_FDR$FDR <- 1 - result_FDR$PPDE
+      result <- merge(result_Condm, result_FDR, by=0)
+      data$Row.names <- rownames(data)
+      data2 <- merge(data, result, by="Row.names")
+      result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > basemean)
+      sig <- rep(3, nrow(result))
+      sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
+      sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
+      data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
+                          FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
+      if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+        new.levels <- c( paste0(specific,"_up"), paste0(specific,"_down"), "NS" )
+        col = c("red","blue", "darkgray")}
+      if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+        new.levels <- c(paste0(specific,"_up: "), "NS" )
+        col = c("red", "darkgray")}
+      if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+        new.levels <- c(paste0(specific,"_down: "), "NS" )
+        col = c("blue", "darkgray")}
+      if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
+        new.levels <- c("NS")
+        col = "darkgray"}
+      
+      data3$sig <- factor(data3$sig, labels = new.levels)
+      return(data3)
+    }
+}
+data_3degcount2 <- function(data3, Species, org){
+    if(is.null(data3)){
+      return(NULL)
+    }else{
+      if(length(unique(data3$sig)) == 1){
+        data4 <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
+        return(data4)
+      } else {
+        data4 <- dplyr::filter(data3, sig != "NS")
+        if(str_detect(data4$Row.names[1], "ENS")){
+          if(Species != "not selected"){
+            my.symbols <- data4$Row.names
+            gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+                                            keytype = "ENSEMBL",
+                                            columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+            colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
+            gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+            data4 <- merge(data4, gene_IDs, by="Row.names")
+          }
+        }else{
+          if(Species != "not selected"){
+            my.symbols <- data4$Row.names
+            gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+                                            keytype = "SYMBOL",
+                                            columns = c("SYMBOL", "ENTREZID"))
+            colnames(gene_IDs) <- c("Row.names", "ENTREZID")
+            gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+            data4 <- merge(data4, gene_IDs, by="Row.names")
+          }
+        }
+        return(data4)
+      }
+    }
+}
+cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, fc, fdr, basemean){
+  if(is.null(data)){
+    return(NULL)
+  }else{
+    collist <- factor(gsub("\\_.+$", "", colnames(data)))
+    vec <- c()
+    for (i in 1:length(unique(collist))) {
+      num <- length(collist[collist == unique(collist)[i]])
+      vec <- c(vec, num)
+    }
+    Cond_1 <- vec[1]
+    Cond_2 <- vec[2]
+    Cond_3 <- vec[3]
+    collist <- unique(collist)
+    if(str_detect(rownames(data)[1], "ENS")){
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
+    }
+    if(specific == 1) {specific == collist[1]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern4"
+      Pattern2 <- "Pattern5"
+    }
+    if(specific == 2) {specific == collist[2]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern3"
+      Pattern2 <- "Pattern5"
+    }
+    if(specific == 3) {specific == collist[3]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
+      Pattern1 <- "Pattern2"
+      Pattern2 <- "Pattern5"
+    }
+    result_FDR$FDR <- 1 - result_FDR$PPDE
+    result <- merge(result_Condm, result_FDR, by=0)
+    data$Row.names <- rownames(data)
+    data2 <- merge(data, result, by="Row.names")
+    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > basemean)
+    sig <- rep(3, nrow(result))
+    sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
+    sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
+    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
+                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+      new.levels <- c( paste0(paste0(specific,"_up: "), sum(sig == 1)), paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
+      col = c("red","blue", "darkgray")}
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+      new.levels <- c(paste0(paste0(specific,"_up: "), sum(sig == 1)), "NS" )
+      col = c("red", "darkgray")}
+    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+      new.levels <- c(paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
+      col = c("blue", "darkgray")}
+    if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
+      new.levels <- c("NS")
+      col = "darkgray"}
+    data3$sig <- factor(data3$sig, labels = new.levels)
+    complete_data <- stats::na.omit(data3)
+    labs_data <- subset(complete_data, padj <= fdr & Row.names !=
+                          "" & (FC_x)*(FC_y) >= log2(fc))
+    labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
+    labs_data <- dplyr::filter(labs_data, sig != "NS")
+    labs_data2 <- utils::head(labs_data, 20)
+    font.label <- data.frame(size=5, color="black", face = "plain")
+    set.seed(42)
+    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
+    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
+    }
+    if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
+    }
+    if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
+      p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
+    }
+    if(!is.null(labs_data)) {
+      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                        force = 1, fontface = font.label$face,
+                                        size = font.label$size/2, color = font.label$color)
+    }
+    p <- p  + geom_hline(yintercept = c(-log2(fc), log2(fc)), linetype = c(2, 2), color = c("black", "black"))+
+      geom_vline(xintercept = c(-log2(fc), log2(fc)),linetype = c(2, 2), color = c("black", "black"))
+    p <- p +
+      theme_bw()+ scale_color_manual(values = col)+
+      theme(legend.position = "top" , legend.title = element_blank(),
+            axis.text.x= ggplot2::element_text(size = 10),
+            axis.text.y= ggplot2::element_text(size = 10),
+            text = ggplot2::element_text(size = 10),
+            title = ggplot2::element_text(size = 10)) +
+      xlab(FC_xlab) + ylab(FC_ylab)
+    if(length(unique(data3$sig)) == 1){
+      ht <- NULL
+    }else{
+      data$Row.names <- rownames(data)
+      data5 <- merge(data, data4, by ="Row.names")
+      rownames(data5) <- data5$Row.names
+      data5 <- data5[,-1]
+      data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
+      data.z <- genescale(data5, axis=1, method="Z")
+      ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
+                            clustering_method_columns = 'ward.D2',
+                            show_row_names = F, show_row_dend = T))
+    }
+    
+    p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    return(p)
+  }
+}
+enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g){
+  if(!is.null(Gene_set) && Species != "not selected"){
+    cnet_list <- list()
+    if(is.null(data4)){
+      return(NULL)
+    }else{
+      if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+        if(Gene_set == "KEGG"){
+          withProgress(message = "KEGG dotplot",{
+            formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code), silent = T)
+            incProgress()
+          })
+        }
+        if(Gene_set == "GO"){
+          withProgress(message = "GO dotplot",{
+            formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org), silent = T)
+            incProgress()
+          })
+        }
+        if (class(formula_res) == "try-error") formula_res <- NA
+        return(formula_res)
+      }else{
+        withProgress(message = "dotplot",{
+          for (name in unique(data3$sig)) {
+            if (name != "NS"){
+              em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+              if (length(as.data.frame(em)$ID) == 0) {
+                cnet1 <- NULL
+              } else {
+                cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
+                cnet1$Cluster <- name
+                cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
+                cnet_list[[name]] = cnet1
+              }
+            }
+          }
+          if (length(cnet_list) == 2){
+            cnet1 <- cnet_list[[1]]
+            cnet2 <- cnet_list[[2]]}
+          if (length(cnet_list) == 1){
+            cnet1 <- cnet_list[[1]]
+            cnet2 <- NULL}
+          if (length(cnet_list) == 0){
+            cnet1 <- NULL
+            cnet2 <- NULL}
+          if((length(cnet1) = 0 ) && (length(cnet2) = 0)) {
+            data <- NA
+          }else if(is.null(cnet2)) {
+            data <- cnet1
+          }else data <- rbind(cnet1, cnet2)
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
+          return(data)
+          incProgress()
+        })
+      }
+    }
+  }
+}
+keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, org_code, H_t2g){
+  if(!is.null(Gene_set) && Species != "not selected"){
+    if(is.null(data4)){
+      return(NULL)
+    }else{
+      cnet_list <- list()
+      cnet_list2 <- list()
+      if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+        if ((length(as.data.frame(formula_res)$Description) == 0) ||
+            length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
+          d <- NULL
+        } else{
+          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
+          d <- as.grob(dotplot(formula_res, showCategory=5, color ="qvalue" ,font.size=10))
+        }
+        for (name in unique(data3$sig)) {
+          if (name != "NS"){
+            if(Gene_set == "KEGG"){
+              withProgress(message = "KEGG cnet plot",{
+                kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code)
+                incProgress()
+              })
+            }
+            if(Gene_set == "GO"){
+              withProgress(mfessage = "GO cnet plot",{
+                kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org)
+                incProgress()
+              })
+            }
+            if (is.null(kk1)) {
+              cnet1 <- NULL
+            } else cnet1 <- setReadable(kk1, org, 'ENTREZID')
+            if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
+              c <- NULL
+            } else{
+              c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
+                            cex_category = 0.75, colorEdge = TRUE)
+              c <- try(as.grob(c + guides(edge_color = "none")))
+              if(length(class(c)) == 1){
+                if(class(c) == "try-error") c <- NULL
+              }
+              cnet_list[[name]] = c
+            }
+          }
+        }
+      }else{
+        for (name in unique(data3$sig)) {
+          if (name != "NS"){
+            em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            if (length(as.data.frame(em)$ID) == 0) {
+              cnet1 <- NULL
+            } else {
+              cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
+              cnet1$Cluster <- name
+              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
+              cnet1 <- cnet1[1:5,]
+              cnet_list2[[name]] = cnet1
+            }
+          }
+        }
+        if (length(cnet_list2) == 0){
+          d <- NULL
+        }else{
+          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
+          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
+          data <- dplyr::filter(data, !is.na(Cluster))
+          data <- dplyr::filter(data, !is.na(Description))
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
+          if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
+            d <- NULL
+          } else{
+            data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+            data$x <- gsub(":","", data$x)
+            data <- dplyr::arrange(data, x)
+            idx <- order(data[["x"]], decreasing = FALSE)
+            data$Description <- factor(data$Description,
+                                       levels=rev(unique(data$Description[idx])))
+            d <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+                           geom_point() +
+                           scale_color_continuous(low="red", high="blue",
+                                                  guide=guide_colorbar(reverse=TRUE)) +
+                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+          }}
+        withProgress(message = "cnet plot",{
+          for (name in unique(data3$sig)) {
+            if (name != "NS"){
+              em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+              if (length(as.data.frame(em)$ID) == 0) {
+                cnet1 <- NULL
+              } else cnet1 <- setReadable(em, org, 'ENTREZID')
+              if ((length(as.data.frame(cnet1)$ID) == 0) || 
+                  length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
+                c <- NULL
+              } else{
+                c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
+                              cex_category = 0.75, colorEdge = TRUE)
+                c <- try(as.grob(c + guides(edge_color = "none")))
+                if(length(class(c)) == 1){
+                  if(class(c) == "try-error") c <- NULL
+                }
+                cnet_list[[name]] = c
+              }
+            }
+          }
+          incProgress()
+        })
+      }
+      if (length(cnet_list) == 2){
+        cnet1 <- cnet_list[[1]]
+        cnet2 <- cnet_list[[2]]}
+      if (length(cnet_list) == 1){
+        cnet1 <- cnet_list[[1]]
+        cnet2 <- NULL}
+      if (length(cnet_list) == 0){
+        cnet1 <- NULL
+        cnet2 <- NULL}
+      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
+    }
+  }else return(NULL)
+}
+GeneList_for_enrichment <- function(Species, Gene_set, org){
+  if(Species != "not selected"){
+    if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+       Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+      return(NULL)
+    }else{
+      switch (Species,
+              "Mus musculus" = species <- "Mus musculus",
+              "Homo sapiens" = species <- "Homo sapiens",
+              "Rattus norvegicus" = species <- "Rattus norvegicus",
+              "Xenopus laevis" = species <- "Xenopus laevis",
+              "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+              "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+      if(Gene_set == "MSigDB Hallmark"){
+        H_t2g <- msigdbr(species = species, category = "H") %>%
+          dplyr::select(gs_name, entrez_gene) 
+      }
+      if(Gene_set == "Transcription factor targets"){
+        H_t2g <- msigdbr(species = species, category = "C3")
+        H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
+          dplyr::select(gs_name, entrez_gene)
+      }
+      if(Gene_set == "DoRothEA regulon (activator)"){
+        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)", org = org)) %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+      }
+      if(Gene_set == "DoRothEA regulon (repressor)"){
+        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)", org = org)) %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+      }
+      return(H_t2g)
+    }
+  }else return(NULL)
+}
+  
 
 
 # Run the app

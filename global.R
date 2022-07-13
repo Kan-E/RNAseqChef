@@ -38,9 +38,15 @@ library('shinyjs', verbose = FALSE)
 library(BiocManager)
 library(clusterProfiler.dplyr)
 library(dorothea)
+library(umap)
 options(repos = BiocManager::repositories())
 
 msigdbr_species <- msigdbr_species()$species_name
+gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interaction Database)",
+                   "BioCarta","WikiPathways", "GO biological process", 
+                   "GO cellular component","GO molecular function", "Human phenotype ontology", 
+                   "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
+                   "Transcription factor targets", "miRNA target")
 read_df <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
@@ -192,6 +198,17 @@ PCAplot <- function(data){
     coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
   p2 <- plot_grid(g1, g2, g3, nrow = 1)
   return(p2)
+}
+umap_plot <- function(data){
+  umap <- umap::umap(t(data),n_neighbors = 2)
+  data2 <- umap$layout %>% as.data.frame()
+  label<- colnames(data)
+  label<- gsub("\\_.+$", "", label)
+  p<- ggplot(data2, mapping = aes(V1,V2, color = label, label = colnames(data)))+
+    geom_point()+geom_text_repel()+ xlab("UMAP_1") + ylab("UMAP_2")+
+    theme(panel.background =element_rect(fill=NA,color=NA),panel.border = element_rect(fill = NA),
+          aspect.ratio=1)
+  return(p)
 }
 pdf_h <- function(rowlist){
   if ((length(rowlist) > 81) && (length(rowlist) <= 200)) pdf_hsize <- 22.5
@@ -460,16 +477,14 @@ enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g)
       return(NULL)
     }else{
       if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
-         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+         Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+         Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+         Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+         Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
         if(Gene_set == "KEGG"){
           withProgress(message = "KEGG dotplot",{
             formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichKEGG", organism =org_code), silent = T)
-            incProgress()
-          })
-        }
-        if(Gene_set == "GO"){
-          withProgress(message = "GO dotplot",{
-            formula_res <- try(compareCluster(ENTREZID~sig, data=data4,fun="enrichGO", OrgDb=org), silent = T)
             incProgress()
           })
         }
@@ -521,7 +536,11 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
       cnet_list <- list()
       cnet_list2 <- list()
       if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
-         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"&&
+         Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+         Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+         Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+         Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
         if ((length(as.data.frame(formula_res)$Description) == 0) ||
             length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
           d <- NULL
@@ -534,12 +553,6 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
             if(Gene_set == "KEGG"){
               withProgress(message = "KEGG cnet plot",{
                 kk1 <- enrichKEGG(data4$ENTREZID[data4$sig == name], organism =org_code)
-                incProgress()
-              })
-            }
-            if(Gene_set == "GO"){
-              withProgress(mfessage = "GO cnet plot",{
-                kk1 <- enrichGO(data4$ENTREZID[data4$sig == name], OrgDb=org)
                 incProgress()
               })
             }
@@ -587,6 +600,7 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
           if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
             d <- NULL
           } else{
+            data$Description <- gsub("_", " ", data$Description)
             data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
             data$x <- gsub(":","", data$x)
             data <- dplyr::arrange(data, x)
@@ -597,7 +611,8 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
                            geom_point() +
                            scale_color_continuous(low="red", high="blue",
                                                   guide=guide_colorbar(reverse=TRUE)) +
-                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL))
+                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL) +
+                           scale_y_discrete(labels = label_wrap_gen(30)))
           }}
         withProgress(message = "cnet plot",{
           for (name in unique(data3$sig)) {
@@ -639,7 +654,11 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
 GeneList_for_enrichment <- function(Species, Gene_set, org){
   if(Species != "not selected"){
     if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
-       Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+       Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+       Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+       Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+       Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+       Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
       return(NULL)
     }else{
       switch (Species,
@@ -652,6 +671,8 @@ GeneList_for_enrichment <- function(Species, Gene_set, org){
       if(Gene_set == "MSigDB Hallmark"){
         H_t2g <- msigdbr(species = species, category = "H") %>%
           dplyr::select(gs_name, entrez_gene) 
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HALLMARK_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
       }
       if(Gene_set == "Transcription factor targets"){
         H_t2g <- msigdbr(species = species, category = "C3")
@@ -667,6 +688,59 @@ GeneList_for_enrichment <- function(Species, Gene_set, org){
         H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)", org = org)) %>%
           dplyr::select(gs_name, entrez_gene)
         H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+      }
+      if(Gene_set == "Reactome"){
+        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:REACTOME") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="REACTOME_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "miRNA target"){
+        H_t2g <- msigdbr(species = species, category = "C3")
+        H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "MIR:MIRDB" | gs_subcat == "MIR:MIR_Legacy") %>%
+          dplyr::select(gs_name, entrez_gene)
+      }
+      if(Gene_set == "GO biological process"){
+        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:BP") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOBP_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "GO cellular component"){
+        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:CC") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOCC_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "GO molecular function"){
+        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:MF") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOMF_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "Human phenotype ontology"){
+        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "HPO") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HP_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "WikiPathways"){
+        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:WIKIPATHWAYS") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="WP_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "PID (Pathway Interaction Database)"){
+        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:PID") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="PID_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      }
+      if(Gene_set == "BioCarta"){
+        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:BIOCARTA") %>%
+          dplyr::select(gs_name, entrez_gene)
+        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="BIOCARTA_", replacement = "")
+        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
       }
       return(H_t2g)
     }
@@ -722,18 +796,15 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
       return(NULL)
     }else{
       if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
-         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)"){
+         Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+         Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+         Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+         Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+         Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
         if(Gene_set == "KEGG"){
           withProgress(message = "KEGG enrichment analysis",{
             formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
                                               fun="enrichKEGG", organism=org_code), silent = T)
-            incProgress(1)
-          })
-        }
-        if(Gene_set == "GO"){
-          withProgress(message = "GO enrichment analysis",{
-            formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
-                                              fun="enrichGO", OrgDb=org), silent =T)
             incProgress(1)
           })
         }
@@ -767,3 +838,161 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
     }
   } 
 }
+enrich_keggGO_global <- function(formula_res, Gene_set){
+    if(!is.null(Gene_set)){
+      if(is.null(formula_res)){
+        return(NULL)
+      }else{
+        if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+           Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+           Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+           Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+           Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+           Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
+          if ((length(as.data.frame(formula_res)$Description) == 0) ||
+              length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
+            p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
+          }
+          p <- plot_grid(p1)
+          return(p)
+        }
+      }
+    }
+}
+enrich_genelist <- function(data, Gene_set, H_t2g, org){
+    if(!is.null(Gene_set)){
+      if(is.null(data)){
+        return(NULL)
+      }else{
+        if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+           Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+           Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+           Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+           Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+           Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
+          return(NULL)
+        }else{
+          df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+          colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          for (name in unique(data$Group)) {
+            em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+            if (length(as.data.frame(em)$ID) != 0) {
+              if(length(colnames(as.data.frame(em))) == 9){
+                cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
+                cnet1$Group <- name
+                cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
+                if (length(cnet1$pvalue) > 5){
+                  cnet1 <- cnet1[1:5,]
+                }
+                df <- rbind(df, cnet1)
+              }
+            }
+          }
+          if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
+            p1 <- NULL
+          } else{
+            df$GeneRatio <- parse_ratio(df$GeneRatio)
+            df <- dplyr::filter(df, !is.na(qvalue))
+            df$Description <- gsub("_", " ", df$Description)
+            df <- dplyr::mutate(df, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+            df$x <- gsub(":","", df$x)
+            df <- dplyr::arrange(df, x)
+            idx <- order(df[["x"]], decreasing = FALSE)
+            df$Description <- factor(df$Description,
+                                     levels=rev(unique(df$Description[idx])))
+            p1 <- as.grob(ggplot(df, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+                            geom_point() +
+                            scale_color_continuous(low="red", high="blue",
+                                                   guide=guide_colorbar(reverse=TRUE)) +
+                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+
+                            scale_y_discrete(labels = label_wrap_gen(30)))
+            p <- plot_grid(p1)
+            return(p)
+          }
+        }}
+    }
+}
+cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code){
+    if(!is.null(Gene_set)){
+      if(is.null(data) || is.null(group)){
+        return(NULL)
+      }else{
+        data2 <- dplyr::filter(data, Group == group)
+        if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+             Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+           Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+           Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+           Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+           Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
+          if(Gene_set == "KEGG"){
+            kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code,
+                              qvalueCutoff = 0.05)
+          }
+        }else{
+          kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, qvalueCutoff = 0.05))
+          if (class(kk1) == "try-error") kk1 <- NA
+        }
+        if(length(as.data.frame(kk1)$ID) == 0){
+          cnet1 <- NULL
+        } else {
+          cnet1 <- setReadable(kk1, org, 'ENTREZID')
+        }
+        if (length(as.data.frame(cnet1)$ID) == 0) {
+          p2 <- NULL
+        } else{
+          p2 <- try(as.grob(cnetplot(cnet1,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,showCategory = 5,
+                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+          if(length(class(p2)) == 1){
+            if(class(p2) == "try-error") p2 <- NULL
+          }
+        }
+        p <- plot_grid(p2)
+        return(p)
+      }
+    }
+}
+dotplot_for_output <- function(data, plot_kegg, plot_genelist, Gene_set, Species){
+  if(!is.null(Gene_set)){
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      withProgress(message = "Plot results",{
+        if(Species != "not selected"){
+          if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
+             Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
+             Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
+             Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
+             Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
+             Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
+            print(plot_kegg)
+          }else{
+            print(plot_genelist)
+          }
+        }
+        incProgress(1)
+      })
+    }
+  }
+}
+cnet_for_output <- function(data, plot_data, Gene_set, Species){
+    if(!is.null(Gene_set)){
+      if(is.null(data)){
+        return(NULL)
+      }else{
+        if(Species != "not selected"){
+          withProgress(message = "cnet plot",{
+            p <- plot_data
+            print(p)
+            incProgress(1)
+          })
+        }else return(NULL)
+      }
+    }
+}
+
+
+

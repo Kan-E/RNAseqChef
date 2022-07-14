@@ -129,8 +129,7 @@ shinyUI(
                    ),
                    conditionalPanel(condition="input.DEG_method=='edgeR'"),
                    fluidRow(
-                     column(6, selectInput("Species", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
-                                                                   "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+                     column(6, selectInput("Species", "Species", species_list, selected = "not selected"))),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -337,8 +336,7 @@ shinyUI(
                                               placement = "right",options = list(container = "body")),
                    ),
                    fluidRow(
-                     column(6, selectInput("Species2", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
-                                                                    "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+                     column(6, selectInput("Species2", "Species", species_list, selected = "not selected"))),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc2", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -534,8 +532,7 @@ shinyUI(
                                               placement = "right",options = list(container = "body")),
                    ),
                    fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
-                            column(6, selectInput("Species6", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
-                                                                           "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+                            column(6, selectInput("Species6", "Species", species_list, selected = "not selected"))),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc6", "Fold Change", min   = 0, max   = NA, value = 1.5)),
@@ -792,6 +789,7 @@ shinyUI(
                                 ".txt")
                    ),
                    fluidRow(
+                     column(6, selectInput("Species7", "Species", species_list, selected = "not selected")),
                      column(6, selectInput(
                        inputId = "pre_zscoring",
                        label = "Option: Pre-zscoring",
@@ -853,7 +851,31 @@ shinyUI(
                                                          dataTableOutput("integrated_count_z_table")
                                          )
                               )
-                     )
+                     ),
+                     tabPanel("Enrichment analysis",
+                              fluidRow(
+                                column(4, htmlOutput("venn_whichGroup1")),
+                                column(4, htmlOutput("Gene_set9")),
+                                column(4, downloadButton("download_venn_cluster_enrichment", "Download dot plot"))
+                              ),
+                              fluidRow(
+                                column(4, textOutput("venn_Spe"),
+                                       tags$head(tags$style("#venn_Spe{color: red;
+                                         font-size: 20px;
+                                         font-style: bold;
+                                      }")))
+                              ),
+                              plotOutput("venn_enrichment1"),
+                              fluidRow(
+                                column(4, htmlOutput("venn_whichGroup2")),
+                                column(4, downloadButton("download_venn_enrichment_cnet", "Download cnet plot"))
+                              ),
+                              plotOutput("venn_enrichment2"),
+                              fluidRow(
+                                column(4, downloadButton("download_venn_enrichment_table", "Download enrichment result"))
+                              ),
+                              dataTableOutput('venn_enrichment_result')
+                     ),
                    )
                  ) #sidebarLayout
                ) #tabPanel
@@ -906,8 +928,7 @@ shinyUI(
                                               placement = "right",options = list(container = "body")),
                    ),
                    fluidRow(
-                     column(6, selectInput("Species3", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
-                                                                    "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected")),
+                     column(6, selectInput("Species3", "Species", species_list, selected = "not selected")),
                      column(6, selectInput("normHeat", "Heatmap in clustering panel", c("OFF", "Draw"), selected = "OFF"))),
                    h4("Filter option 1:"),
                    fileInput("file10",
@@ -1033,8 +1054,7 @@ shinyUI(
                                            img(src="input_format_enrich.png", width = 250,height = 400)), 
                              placement = "right",options = list(container = "body")),
                    fluidRow(
-                     column(6, selectInput("Species4", "Species", c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis",
-                                                                    "Drosophila melanogaster", "Caenorhabditis elegans"), selected = "not selected"))),
+                     column(6, selectInput("Species4", "Species", species_list, selected = "not selected"))),
                    actionButton("goButton4", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;

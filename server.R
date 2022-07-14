@@ -916,19 +916,12 @@ shinyServer(function(input, output, session) {
   enrichment_1_1 <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
       data3 <- data_degcount2()
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets"&&
-         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)" &&
-         input$Gene_set != "Reactome" && input$Gene_set != "miRNA target" && input$Gene_set != "GO biological process" && 
-         input$Gene_set != "GO cellular component" && input$Gene_set != "GO molecular function" && 
-         input$Gene_set != "Human phenotype ontology" && input$Gene_set != "WikiPathways" && 
-         input$Gene_set != "PID (Pathway Interaction Database)" && input$Gene_set != "BioCarta"){
-        if(input$Gene_set == "KEGG"){
+      if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG enrichment analysis",{
             formula_res <- try(compareCluster(ENTREZID~group, data=data3,
                                               fun="enrichKEGG", organism=org_code1()), silent = T)
             incProgress(1)
           })
-        }
         if (class(formula_res) == "try-error") {
           formula_res <- NULL
           return(formula_res)
@@ -999,13 +992,7 @@ shinyServer(function(input, output, session) {
       geneList <- data$log2FoldChange
       names(geneList) = as.character(data$ENTREZID)
       geneList <- sort(geneList, decreasing = TRUE)
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
-         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)" &&
-         input$Gene_set != "Reactome" && input$Gene_set != "miRNA target" && input$Gene_set != "GO biological process" && 
-         input$Gene_set != "GO cellular component" && input$Gene_set != "GO molecular function" && 
-         input$Gene_set != "Human phenotype ontology" && input$Gene_set != "WikiPathways" && 
-         input$Gene_set != "PID (Pathway Interaction Database)" && input$Gene_set != "BioCarta"){
-        if(input$Gene_set == "KEGG"){
+      if(input$Gene_set == "KEGG"){
           withProgress(message = "KEGG GSEA",{
             kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
                            organism = org_code1(), keyType = "kegg",
@@ -1013,7 +1000,6 @@ shinyServer(function(input, output, session) {
                            minGSSize = 50, maxGSSize = 500, by = "fgsea",
                            use_internal_data = FALSE, verbose = F)
           })
-        }
         if (length(as.data.frame(kk3)$ID) == 0) {
           kk3 <- NULL
         } else{
@@ -1041,12 +1027,7 @@ shinyServer(function(input, output, session) {
   # pair-wise enrichment plot ------------------------------------------------------------------------------
   pair_enrich1_keggGO <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
-         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)" &&
-         input$Gene_set != "Reactome" && input$Gene_set != "miRNA target" && input$Gene_set != "GO biological process" && 
-         input$Gene_set != "GO cellular component" && input$Gene_set != "GO molecular function" && 
-         input$Gene_set != "Human phenotype ontology" && input$Gene_set != "WikiPathways" && 
-         input$Gene_set != "PID (Pathway Interaction Database)" && input$Gene_set != "BioCarta"){
+      if(input$Gene_set == "KEGG"){
         count <- deg_norm_count()
         formula_res <- enrichment_1_1()
         if ((length(as.data.frame(formula_res)$Description) == 0) ||
@@ -1074,12 +1055,7 @@ shinyServer(function(input, output, session) {
   
   pair_enrich1_H <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      if(input$Gene_set == "MSigDB Hallmark" || input$Gene_set == "Transcription factor targets" || 
-         input$Gene_set == "DoRothEA regulon (activator)" || input$Gene_set == "DoRothEA regulon (repressor)" ||
-         input$Gene_set == "Reactome" || input$Gene_set == "miRNA target" || input$Gene_set == "GO biological process" || 
-         input$Gene_set == "GO cellular component" || input$Gene_set== "GO molecular function" || 
-         input$Gene_set == "Human phenotype ontology" || input$Gene_set == "WikiPathways" || 
-         input$Gene_set == "PID (Pathway Interaction Database)" || input$Gene_set == "BioCarta"){
+      if(input$Gene_set != "KEGG"){
         count <- deg_norm_count()
         formula_res <- enrichment_1_1()
         data3 <- data_degcount2()
@@ -1177,18 +1153,11 @@ shinyServer(function(input, output, session) {
       count <- deg_norm_count()
       upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
       downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-      if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
-         input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)" &&
-         input$Gene_set != "Reactome" && input$Gene_set != "miRNA target" && input$Gene_set != "GO biological process" && 
-         input$Gene_set != "GO cellular component" && input$Gene_set != "GO molecular function" && 
-         input$Gene_set != "Human phenotype ontology" && input$Gene_set != "WikiPathways" && 
-         input$Gene_set != "PID (Pathway Interaction Database)" && input$Gene_set != "BioCarta"){
-        if(input$Gene_set == "KEGG"){
+      if(input$Gene_set == "KEGG"){
           kk1 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
                             pvalueCutoff = 0.05)
           kk2 <- enrichKEGG(downgene$ENTREZID, organism =org_code1(),
                             pvalueCutoff = 0.05)
-        }
       }else{
         H_t2g <- Hallmark_set()
         kk1 <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
@@ -2750,13 +2719,7 @@ shinyServer(function(input, output, session) {
       geneList <- data$log2FoldChange
       names(geneList) = as.character(data$ENTREZID)
       geneList <- sort(geneList, decreasing = TRUE)
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
-         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)" &&
-         input$Gene_set6 != "Reactome" && input$Gene_set6 != "miRNA target" && input$Gene_set6 != "GO biological process" && 
-         input$Gene_set6 != "GO cellular component" && input$Gene_set6 != "GO molecular function" && 
-         input$Gene_set6 != "Human phenotype ontology" && input$Gene_set6 != "WikiPathways" && 
-         input$Gene_set6 != "PID (Pathway Interaction Database)" && input$Gene_set6 != "BioCarta"){
-        if(input$Gene_set6 == "KEGG"){
+      if(input$Gene_set6 == "KEGG"){
           withProgress(message = "KEGG GSEA",{
             kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
                            organism = org_code6(), keyType = "kegg",
@@ -2764,7 +2727,6 @@ shinyServer(function(input, output, session) {
                            minGSSize = 50, maxGSSize = 500, by = "fgsea",
                            use_internal_data = FALSE, verbose = F)
           })
-        }
         if (length(as.data.frame(kk3)$ID) == 0) {
           kk3 <- NULL
         } else{
@@ -2816,12 +2778,7 @@ shinyServer(function(input, output, session) {
   
   multi_enrich1_H <- reactive({
     if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 == "MSigDB Hallmark" || input$Gene_set6 == "Transcription factor targets" || 
-         input$Gene_set6 == "DoRothEA regulon (activator)" || input$Gene_set6 == "DoRothEA regulon (repressor)" ||
-         input$Gene_set6 == "Reactome" || input$Gene_set6 == "miRNA target" || input$Gene_set6 == "GO biological process" || 
-         input$Gene_set6 == "GO cellular component" || input$Gene_set6 == "GO molecular function" || 
-         input$Gene_set6 == "Human phenotype ontology" || input$Gene_set6 == "WikiPathways" || 
-         input$Gene_set6 == "PID (Pathway Interaction Database)" || input$Gene_set6 == "BioCarta"){
+      if(input$Gene_set6 != "KEGG"){
         H_t2g <- multi_Hallmark_set()
         em3 <- multi_enrichment_1_gsea()
         if (length(as.data.frame(em3)$ID) == 0) {
@@ -2863,12 +2820,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
-           input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)" &&
-           input$Gene_set6 != "Reactome" && input$Gene_set6 != "miRNA target" && input$Gene_set6 != "GO biological process" && 
-           input$Gene_set6 != "GO cellular component" && input$Gene_set6 != "GO molecular function" && 
-           input$Gene_set6 != "Human phenotype ontology" && input$Gene_set6 != "WikiPathways" && 
-           input$Gene_set6 != "PID (Pathway Interaction Database)" && input$Gene_set6 != "BioCarta"){
+        if(input$Gene_set6 == "KEGG"){
           p1 <- multi_enrich1_keggGO()
         }else{
           p1 <- multi_enrich1_H()
@@ -3089,12 +3041,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set7 != "MSigDB Hallmark" && input$Gene_set7 != "Transcription factor targets" &&
-           input$Gene_set7 != "DoRothEA regulon (activator)" && input$Gene_set7 != "DoRothEA regulon (repressor)" &&
-           input$Gene_set7 != "Reactome" && input$Gene_set7 != "miRNA target" && input$Gene_set7 != "GO biological process" && 
-           input$Gene_set7 != "GO cellular component" && input$Gene_set7 != "GO molecular function" && 
-           input$Gene_set7 != "Human phenotype ontology" && input$Gene_set7 != "WikiPathways" && 
-           input$Gene_set7 != "PID (Pathway Interaction Database)" && input$Gene_set7 != "BioCarta"){
+        if(input$Gene_set7 == "KEGG"){
           p1 <- multi_enrich_keggGO()
         }else{
           p1 <- multi_enrich_H()
@@ -3113,12 +3060,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set8 != "MSigDB Hallmark" && input$Gene_set8 != "Transcription factor targets" &&
-           input$Gene_set8 != "DoRothEA regulon (activator)" && input$Gene_set8 != "DoRothEA regulon (repressor)" &&
-           input$Gene_set8 != "Reactome" && input$Gene_set8 != "miRNA target" && input$Gene_set8 != "GO biological process" && 
-           input$Gene_set8 != "GO cellular component" && input$Gene_set8 != "GO molecular function" && 
-           input$Gene_set8 != "Human phenotype ontology" && input$Gene_set8 != "WikiPathways" && 
-           input$Gene_set8 != "PID (Pathway Interaction Database)" && input$Gene_set8 != "BioCarta"){
+        if(input$Gene_set8 == "KEGG"){
           p1 <- multi_enrich_keggGO2()
         }else{
           p1 <- multi_enrich_H2()
@@ -3751,7 +3693,7 @@ shinyServer(function(input, output, session) {
   #3conditions DEG_3------------------------
   data_3degcount1_3 <- reactive({
     data3 <- data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
-                             result_FDR = deg_result2(), specific = 1,fc = input$fc2, 
+                             result_FDR = deg_result2(), specific = 3,fc = input$fc2, 
                              fdr = input$fdr2, basemean = input$basemean2)
     return(data3)
   })
@@ -4940,6 +4882,156 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  #venn enrichment---------
+  output$venn_whichGroup1 <- renderUI({
+    clusters <- overlap_table2()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("venn_whichGroup1", "gene list", choices = c(unique(clusters$Group)),multiple = TRUE)
+    }
+  })
+  
+  venn_enrich_input1 <- reactive({
+    if(is.null(input$venn_whichGroup1)){
+      return(NULL)
+    }else{
+      clusters <- overlap_table2()
+      cluster_name <- input$venn_whichGroup1
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, Group == name)
+        clusterCount2 <- data.frame(GeneID = clusterCount2$Gene, Group = clusterCount2$Group)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  output$Gene_set9 <- renderUI({
+    selectInput('Gene_set9', 'Gene Set', gene_set_list)
+  })
+  
+  output$venn_Spe <- renderText({
+    if(input$Species7 == "not selected") print("Please select 'Species'")
+  })
+  
+  org7 <- reactive({
+    return(org(Species = input$Species7))
+  })
+  org_code7 <- reactive({
+    return(org_code(Species = input$Species7))
+  })
+  
+  venn_Hallmark_set <- reactive({
+    return(GeneList_for_enrichment(Species = input$Species7, Gene_set = input$Gene_set9, org = org7()))
+  })
+  
+  venn_enrich_viewer2 <- reactive({
+    return(enrich_viewer_forMulti2(df = venn_enrich_input1(), Species = input$Species7, org = org7(),
+                                   org_code = org_code7(),H_t2g = venn_Hallmark_set(),Gene_set = input$Gene_set9))
+  })
+  
+  venn_enrich_keggGO <- reactive({
+    return(enrich_keggGO_global(formula_res = venn_enrich_viewer2(), Gene_set = input$Gene_set9))
+  })
+  
+  venn_enrich_H <- reactive({
+    return(enrich_genelist(data = enrich_viewer_forMulti1(df = venn_enrich_input1(), Species = input$Species7, org = org7()),
+                           Gene_set = input$Gene_set9, org = org7(), H_t2g = venn_Hallmark_set()))
+  })
+  
+  output$venn_enrichment1 <- renderPlot({
+    dotplot_for_output(data = venn_enrich_viewer2(), plot_kegg = venn_enrich_keggGO(), 
+                       plot_genelist = venn_enrich_H(), Gene_set = input$Gene_set9, 
+                       Species = input$Species7)
+  })
+  
+  output$download_venn_cluster_enrichment = downloadHandler(
+    filename = function(){
+      paste(input$venn_whichGroup1, paste0(input$Gene_set9,"_enrichment.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$Gene_set9 == "KEGG"){
+          p1 <- multi_enrich_keggGO()
+        }else{
+          p1 <- multi_enrich_H()
+        }
+        pdf(file, height = 6, width = 8)
+        print(p1)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$venn_enrichment_result <- DT::renderDataTable({
+    as.data.frame(venn_enrich_viewer2())
+  })
+  
+  output$download_venn_enrichment_table = downloadHandler(
+    filename = function() {
+      paste(input$venn_whichGroup1, paste0(input$Gene_set9,"_enrichment.txt"), sep="_")
+    },
+    content = function(file){write.table(as.data.frame(venn_enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  output$venn_whichGroup2 <- renderUI({
+    clusters <- overlap_table2()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("venn_whichGroup2", "gene list", choices = c("not selected",unique(clusters$Group)),selected = "not selected",multiple = FALSE)
+    }
+  })
+  
+  venn_enrich_input2 <- reactive({
+    if(is.null(input$venn_whichGroup2) || input$venn_whichGroup2 == "not selected"){
+      return(NULL)
+    }else{
+      clusters <- overlap_table2()
+      cluster_name <- input$venn_whichGroup2
+      clusterCount <- data.frame(GeneID = NA, Group=NA)
+      for(name in cluster_name){
+        clusterCount2 <- dplyr::filter(clusters, Group == name)
+        clusterCount2 <- data.frame(GeneID = clusterCount2$Gene, Group = clusterCount2$Group)
+        clusterCount <- rbind(clusterCount, clusterCount2) 
+      }
+      clusterCount <- na.omit(clusterCount)
+      return(clusterCount)
+    }
+  })
+  
+  venn_enrich2 <- reactive({
+    cnet_global(data = enrich_viewer_forMulti1(df = venn_enrich_input2(), Species = input$Species7, org = org7()), 
+                group = input$venn_whichGroup2, Gene_set = input$Gene_set9, 
+                H_t2g = venn_Hallmark_set(), org = org7(), org_code = org_code7())
+  })
+  output$venn_enrichment2 <- renderPlot({
+    cnet_for_output(data = venn_enrich_input2(), plot_data = venn_enrich2(), 
+                    Gene_set = input$Gene_set9, Species = input$Species7)
+  })
+  
+  output$download_venn_enrichment_cnet = downloadHandler(
+    filename = function(){
+      paste(input$venn_whichGroup2, paste0(input$Gene_set9,"_cnet.pdf"), sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        p <- venn_enrich2()
+        pdf(file, height = 6, width = 6)
+        print(p)
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  
+  
+  
   # enrichment viewer ------------------------------------------------------------------------------
   output$Spe3 <- renderText({
     if(input$Species4 == "not selected") print("Please select 'Species'")
@@ -5002,19 +5094,12 @@ shinyServer(function(input, output, session) {
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" && 
-           input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)" &&
-           input$Gene_set3 != "Reactome" && input$Gene_set3 != "miRNA target" && input$Gene_set3 != "GO biological process" && 
-           input$Gene_set3 != "GO cellular component" && input$Gene_set3 != "GO molecular function" && 
-           input$Gene_set3 != "Human phenotype ontology" && input$Gene_set3 != "WikiPathways" && 
-           input$Gene_set3 != "PID (Pathway Interaction Database)" && input$Gene_set3 != "BioCarta"){
-          if(input$Gene_set3 == "KEGG"){
+        if(input$Gene_set3 == "KEGG"){
             withProgress(message = "KEGG enrichment analysis",{
               formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
                                                 fun="enrichKEGG", organism=org_code4()), silent = T)
               incProgress(1)
             })
-          }
           if (class(formula_res) == "try-error") {
             formula_res <- NULL
           }else{
@@ -5097,12 +5182,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set3 != "MSigDB Hallmark" && input$Gene_set3 != "Transcription factor targets" &&
-           input$Gene_set3 != "DoRothEA regulon (activator)" && input$Gene_set3 != "DoRothEA regulon (repressor)" &&
-           input$Gene_set3 != "Reactome" && input$Gene_set3 != "miRNA target" && input$Gene_set3 != "GO biological process" && 
-           input$Gene_set3 != "GO cellular component" && input$Gene_set3 != "GO molecular function" && 
-           input$Gene_set3 != "Human phenotype ontology" && input$Gene_set3 != "WikiPathways" && 
-           input$Gene_set3 != "PID (Pathway Interaction Database)" && input$Gene_set3 != "BioCarta"){
+        if(input$Gene_set3 == "KEGG"){
           p1 <- enrich_keggGO()
         }else{
           p1 <- enrich_H()

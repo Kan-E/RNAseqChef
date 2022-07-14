@@ -59,6 +59,38 @@ read_df <- function(tmp){
     return(df)
   }
 }
+read_gene_list <- function(tmp){
+  if(is.null(tmp)) {
+    return(NULL)
+  }else{
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
+    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",")
+    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t")
+    return(df)
+  }
+}
+gene_list_convert_for_enrichment <- function(data, Species){
+    if(is.null(data) || Species == "not selected"){
+      return(NULL)
+    }else{
+      df <- data.frame(GeneID = data[,1], Group = data[,2])
+      my.symbols <- df$GeneID
+      if(str_detect(df$GeneID[1], "ENS")){
+        gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
+                                        keytype = "ENSEMBL",
+                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
+        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
+      }else{
+        gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+                                          keytype = "SYMBOL",
+                                          columns = c("ENTREZID", "SYMBOL"))
+        colnames(gene_IDs) <- c("GeneID","ENTREZID")
+      }
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      data <- merge(df, gene_IDs, by="GeneID")
+      return(data)
+    }
+}
 dorothea <- function(species, type, org){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
@@ -489,6 +521,9 @@ enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g)
         withProgress(message = "dotplot",{
           for (name in unique(data3$sig)) {
             if (name != "NS"){
+              if(is.null(H_t2g)){
+                cnet_list <- NULL
+              }else{
               em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
               if (length(as.data.frame(em)$ID) == 0) {
                 cnet1 <- NULL
@@ -497,6 +532,7 @@ enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g)
                 cnet1$Cluster <- name
                 cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
                 cnet_list[[name]] = cnet1
+              }
               }
             }
           }
@@ -564,6 +600,9 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
       }else{
         for (name in unique(data3$sig)) {
           if (name != "NS"){
+            if(is.null(H_t2g)){
+              cnet_list2 <- NULL
+            }else{
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
@@ -573,6 +612,7 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
               cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
               cnet1 <- cnet1[1:5,]
               cnet_list2[[name]] = cnet1
+            }
             }
           }
         }
@@ -605,6 +645,9 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
         withProgress(message = "cnet plot",{
           for (name in unique(data3$sig)) {
             if (name != "NS"){
+              if(is.null(H_t2g)){
+                cnet_list <- NULL
+              }else{
               em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g, pvalueCutoff = 0.05)
               if (length(as.data.frame(em)$ID) == 0) {
                 cnet1 <- NULL
@@ -620,6 +663,7 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
                   if(class(c) == "try-error") c <- NULL
                 }
                 cnet_list[[name]] = c
+              }
               }
             }
           }
@@ -639,7 +683,7 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
     }
   }else return(NULL)
 }
-GeneList_for_enrichment <- function(Species, Gene_set, org){
+GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
   if(Species != "not selected"){
     if(Gene_set == "KEGG"){
       return(NULL)
@@ -725,6 +769,13 @@ GeneList_for_enrichment <- function(Species, Gene_set, org){
         H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="BIOCARTA_", replacement = "")
         H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
       }
+      if(Gene_set == "Custom gene set"){
+        if(!is.null(Custom_gene_list)){
+          H_t2g <- gene_list_convert_for_enrichment(data= Custom_gene_list, Species = Species)
+          H_t2g <- data.frame(gs_name = H_t2g$Group, entrez_gene = H_t2g$ENTREZID)
+          H_t2g$gs_name <- gsub(":", "_", H_t2g$gs_name)
+        }else H_t2g <- NULL
+      }
       return(H_t2g)
     }
   }else return(NULL)
@@ -792,6 +843,9 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
         return(formula_res)
       }else{
         withProgress(message = "enrichment analysis",{
+          if(is.null(H_t2g)){
+            df <- NULL
+          }else{
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
           for (name in unique(data3$Group)) {
@@ -803,6 +857,7 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
                 df <- rbind(df, cnet1)
               }
             }
+          }
           }
           if(length(df$ID) !=0){
             df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
@@ -838,14 +893,12 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
       if(is.null(data)){
         return(NULL)
       }else{
-        if(Gene_set != "MSigDB Hallmark" && Gene_set != "Transcription factor targets" &&
-           Gene_set != "DoRothEA regulon (activator)" && Gene_set != "DoRothEA regulon (repressor)" &&
-           Gene_set != "Reactome" && Gene_set != "miRNA target" && Gene_set != "GO biological process" && 
-           Gene_set != "GO cellular component" && Gene_set != "GO molecular function" && 
-           Gene_set != "Human phenotype ontology" && Gene_set != "WikiPathways" && 
-           Gene_set != "PID (Pathway Interaction Database)" && Gene_set != "BioCarta"){
+        if(Gene_set == "KEGG"){
           return(NULL)
         }else{
+          if(is.null(H_t2g)){
+            df <- NULL
+          }else{
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
           for (name in unique(data$Group)) {
@@ -861,6 +914,7 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
                 df <- rbind(df, cnet1)
               }
             }
+          }
           }
           if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
             p1 <- NULL
@@ -896,8 +950,12 @@ cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code){
             kk1 <- enrichKEGG(data2$ENTREZID, organism =org_code,
                               qvalueCutoff = 0.05)
         }else{
+          if(is.null(H_t2g)){
+            kk1 <- NULL
+          }else{
           kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g, qvalueCutoff = 0.05))
           if (class(kk1) == "try-error") kk1 <- NA
+          }
         }
         if(length(as.data.frame(kk1)$ID) == 0){
           cnet1 <- NULL

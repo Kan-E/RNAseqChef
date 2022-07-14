@@ -1,3 +1,5 @@
+popoverTempate <- 
+  '<div class="popover popover-lg" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
 shinyServer(function(input, output, session) {
   options(shiny.maxRequestSize=30*1024^2)
   # pair-wise ------------------------------------------------------------------------------
@@ -1219,12 +1221,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set != "MSigDB Hallmark" && input$Gene_set != "Transcription factor targets" &&
-           input$Gene_set != "DoRothEA regulon (activator)" && input$Gene_set != "DoRothEA regulon (repressor)" &&
-           input$Gene_set != "Reactome" && input$Gene_set != "miRNA target" && input$Gene_set != "GO biological process" && 
-           input$Gene_set != "GO cellular component" && input$Gene_set != "GO molecular function" && 
-           input$Gene_set != "Human phenotype ontology" && input$Gene_set != "WikiPathways" && 
-           input$Gene_set != "PID (Pathway Interaction Database)" && input$Gene_set != "BioCarta"){
+        if(input$Gene_set =="KEGG"){
           p1 <- pair_enrich1_keggGO()
         }else{
           p1 <- pair_enrich1_H()
@@ -2754,12 +2751,7 @@ shinyServer(function(input, output, session) {
   # Multi DEG enrichment plot ------------------------------------------------------------------------------
   multi_enrich1_keggGO <- reactive({
     if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 != "MSigDB Hallmark" && input$Gene_set6 != "Transcription factor targets" &&
-         input$Gene_set6 != "DoRothEA regulon (activator)" && input$Gene_set6 != "DoRothEA regulon (repressor)" &&
-         input$Gene_set6 != "Reactome" && input$Gene_set6 != "miRNA target" && input$Gene_set6 != "GO biological process" && 
-         input$Gene_set6 != "GO cellular component" && input$Gene_set6 != "GO molecular function" && 
-         input$Gene_set6 != "Human phenotype ontology" && input$Gene_set6 != "WikiPathways" && 
-         input$Gene_set6 != "PID (Pathway Interaction Database)" && input$Gene_set6 != "BioCarta"){
+      if(input$Gene_set6 == "KEGG"){
         kk4 <- multi_enrichment_1_gsea()
         if (length(as.data.frame(kk4)$ID) == 0) {
           p4 <- NULL
@@ -5037,7 +5029,7 @@ shinyServer(function(input, output, session) {
     if(input$Species4 == "not selected") print("Please select 'Species'")
   })
   Hallmark_enrich <- reactive({
-    return(GeneList_for_enrichment(Species = input$Species4, Gene_set = input$Gene_set3, org = org4()))
+    return(GeneList_for_enrichment(Species = input$Species4, Gene_set = input$Gene_set3, org = org4(), Custom_gene_list = Custom_input()))
   })
   org4 <- reactive({
     return(org(Species = input$Species4))
@@ -5048,15 +5040,15 @@ shinyServer(function(input, output, session) {
   
   enrich_input <- reactive({
     tmp <- input$enrich_data_file$datapath
-    if(is.null(input$enrich_data_file) && input$goButton4 == 0){
-      return(NULL)
-    }else{
-      if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "data/enrich_example.txt"
-      if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
-      if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",")
-      if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t")
-      return(df)
-    }
+    if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "data/enrich_example.txt"
+    return(read_gene_list(tmp))
+  })
+  
+  Custom_input <- reactive({
+    tmp <- input$custom_input$datapath
+    data <- read_gene_list(tmp)
+    df <- gene_list_convert_for_enrichment(data= data, Species = input$Species4)
+    return(df)
   })
   
   output$enrichment_input <- DT::renderDataTable({
@@ -5065,27 +5057,7 @@ shinyServer(function(input, output, session) {
   
   
   enrich_viewer1 <- reactive({
-    data <- enrich_input()
-    if(is.null(data) || input$Species4 == "not selected"){
-      return(NULL)
-    }else{
-      df <- data.frame(GeneID = data[,1], Group = data[,2])
-      my.symbols <- df$GeneID
-      if(str_detect(df$GeneID[1], "ENS")){
-        gene_IDs<-AnnotationDbi::select(org4(),keys = my.symbols,
-                                        keytype = "ENSEMBL",
-                                        columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
-        colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
-      }else{
-        gene_IDs <- AnnotationDbi::select(org4(), keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("ENTREZID", "SYMBOL"))
-        colnames(gene_IDs) <- c("GeneID","ENTREZID")
-      }
-      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
-      data <- merge(df, gene_IDs, by="GeneID")
-      return(data)
-    }
+    return(gene_list_convert_for_enrichment(data= enrich_input(), Species = input$Species4))
   })
   
   enrich_viewer2 <- reactive({
@@ -5109,6 +5081,9 @@ shinyServer(function(input, output, session) {
         }else{
           withProgress(message = "enrichment analysis",{
             H_t2g <- Hallmark_enrich()
+            if(is.null(H_t2g)){
+              df <- NULL
+            }else{
             df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
             colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
             for (name in unique(data3$Group)) {
@@ -5120,6 +5095,7 @@ shinyServer(function(input, output, session) {
                   df <- rbind(df, cnet1)
                 }
               }
+            }
             }
             if(length(df$ID) !=0){
               df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
@@ -5210,7 +5186,21 @@ shinyServer(function(input, output, session) {
   )
   
   output$Gene_set3 <- renderUI({
-    selectInput('Gene_set3', 'Gene Set', gene_set_list)
+    selectInput('Gene_set3', 'Gene Set', c(gene_set_list, "Custom gene set"))
+  })
+  
+  output$Custom_input <- renderUI({
+    if(is.null(input$Gene_set3)){
+      return(NULL)
+    }else{
+    if(input$Gene_set3 == "Custom gene set"){
+    fileInput("custom_input",
+              "Select a file (txt, csv, xlsx)",
+              accept = c("txt", "csv","xlsx"),
+              multiple = FALSE,
+              width = "80%")
+    }else return(NULL)
+    }
   })
   
   output$enrichment_result <- DT::renderDataTable({

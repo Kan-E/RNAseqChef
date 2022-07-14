@@ -1081,9 +1081,9 @@ shinyUI(
                                        tags$head(tags$style("#Spe3{color: red;
                                  font-size: 20px;
             font-style: bold;
-            }"))),
+            }")), downloadButton("download_enrichment", "Download dot plot")),
                                 column(4, htmlOutput("Gene_set3")),
-                                column(4, downloadButton("download_enrichment", "Download dot plot"))
+                                column(4, htmlOutput("Custom_input"))
                               ),
                               plotOutput("enrichment3"),
                               fluidRow(

@@ -591,6 +591,19 @@ shinyUI(
                                 plotOutput("multi_PCA", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
+                              fluidRow(
+                                column(6, htmlOutput("multi_umap_n"),
+                                       downloadButton("download_multi_umap", "Download umap"),
+                                       textOutput("multi_umap_error"),
+                                       tags$head(tags$style("#multi_umap_error{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")))
+                                ),
+                              div(
+                                plotOutput("multi_umap", height = "100%"),
+                                style = "height: calc(100vh  - 100px)"
+                              ),
                               bsCollapse(id="input_collapse_multi_DEG",open="DEG_panel",multiple = TRUE,
                                          bsCollapsePanel(title="DEG_result:",
                                                          value="DEG_panel",
@@ -928,8 +941,7 @@ shinyUI(
                                               placement = "right",options = list(container = "body")),
                    ),
                    fluidRow(
-                     column(6, selectInput("Species3", "Species", species_list, selected = "not selected")),
-                     column(6, selectInput("normHeat", "Heatmap in clustering panel", c("OFF", "Draw"), selected = "OFF"))),
+                     column(6, selectInput("Species3", "Species", species_list, selected = "not selected"))),
                    h4("Filter option 1:"),
                    fileInput("file10",
                              label = "Select a gene list file for gene extraction",
@@ -939,9 +951,7 @@ shinyUI(
                    h4("Filter option 2:"),
                    fluidRow(
                      column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
-                     ),
-                     column(8,  "If the gene number is >10,000 after filtering, heatmap and k-means clustering are not recommended.", br(),
-                            "This is due to a limitation of the server memory.")
+                     )
                    ),
                    actionButton("goButton3", "example data"),
                    tags$head(tags$style("#goButton{color: black;
@@ -984,11 +994,22 @@ shinyUI(
                               )
                      ),
                      tabPanel("Clustering",
+                              fluidRow(
+                                column(3, downloadButton("download_norm_PCA", "Download Clustering"))
+                              ),
                               plotOutput("norm_PCA"),
                               fluidRow(
-                                column(3, downloadButton("download_norm_PCA", "Download Clustering")),
-                                column(3, downloadButton("download_norm_heatmap", "Download heatmap")),
-                                column(6, plotOutput("norm_heatmap"))
+                                column(6, htmlOutput("norm_umap_n"),
+                                       downloadButton("download_norm_umap", "Download umap"),
+                                       textOutput("norm_umap_error"),
+                                       tags$head(tags$style("#norm_umap_error{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")))
+                              ),
+                              div(
+                                plotOutput("norm_umap", height = "100%"),
+                                style = "height: calc(100vh  - 100px)"
                               ),
                               bsCollapse(id="norm_result_collapse_panel",open="cutoff_count_panel",multiple = TRUE,
                                          bsCollapsePanel(title="basemean-cutoff_Norm_count_matrix:",

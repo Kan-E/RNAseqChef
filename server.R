@@ -3265,6 +3265,64 @@ shinyServer(function(input, output, session) {
     content = function(file){write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), file, row.names = T, sep = "\t", quote = F)}
   )
   
+  output$multi_umap_n <- renderUI({
+    sliderInput("multi_n_neighbors", "n_neighbors", min = 2,
+                max=100, step = 1,
+                value = 15)
+  })
+  
+  multi_umap_plot <- reactive({
+    data <- multi_d_row_count_matrix()
+    if(is.null(input$multi_n_neighbors)){
+      return(NULL)
+    }else{
+      if(is.null(data)){
+        return(NULL)
+      }else{
+        p<- try(umap_plot(data = data, n_neighbors = input$multi_n_neighbors))
+        return(p)
+      }
+    }
+  })
+  
+  output$multi_umap_error <- renderText({
+    p <- multi_umap_plot()
+    if(length(p) == 1){
+      if (class(p) == "try-error") {
+        print("umap: number of neighbors must be smaller than number of items")
+      }
+    }else return(NULL)
+  })
+  
+  
+  output$multi_umap <- renderPlot({
+    p <- multi_umap_plot()
+    withProgress(message = "umap",{
+      if(length(p) == 1){
+        if (class(p) == "try-error") {
+          return(NULL)
+        }
+      }else{
+        print(p)
+      }
+    })
+  })
+  
+  output$download_multi_umap = downloadHandler(
+    filename = function(){
+      paste0(download_multi_overview_dir(), paste0(input$multi_n_neighbors,"_neighbors_umap.pdf"))
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        pdf(file, height = 3.5, width = 4.7)
+        print(multi_umap())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  
   # 3 conditions ------------------------------------------------------------------------------
   org2 <- reactive({
     return(org(Species = input$Species2))
@@ -4240,43 +4298,57 @@ shinyServer(function(input, output, session) {
     content = function(file){write.table(PCAdata(row_count = d_norm_count_matrix_cutofff(), deg_norm_count = d_norm_count_matrix_cutofff()), file, row.names = T, sep = "\t", quote = F)}
   )
   
-  norm_heat <- reactive({
-    if(input$normHeat != "OFF"){
+  output$norm_umap_n <- renderUI({
+    sliderInput("norm_n_neighbors", "n_neighbors", min = 2,
+                 max=100, step = 1,
+                 value = 15)
+  })
+  
+  norm_umap_plot <- reactive({
       data <- d_norm_count_matrix_cutofff()
-      withProgress(message = "Heatmap",{
+      if(is.null(input$norm_n_neighbors)){
+        return(NULL)
+      }else{
         if(is.null(data)){
           return(NULL)
         }else{
-          data.z <-genescale(data, axis=1, method="Z")
-          data.z <- na.omit(data.z)
-          ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
-                        clustering_method_columns = 'ward.D2',
-                        show_row_names = F, show_row_dend = F)
-          return(ht)
+          p<- try(umap_plot(data = data, n_neighbors = input$norm_n_neighbors))
+          return(p)
         }
-      })
-    }else return(NULL)
+      }
   })
   
-  output$norm_heatmap <- renderPlot({
-    data <- d_norm_count_matrix_cutofff()
-    withProgress(message = "Heatmap",{
-      if(is.null(data)){
-        return(NULL)
+  output$norm_umap_error <- renderText({
+    p <- norm_umap_plot()
+    if(length(p) == 1){
+    if (class(p) == "try-error") {
+      print("umap: number of neighbors must be smaller than number of items")
+      }
+      }else return(NULL)
+  })
+  
+  
+  output$norm_umap <- renderPlot({
+    p <- norm_umap_plot()
+    withProgress(message = "umap",{
+      if(length(p) == 1){
+        if (class(p) == "try-error") {
+          return(NULL)
+        }
       }else{
-        print(norm_heat())
+        print(p)
       }
     })
   })
   
-  output$download_norm_heatmap = downloadHandler(
+  output$download_norm_umap = downloadHandler(
     filename = function(){
-      paste0(download_norm_dir(), "heatmap.pdf")
+      paste0(download_norm_dir(), paste0(input$norm_n_neighbors,"_neighbors_umap.pdf"))
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 9, width = 3.5)
-        print(norm_heat())
+        pdf(file, height = 3.5, width = 4.7)
+        print(norm_umap())
         dev.off()
         incProgress(1)
       })

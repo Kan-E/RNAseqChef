@@ -59,6 +59,10 @@ IHW, Independent hypothesis weighting, and qvalue (for fdr control method of des
 ggdendro (for dendrograms)
 - Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro
 
+umap (for UMAP)
+- Konopka T (2022). _umap: Uniform Manifold Approximation and Projection_. R package
+  version 0.2.8.0, <https://CRAN.R-project.org/package=umap>.
+
 clusterProfiler, DOSE, msigdbr, dorothea (for enrichment analysis)
 - T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141
 - Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609

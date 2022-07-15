@@ -38,3 +38,6 @@ manual_figure/volcano navi.png
 *.png
 RNAseqChef Japanese.Rmd
 RNAseqChef-Japanese.html
+RNAseqChef-Japanese.Rmd
+.DS_Store
+.DS_Store

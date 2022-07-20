@@ -40,11 +40,11 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       if(length(input$norm_file1[, 1]) == 1){
-        upload <- read.table(file = input$norm_file1[[1, 'datapath']], header = T ,sep="\t", row.names = 1)
+        upload <- read_df(input$norm_file1[[1, 'datapath']])
       }else{
         upload = list()
         for(nr in 1:length(input$norm_file1[, 1])){
-          df <- read.table(file = input$norm_file1[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+          df <- read_df(input$norm_file1[[nr, 'datapath']])
           upload[gsub("\\..+$", "", input$norm_file1[nr,]$name)] <- list(df)
         }
       } 
@@ -1279,7 +1279,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for(nr in 1:length(input$file11[, 1])){
-        df <- read.table(file = input$file11[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+        df <- read_df(input$file11[[nr, 'datapath']])
         upload[gsub("\\..+$", "", input$file11[nr,]$name)] <- list(df)
       }
       return(upload)
@@ -1865,11 +1865,11 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       if(length(input$multi_norm_file1[, 1]) == 1){
-        upload <- read.table(file = input$multi_norm_file1[[1, 'datapath']], header = T ,sep="\t", row.names = 1)
+        upload <- read_df(input$multi_norm_file1[[1, 'datapath']])
       }else{
         upload = list()
         for(nr in 1:length(input$multi_norm_file1[, 1])){
-          df <- read.table(file = input$multi_norm_file1[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+          df <- read_df(input$multi_norm_file1[[nr, 'datapath']])
           upload[gsub("\\..+$", "", input$multi_norm_file1[nr,]$name)] <- list(df)
         }
       } 
@@ -2045,7 +2045,7 @@ shinyServer(function(input, output, session) {
     if(is.null(multi_pattern1())){
       return(NULL)
     }else{ 
-      print(paste0("The DEG number after the filteration: ", length(multi_pattern1()$gene)))
+      print(paste0("The DEG number after the filtration: ", length(multi_pattern1()$gene)))
     }
   })
   
@@ -2356,7 +2356,7 @@ shinyServer(function(input, output, session) {
     if(is.null(multi_deg_count())){
       return(NULL)
     }else{ 
-      print(paste0("The DEG number after the filteration: ", length(rownames(multi_deg_count1()))))
+      print(paste0("The DEG number after the filtration: ", length(rownames(multi_deg_count1()))))
     }
   })
   
@@ -4662,7 +4662,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for(nr in 1:length(input$files[, 1])){
-        df <- read.table(file = input$files[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+        df <- read_df(input$files[[nr, 'datapath']])
         name <- c(name, gsub("\\..+$", "", input$files[nr,]$name))
         upload[[nr]] <- c(rownames(df))
       }
@@ -4769,7 +4769,7 @@ shinyServer(function(input, output, session) {
       upload = list()
       name = c()
       for(nr in 1:length(input$countfiles[, 1])){
-        df <- read.table(file = input$countfiles[[nr, 'datapath']], header = T ,sep="\t", row.names = 1)
+        df <- read_df(input$countfiles[[nr, 'datapath']])
         name <- c(name, gsub("\\..+$", "", input$countfiles[nr,]$name))
         upload[[nr]] <- list(df)
       }

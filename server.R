@@ -14,12 +14,12 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing row count matrix, please wait",{
       if (input$data_file_type == "Row1"){
         tmp <- input$file3$datapath
-        if(is.null(input$file3) && input$goButton > 0 )  tmp = "data/example1.txt"
+        if(is.null(input$file3) && input$goButton > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example1.txt"
         return(read_df(tmp = tmp))
       }
       if (input$data_file_type == "Row2"){
         tmp <- input$file1$datapath
-        if(is.null(input$file1) && input$goButton > 0 )  tmp = "data/example2.csv"
+        if(is.null(input$file1) && input$goButton > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv"
         return(read_df(tmp = tmp))
       }
     })
@@ -29,7 +29,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$file2$datapath
-      if(is.null(input$file2) && input$goButton > 0 )  tmp = "data/example3.csv"
+      if(is.null(input$file2) && input$goButton > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example3.csv"
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
@@ -916,30 +916,13 @@ shinyServer(function(input, output, session) {
   })
   
   enrichment_1_1 <- reactive({
-    if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      data3 <- data_degcount2()
-      if(input$Gene_set == "KEGG"){
-          withProgress(message = "KEGG enrichment analysis",{
-            formula_res <- try(compareCluster(ENTREZID~group, data=data3,
-                                              fun="enrichKEGG", organism=org_code1()), silent = T)
-            incProgress(1)
-          })
-        if (class(formula_res) == "try-error") {
-          formula_res <- NULL
-          return(formula_res)
-        }else{
-          if (length(as.data.frame(formula_res)$ID) == 0) {
-            formula_res <- NULL
-          }else{
-            formula_res <- setReadable(formula_res, org1(), 'ENTREZID')
-          }
-          return(formula_res)
-        }
-      }else{
+    data3 <- data_degcount2()
+    if(!is.null(input$Gene_set) && input$Species != "not selected" && !is.null(data3)){
         withProgress(message = "enrichment analysis",{
           H_t2g <- Hallmark_set()
-          em_up <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
-          em_down <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+          H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+          em_up <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
+          em_down <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
           if (class(em_up) == "try-error") em_up <- NA
           if (class(em_down) == "try-error") em_down <- NA
           if (length(as.data.frame(em_up)$ID) == 0) {
@@ -958,16 +941,16 @@ shinyServer(function(input, output, session) {
             group1 <- as.data.frame(em_up)
             group2 <- as.data.frame(em_down)
             if ((length(colnames(group1)) != 1) && (length(colnames(group2)) != 1))  {
-              group1$Cluster <- "Up"
-              group2$Cluster <- "Down"
+              group1$Group <- "Up"
+              group2$Group <- "Down"
               data<- rbind(group1, group2)
             }
             if((length(colnames(group1)) == 1) && (length(colnames(group2)) != 1)){
-              group2$Cluster <- "Down"
+              group2$Group <- "Down"
               data <- group2
             }
             if((length(colnames(group1)) != 1) && (length(colnames(group2)) == 1)){
-              group1$Cluster <- "Up"
+              group1$Group <- "Up"
               data <- group1
             }
             if((length(colnames(group1)) == 1) && (length(colnames(group2)) == 1)){
@@ -981,37 +964,23 @@ shinyServer(function(input, output, session) {
           }
           incProgress(1)
         })
-      }
     }else{return(NULL)}
   })
   
   enrichment_1_gsea <- reactive({
-    if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      data <- data_degcount()
-      data3 <- data_degcount2()
-      count <- deg_norm_count()
+    data <- data_degcount()
+    data3 <- data_degcount2()
+    count <- deg_norm_count()
+    if(!is.null(input$Gene_set) && input$Species != "not selected" &&
+       !is.null(data) && !is.null(data3) && !is.null(count)){
       data <- na.omit(data)
       geneList <- data$log2FoldChange
       names(geneList) = as.character(data$ENTREZID)
       geneList <- sort(geneList, decreasing = TRUE)
-      if(input$Gene_set == "KEGG"){
-          withProgress(message = "KEGG GSEA",{
-            kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
-                           organism = org_code1(), keyType = "kegg",
-                           exponent = 1, eps = 0, pAdjustMethod = "BH",
-                           minGSSize = 50, maxGSSize = 500, by = "fgsea",
-                           use_internal_data = FALSE, verbose = F)
-          })
-        if (length(as.data.frame(kk3)$ID) == 0) {
-          kk3 <- NULL
-        } else{
-          kk3 <- setReadable(kk3, org1(), 'ENTREZID')
-        }
-        return(kk3)
-      }else{
         withProgress(message = "GSEA",{
           H_t2g <- Hallmark_set()
-          em3 <- GSEA(geneList, TERM2GENE = H_t2g,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+          H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+          em3 <- GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                       minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F)
           if (length(as.data.frame(em3)$ID) == 0) {
             em4 <- NA
@@ -1021,49 +990,20 @@ shinyServer(function(input, output, session) {
           return(em4)
           incProgress(1)
         })
-      }
     }else return(NULL)
   })
   
   
   # pair-wise enrichment plot ------------------------------------------------------------------------------
-  pair_enrich1_keggGO <- reactive({
+   pair_enrich1_H <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      if(input$Gene_set == "KEGG"){
-        count <- deg_norm_count()
-        formula_res <- enrichment_1_1()
-        if ((length(as.data.frame(formula_res)$Description) == 0) ||
-            length(which(!is.na(unique(as.data.frame(formula_res)$qvalue)))) == 0) {
-          p1 <- NULL
-        } else{
-          formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
-          p1 <- as.grob(dotplot(formula_res, color ="qvalue", font.size = 10))
-        }
-        kk4 <- enrichment_1_gsea()
-        if (length(as.data.frame(kk4)$ID) == 0) {
-          p4 <- NULL
-        } else{
-          if (length(as.data.frame(kk4)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(kk4, 1:5, pvalue_table = F))
-          }else{
-            p4 <- as.grob(gseaplot2(kk4, 1:length(kk4$ID), pvalue_table = F))
-          }
-        }
-        p <- plot_grid(p1, p4, nrow = 1)
-        return(p)
-      }
-    }else return(NULL)
-  })
-  
-  pair_enrich1_H <- reactive({
-    if(!is.null(input$Gene_set) && input$Species != "not selected"){
-      if(input$Gene_set != "KEGG"){
         count <- deg_norm_count()
         formula_res <- enrichment_1_1()
         data3 <- data_degcount2()
         H_t2g <- Hallmark_set()
-        em_up <- enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
-        em_down <- enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05)
+        H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+        em_up <- enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
+        em_down <- enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
         if (length(as.data.frame(em_up)$ID) == 0) {
           em_up <- NA
         } else{
@@ -1079,8 +1019,8 @@ shinyServer(function(input, output, session) {
         } else{
           group1 <- as.data.frame(em_up)
           group2 <- as.data.frame(em_down)
-          group1$Cluster <- "Up"
-          group2$Cluster <- "Down"
+          group1$Group <- "Up"
+          group2$Group <- "Down"
           if(length(as.data.frame(em_up)$ID) != 0){
             if (length(group1$pvalue) > 5){
               group1 <- group1[sort(group1$pvalue, decreasing = F, index=T)$ix,]
@@ -1112,13 +1052,13 @@ shinyServer(function(input, output, session) {
               p1 <- NULL
             } else{
               data$Description <- gsub("_", " ", data$Description)
-              data <- dplyr::mutate(data, x = paste0(Cluster, eval(parse(text = "GeneRatio"))))
+              data <- dplyr::mutate(data, x = paste0(Group, eval(parse(text = "GeneRatio"))))
               data$x <- gsub(":","", data$x)
               data <- dplyr::arrange(data, x)
               idx <- order(data[["x"]], decreasing = FALSE)
               data$Description <- factor(data$Description,
                                          levels=rev(unique(data$Description[idx])))
-              p1 <- as.grob(ggplot(data, aes(x = Cluster,y= Description,color=qvalue,size=GeneRatio))+
+              p1 <- as.grob(ggplot(data, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
                               geom_point() +
                               scale_color_continuous(low="red", high="blue",
                                                      guide=guide_colorbar(reverse=TRUE)) +
@@ -1138,12 +1078,11 @@ shinyServer(function(input, output, session) {
         }
         p <- plot_grid(p1, p4, nrow = 1)
         return(p)
-      }
     }else return(NULL)
   })
   
   output$enrichment1 <- renderPlot({
-    dotplot_for_output(data = d_row_count_matrix(), plot_kegg = pair_enrich1_keggGO(), 
+    dotplot_for_output(data = d_row_count_matrix(),
                        plot_genelist = pair_enrich1_H(), Gene_set = input$Gene_set, 
                        Species = input$Species)
   })
@@ -1155,18 +1094,12 @@ shinyServer(function(input, output, session) {
       count <- deg_norm_count()
       upgene <- data3[data3$log2FoldChange > log(input$fc, 2),]
       downgene <- data3[data3$log2FoldChange < log(1/input$fc, 2),]
-      if(input$Gene_set == "KEGG"){
-          kk1 <- enrichKEGG(upgene$ENTREZID, organism =org_code1(),
-                            pvalueCutoff = 0.05)
-          kk2 <- enrichKEGG(downgene$ENTREZID, organism =org_code1(),
-                            pvalueCutoff = 0.05)
-      }else{
         H_t2g <- Hallmark_set()
-        kk1 <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
-        kk2 <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g, pvalueCutoff = 0.05))
+        H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+        kk1 <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
+        kk2 <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
         if (class(kk1) == "try-error") kk1 <- NA
         if (class(kk2) == "try-error") kk2 <- NA
-      }
       if(length(as.data.frame(kk1)$ID) == 0){
         cnet1 <- NULL
       } else {
@@ -1221,11 +1154,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set =="KEGG"){
-          p1 <- pair_enrich1_keggGO()
-        }else{
           p1 <- pair_enrich1_H()
-        }
         p2 <- pair_enrich2()
         pdf(file, height = 10, width = 12)
         print(plot_grid(p1, p2, nrow =2))
@@ -1239,25 +1168,69 @@ shinyServer(function(input, output, session) {
     selectInput('Gene_set', 'Gene Set', gene_set_list)
   })
   
-  output$pair_enrichment_result <- DT::renderDataTable({
-    as.data.frame(enrichment_1_1())
+  pair_enrich_table <- reactive({
+    return(enrich_for_table(data = as.data.frame(enrichment_1_1()), H_t2g = Hallmark_set(), Gene_set = input$Gene_set))
+    data <- as.data.frame(enrichment_1_1())
+    H_t2g <- Hallmark_set()
+    if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
+      return(NULL)
+    }else{
+      colnames(data)[1] <- "gs_name"
+      H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
+      H_t2g <- H_t2g[,-2]
+      data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
+      data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+                          Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
+                          p.adjust = data2$p.adjust, qvalue = data2$qvalue, GeneSymbol = data2$geneID)
+      return(data3) 
+    }
   })
   
+  output$pair_enrichment_result <- DT::renderDataTable({
+    pair_enrich_table()
+  })
+  
+  pair_gsea_table <- reactive({
+    data <- as.data.frame(enrichment_1_gsea())
+    H_t2g <- Hallmark_set()
+    if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
+      return(NULL)
+    }else{
+      colnames(data)[1] <- "gs_name"
+      H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
+      H_t2g <- H_t2g[,-2]
+      data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
+      if(input$Gene_set == "DoRothEA regulon (activator)" || input$Gene_set == "DoRothEA regulon (repressor)"){
+        data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Confidence = data2$confidence,
+                            setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                            pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                            rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+      }else{
+      data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+                          setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                          pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                          rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+      return(data3) 
+      }
+    }
+  })
+  
+  
   output$pair_GSEA_result <- DT::renderDataTable({
-    as.data.frame(enrichment_1_gsea())
+    pair_gsea_table()
   })
   
   output$download_pair_enrichment_table = downloadHandler(
     filename = function() {
       paste(download_pair_overview_dir(), paste0(input$Gene_set,"-enrichment.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(enrichment_1_1()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(pair_enrich_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   output$download_pair_GSEA_table = downloadHandler(
     filename = function() {
       paste(download_pair_overview_dir(), paste0(input$Gene_set,"-GSEA.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(enrichment_1_gsea()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(pair_gsea_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   
@@ -1271,9 +1244,9 @@ shinyServer(function(input, output, session) {
     if(is.null(input$file11)){
       if(input$goButton > 0 ){
         df <- list()
-        df["day0"] <- list(read.table("data/day0.txt",header = T, row.names = 1))
-        df["day1"] <- list(read.table("data/day1.txt",header = T, row.names = 1))
-        df["day5"] <- list(read.table("data/day5.txt",header = T, row.names = 1))
+        df["day0"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day0.txt",header = T, row.names = 1))
+        df["day1"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day1.txt",header = T, row.names = 1))
+        df["day5"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day5.txt",header = T, row.names = 1))
         return(df)
       }
       return(NULL)
@@ -1802,12 +1775,12 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing row count matrix, please wait",{
       if (input$multi_data_file_type == "Row1"){
         tmp <- input$multi_file1$datapath
-        if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = "data/example4.txt"
+        if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt"
         return(read_df(tmp = tmp))
       }
       if (input$multi_data_file_type == "Row2"){
         tmp <- input$multi_file2$datapath
-        if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = "data/example8.txt"
+        if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example8.txt"
         return(read_df(tmp = tmp))
       }
     })
@@ -1817,7 +1790,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$multi_file3$datapath
-      if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = "data/example5.csv"
+      if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example5.csv"
       df <- read_df(tmp = tmp)
       if(!is.null(df)){
         rownames(df) <- gsub("-",".",rownames(df))
@@ -2716,24 +2689,10 @@ shinyServer(function(input, output, session) {
       geneList <- data$log2FoldChange
       names(geneList) = as.character(data$ENTREZID)
       geneList <- sort(geneList, decreasing = TRUE)
-      if(input$Gene_set6 == "KEGG"){
-          withProgress(message = "KEGG GSEA",{
-            kk3 <- gseKEGG(geneList = geneList, pvalueCutoff = 0.05,
-                           organism = org_code6(), keyType = "kegg",
-                           exponent = 1, eps = 0, pAdjustMethod = "BH",
-                           minGSSize = 50, maxGSSize = 500, by = "fgsea",
-                           use_internal_data = FALSE, verbose = F)
-          })
-        if (length(as.data.frame(kk3)$ID) == 0) {
-          kk3 <- NULL
-        } else{
-          kk3 <- setReadable(kk3, org6(), 'ENTREZID')
-        }
-        return(kk3)
-      }else{
         withProgress(message = "GSEA",{
           H_t2g <- multi_Hallmark_set()
-          em3 <- GSEA(geneList, TERM2GENE = H_t2g,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+          H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+          em3 <- GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                       minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F)
           if (length(as.data.frame(em3)$ID) == 0) {
             em4 <- NA
@@ -2743,35 +2702,13 @@ shinyServer(function(input, output, session) {
           return(em4)
           incProgress(1)
         })
-      }
     }else return(NULL)
   })
   
   
   # Multi DEG enrichment plot ------------------------------------------------------------------------------
-  multi_enrich1_keggGO <- reactive({
+   multi_enrich1_H <- reactive({
     if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 == "KEGG"){
-        kk4 <- multi_enrichment_1_gsea()
-        if (length(as.data.frame(kk4)$ID) == 0) {
-          p4 <- NULL
-        } else{
-          if (length(as.data.frame(kk4)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(kk4, 1:5, pvalue_table = F))
-          }else{
-            p4 <- as.grob(gseaplot2(kk4, 1:length(kk4$ID), pvalue_table = F))
-          }
-        }
-        p <- plot_grid(p4, nrow = 1)
-        return(p)
-      }
-    }else return(NULL)
-  })
-  
-  multi_enrich1_H <- reactive({
-    if(!is.null(input$Gene_set6) && input$Species6 != "not selected"){
-      if(input$Gene_set6 != "KEGG"){
-        H_t2g <- multi_Hallmark_set()
         em3 <- multi_enrichment_1_gsea()
         if (length(as.data.frame(em3)$ID) == 0) {
           p4 <- NULL
@@ -2784,12 +2721,11 @@ shinyServer(function(input, output, session) {
         }
         p <- plot_grid(p4, nrow = 1)
         return(p)
-      }
     }else return(NULL)
   })
   
   output$multi_enrichment1 <- renderPlot({
-    dotplot_for_output(data = multi_enrich_pairFC(), plot_kegg = multi_enrich1_keggGO(), 
+    dotplot_for_output(data = multi_enrich_pairFC(),
                        plot_genelist = multi_enrich1_H(), Gene_set = input$Gene_set6, 
                        Species = input$Species6)
   })
@@ -2798,11 +2734,36 @@ shinyServer(function(input, output, session) {
     selectInput('Gene_set6', 'Gene Set', gene_set_list)
   })
   
+  multi_GSEA_table <- reactive({
+    data <- as.data.frame(multi_enrichment_1_gsea())
+    H_t2g <- multi_Hallmark_set()
+    if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
+      return(NULL)
+    }else{
+      colnames(data)[1] <- "gs_name"
+      H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
+      H_t2g <- H_t2g[,-2]
+      data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
+      if(input$Gene_set6 == "DoRothEA regulon (activator)" || input$Gene_set6 == "DoRothEA regulon (repressor)"){
+        data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Confidence = data2$confidence,
+                            setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                            pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                            rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+      }else{
+      data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+                          setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                          pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                          rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+      return(data3) 
+      }
+    }
+  })
+  
   output$multi_GSEA_result <- DT::renderDataTable({
     if(is.null(dds) || length(input$selectEnrich_pair) != 2){
       return(NULL)
     }else{
-      as.data.frame(multi_enrichment_1_gsea())
+      multi_GSEA_table()
     }
   })
   
@@ -2812,11 +2773,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set6 == "KEGG"){
-          p1 <- multi_enrich1_keggGO()
-        }else{
           p1 <- multi_enrich1_H()
-        }
         pdf(file, height = 5, width = 7)
         print(plot_grid(p1, nrow =1))
         dev.off()
@@ -2829,7 +2786,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste(download_multi_overview_dir(), paste0(input$Gene_set6,"-GSEA.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(multi_enrichment_1_gsea()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_GSEA_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   #multi DEG enrichment 2--------
@@ -2940,14 +2897,6 @@ shinyServer(function(input, output, session) {
                                    org_code = org_code6(),H_t2g = multi_Hallmark_set3(),Gene_set = input$Gene_set8))
   })
   
-  multi_enrich_keggGO <- reactive({
-    return(enrich_keggGO_global(formula_res = multi_enrich_viewer2(), Gene_set = input$Gene_set7))
-  })
-  
-  multi_enrich_keggGO2 <- reactive({
-    return(enrich_keggGO_global(formula_res = multi_enrich_viewer12(), Gene_set = input$Gene_set8))
-  })
-  
   multi_enrich_H <- reactive({
     return(enrich_genelist(data = enrich_viewer_forMulti1(df = multi_enrich_input1(), Species = input$Species6, org = org6()),
                              Gene_set = input$Gene_set7, org = org6(), H_t2g = multi_Hallmark_set2()))
@@ -2959,13 +2908,13 @@ shinyServer(function(input, output, session) {
   })
   
   output$multi_enrichment3 <- renderPlot({
-    dotplot_for_output(data = multi_enrich_viewer2(), plot_kegg = multi_enrich_keggGO(), 
+    dotplot_for_output(data = multi_enrich_viewer2(),
                        plot_genelist = multi_enrich_H(), Gene_set = input$Gene_set7, 
                        Species = input$Species6)
   })
   
   output$multi_enrichment5 <- renderPlot({
-    dotplot_for_output(data = multi_enrich_viewer12(), plot_kegg = multi_enrich_keggGO2(), 
+    dotplot_for_output(data = multi_enrich_viewer12(), 
                        plot_genelist = multi_enrich_H2(), Gene_set = input$Gene_set8, 
                        Species = input$Species6)
   })
@@ -3033,11 +2982,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set7 == "KEGG"){
-          p1 <- multi_enrich_keggGO()
-        }else{
           p1 <- multi_enrich_H()
-        }
         pdf(file, height = 6, width = 8)
         print(p1)
         dev.off()
@@ -3052,11 +2997,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set8 == "KEGG"){
-          p1 <- multi_enrich_keggGO2()
-        }else{
           p1 <- multi_enrich_H2()
-        }
         pdf(file, height = 6, width = 8)
         print(p1)
         dev.off()
@@ -3095,26 +3036,34 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  multi_enrich_div_table <- reactive({
+    return(enrich_for_table(data = multi_enrich_viewer2(), H_t2g = multi_Hallmark_set2(), Gene_set = input$Gene_set7))
+  })
+  
+  multi_enrich_k_table <- reactive({
+    return(enrich_for_table(data = multi_enrich_viewer12(), H_t2g = multi_Hallmark_set3(), Gene_set = input$Gene_set8))
+  })
+  
   output$multi_enrichment_result <- DT::renderDataTable({
-    as.data.frame(multi_enrich_viewer2())
+    multi_enrich_div_table()
   })
   
   output$multi_enrichment_result2 <- DT::renderDataTable({
-    as.data.frame(multi_enrich_viewer12())
+    multi_enrich_k_table()
   })
   
   output$download_multi_enrichment_table = downloadHandler(
     filename = function() {
       paste(download_multi_overview_dir(), paste0(input$Gene_set7,"_divisive_enrichment.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(multi_enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_enrich_div_table, file, row.names = F, sep = "\t", quote = F)}
   )
   
   output$download_multi_enrichment_table2 = downloadHandler(
     filename = function() {
       paste(download_multi_overview_dir(), paste0(input$Gene_set8,"_kmeans_enrichment.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(multi_enrich_viewer12()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_enrich_k_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   #Multi PCA ------------------------------------------------------------------------------
@@ -3334,11 +3283,11 @@ shinyServer(function(input, output, session) {
   row_count_matrix2 <- reactive({
     if (input$data_file_type2 == "Row3"){
       tmp <- input$file4$datapath
-      if(is.null(input$file4) && input$goButton2 > 0 )  tmp = "data/example4.txt"
+      if(is.null(input$file4) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt"
       return(read_df(tmp = tmp))
     }else{
       tmp <- input$file5$datapath
-      if(is.null(input$file5) && input$goButton2 > 0 )  tmp = "data/example2.csv"
+      if(is.null(input$file5) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv"
       return(read_df(tmp = tmp))
     }
   })
@@ -3347,7 +3296,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$file6$datapath
-      if(is.null(input$file6) && input$goButton2 > 0 )  tmp = "data/example6.csv"
+      if(is.null(input$file6) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example6.csv"
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
@@ -4029,33 +3978,44 @@ shinyServer(function(input, output, session) {
     selectInput('Gene_set2', 'Gene Set', gene_set_list)
   })
   
+  cond3_enrich_table1 <- reactive({
+    return(enrich_for_table(data = as.data.frame(enrichment3_1_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
+  })
+  cond3_enrich_table2 <- reactive({
+    return(enrich_for_table(data = as.data.frame(enrichment3_2_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
+  })
+  cond3_enrich_table3 <- reactive({
+    return(enrich_for_table(data = as.data.frame(enrichment3_3_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
+  })
+  
+  
   output$enrichment3_result_1 <- DT::renderDataTable({
-    as.data.frame(enrichment3_1_1())
+    cond3_enrich_table1()
   })
   output$enrichment3_result_2 <- DT::renderDataTable({
-    as.data.frame(enrichment3_2_1())
+    cond3_enrich_table2()
   })
   output$enrichment3_result_3 <- DT::renderDataTable({
-    as.data.frame(enrichment3_3_1())
+    cond3_enrich_table3()
   })
   
   output$download_cond3_enrichment_table1 = downloadHandler(
     filename = function() {
       paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment1.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(enrichment3_1_1()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(cond3_enrich_table1(), file, row.names = F, sep = "\t", quote = F)}
   )
   output$download_cond3_enrichment_table2 = downloadHandler(
     filename = function() {
       paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment2.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(enrichment3_2_1()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(cond3_enrich_table2(), file, row.names = F, sep = "\t", quote = F)}
   )
   output$download_cond3_enrichment_table3 = downloadHandler(
     filename = function() {
       paste(download_cond3_dir(), paste0(input$Gene_set2,"-enrichment3.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(enrichment3_3_1()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(cond3_enrich_table3(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   output$download_cond3_enrichment = downloadHandler(
@@ -4088,11 +4048,11 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing normalized count matrix, please wait",{
       if (input$data_file_type3 == "Row5"){
         tmp <- input$file7$datapath
-        if(is.null(input$file7) && input$goButton3 > 0 )  tmp = "data/example7.txt"
+        if(is.null(input$file7) && input$goButton3 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example7.txt"
         return(read_df(tmp = tmp))
       }else{
         tmp <- input$file8$datapath
-        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "data/example7.txt"
+        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example7.txt"
         return(read_df(tmp = tmp))
       }
       incProgress(1)
@@ -4103,7 +4063,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$file9$datapath
-      if(is.null(input$file9) && input$goButton3 > 0 )  tmp = "data/example9.csv"
+      if(is.null(input$file9) && input$goButton3 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example9.csv"
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
@@ -4112,7 +4072,7 @@ shinyServer(function(input, output, session) {
   gene_list <- reactive({
     data <- input$file10$datapath
     if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
-    if(is.null(input$file10) && input$goButton3 > 0 )  data = "data/enrich_example.txt"
+    if(is.null(input$file10) && input$goButton3 > 0 )  data = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt"
     df <- read_df(tmp = data)
     gene <-c(rownames(df))
     df <- as.data.frame(gene, row.names = gene)
@@ -4654,9 +4614,9 @@ shinyServer(function(input, output, session) {
     if(is.null(input$files)){
       if(input$goButton_venn > 0 ){
         df <- list()
-        df[["day0"]] <-  c(rownames(read.table("data/example11.txt",header = T, row.names = 1,sep="\t")))
-        df[["day1"]] <- c(rownames(read.table("data/example12.txt",header = T, row.names = 1,sep="\t")))
-        df[["day5"]] <- c(rownames(read.table("data/example13.txt",header = T, row.names = 1,sep="\t")))
+        df[["day0"]] <-  c(rownames(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example11.txt",header = T, row.names = 1,sep="\t")))
+        df[["day1"]] <- c(rownames(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example12.txt",header = T, row.names = 1,sep="\t")))
+        df[["day5"]] <- c(rownames(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example13.txt",header = T, row.names = 1,sep="\t")))
         return(df)
       }
       return(NULL)
@@ -4707,7 +4667,7 @@ shinyServer(function(input, output, session) {
   
   count_for_venn <- reactive({
     tmp <- input$file_for_venn$datapath
-    if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "data/example7.txt"
+    if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example7.txt"
     return(read_df(tmp = tmp))
   })
   
@@ -4759,9 +4719,9 @@ shinyServer(function(input, output, session) {
     if(is.null(input$countfiles)){
       if(input$goButton_venn > 0){
         df <- list()
-        df["day0"] <- list(read.table("data/day0.txt",header = T, row.names = 1))
-        df["day1"] <- list(read.table("data/day1.txt",header = T, row.names = 1))
-        df["day5"] <- list(read.table("data/day5.txt",header = T, row.names = 1))
+        df["day0"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day0.txt",header = T, row.names = 1))
+        df["day1"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day1.txt",header = T, row.names = 1))
+        df["day5"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day5.txt",header = T, row.names = 1))
         return(df)
       }
       return(NULL)
@@ -4997,17 +4957,13 @@ shinyServer(function(input, output, session) {
                                    org_code = org_code7(),H_t2g = venn_Hallmark_set(),Gene_set = input$Gene_set9))
   })
   
-  venn_enrich_keggGO <- reactive({
-    return(enrich_keggGO_global(formula_res = venn_enrich_viewer2(), Gene_set = input$Gene_set9))
-  })
-  
   venn_enrich_H <- reactive({
     return(enrich_genelist(data = enrich_viewer_forMulti1(df = venn_enrich_input1(), Species = input$Species7, org = org7()),
                            Gene_set = input$Gene_set9, org = org7(), H_t2g = venn_Hallmark_set()))
   })
   
   output$venn_enrichment1 <- renderPlot({
-    dotplot_for_output(data = venn_enrich_viewer2(), plot_kegg = venn_enrich_keggGO(), 
+    dotplot_for_output(data = venn_enrich_viewer2(),
                        plot_genelist = venn_enrich_H(), Gene_set = input$Gene_set9, 
                        Species = input$Species7)
   })
@@ -5018,11 +4974,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set9 == "KEGG"){
-          p1 <- multi_enrich_keggGO()
-        }else{
           p1 <- multi_enrich_H()
-        }
         pdf(file, height = 6, width = 8)
         print(p1)
         dev.off()
@@ -5031,15 +4983,19 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  venn_enrich_table <- reactive({
+    return(enrich_for_table(data = as.data.frame(venn_enrich_viewer2()), H_t2g = venn_Hallmark_set(), Gene_set = input$Gene_set9))
+  })
+  
   output$venn_enrichment_result <- DT::renderDataTable({
-    as.data.frame(venn_enrich_viewer2())
+    venn_enrich_table()
   })
   
   output$download_venn_enrichment_table = downloadHandler(
     filename = function() {
       paste(input$venn_whichGroup1, paste0(input$Gene_set9,"_enrichment.txt"), sep="_")
     },
-    content = function(file){write.table(as.data.frame(venn_enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(venn_enrich_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   output$venn_whichGroup2 <- renderUI({
@@ -5094,8 +5050,6 @@ shinyServer(function(input, output, session) {
   )
   
   
-  
-  
   # enrichment viewer ------------------------------------------------------------------------------
   output$Spe3 <- renderText({
     if(input$Species4 == "not selected") print("Please select 'Species'")
@@ -5112,7 +5066,7 @@ shinyServer(function(input, output, session) {
   
   enrich_input <- reactive({
     tmp <- input$enrich_data_file$datapath
-    if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "data/enrich_example.txt"
+    if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt"
     return(read_gene_list(tmp))
   })
   
@@ -5138,28 +5092,16 @@ shinyServer(function(input, output, session) {
       if(is.null(data3)){
         return(NULL)
       }else{
-        if(input$Gene_set3 == "KEGG"){
-            withProgress(message = "KEGG enrichment analysis",{
-              formula_res <- try(compareCluster(ENTREZID~Group, data=data3,
-                                                fun="enrichKEGG", organism=org_code4()), silent = T)
-              incProgress(1)
-            })
-          if (class(formula_res) == "try-error") {
-            formula_res <- NULL
-          }else{
-            formula_res <-setReadable(formula_res, org4(), 'ENTREZID')
-            return(formula_res)
-          }
-        }else{
           withProgress(message = "enrichment analysis",{
             H_t2g <- Hallmark_enrich()
             if(is.null(H_t2g)){
               df <- NULL
             }else{
+              H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
             df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
             colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
             for (name in unique(data3$Group)) {
-              em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g, qvalueCutoff = 0.05)
+              em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g2, qvalueCutoff = 0.05)
               if (length(as.data.frame(em)$ID) != 0) {
                 if(length(colnames(as.data.frame(em))) == 9){
                   cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
@@ -5175,23 +5117,18 @@ shinyServer(function(input, output, session) {
               return(df)
             }else return(NULL)
           })
-        }
       }
     }
   })
   
   # enrichment plot ------------------------------------------------------------------------------
-  enrich_keggGO <- reactive({
-    return(enrich_keggGO_global(formula_res = enrich_viewer2(), Gene_set = input$Gene_set3))
-  })
-  
   enrich_H <- reactive({
     return(enrich_genelist(data = enrich_viewer1(), Gene_set = input$Gene_set3,
                            org = org4(), H_t2g = Hallmark_enrich()))
   })
   
   output$enrichment3 <- renderPlot({
-    dotplot_for_output(data = enrich_viewer2(), plot_kegg = enrich_keggGO(), 
+    dotplot_for_output(data = enrich_viewer2(),
                        plot_genelist = enrich_H(), Gene_set = input$Gene_set3, 
                        Species = input$Species4)
   })
@@ -5230,11 +5167,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Gene_set3 == "KEGG"){
-          p1 <- enrich_keggGO()
-        }else{
           p1 <- enrich_H()
-        }
         pdf(file, height = 5, width = 6.5)
         print(plot_grid(p1))
         dev.off()
@@ -5275,15 +5208,19 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  enrich_viewer_table <- reactive({
+    return(enrich_for_table(data = as.data.frame(enrich_viewer2()), H_t2g = Hallmark_enrich(), Gene_set = input$Gene_set3))
+  })
+  
   output$enrichment_result <- DT::renderDataTable({
-    as.data.frame(enrich_viewer2())
+    enrich_viewer_table()
   })
   
   output$download_enrichment_table = downloadHandler(
     filename = function() {
       paste(gsub("\\..+$", "", input$enrich_data_file), paste0(input$Gene_set3,"_table.txt"), sep ="-")
     },
-    content = function(file){write.table(as.data.frame(enrich_viewer2()), file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(enrich_viewer_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   #volcano navi------------------------------------------------------
@@ -5297,7 +5234,7 @@ shinyServer(function(input, output, session) {
   degresult <- reactive({
     withProgress(message = "Importing normalized count matrix, please wait",{
       tmp <- input$deg_file1$datapath
-      if(is.null(input$deg_file1) && input$goButton5 > 0 )  tmp = "data/DEGexample.txt"
+      if(is.null(input$deg_file1) && input$goButton5 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/DEGexample.txt"
       return(read_df(tmp = tmp))
       incProgress(1)
     })
@@ -5305,7 +5242,7 @@ shinyServer(function(input, output, session) {
   norm_count_input_for_deg <- reactive({
     withProgress(message = "Importing normalized count matrix, please wait",{
       tmp <- input$deg_file2$datapath
-      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "data/day0.txt"
+      if(is.null(input$deg_file2) && input$goButton5 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day0.txt"
       return(read_df(tmp = tmp))
       incProgress(1)
     })

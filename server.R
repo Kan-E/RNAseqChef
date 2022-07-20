@@ -1201,12 +1201,12 @@ shinyServer(function(input, output, session) {
       H_t2g <- H_t2g[,-2]
       data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
       if(input$Gene_set == "DoRothEA regulon (activator)" || input$Gene_set == "DoRothEA regulon (repressor)"){
-        data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Confidence = data2$confidence,
+        data3 <- data.frame(Gene_set_name = data2$gs_name, Confidence = data2$confidence,
                             setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                             pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                             rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
       }else{
-      data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+      data3 <- data.frame(Gene_set_name = data2$gs_name, Description = data2$gs_description,
                           setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                           pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                           rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
@@ -2745,12 +2745,12 @@ shinyServer(function(input, output, session) {
       H_t2g <- H_t2g[,-2]
       data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
       if(input$Gene_set6 == "DoRothEA regulon (activator)" || input$Gene_set6 == "DoRothEA regulon (repressor)"){
-        data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Confidence = data2$confidence,
+        data3 <- data.frame(Gene_set_name = data2$gs_name, Confidence = data2$confidence,
                             setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                             pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                             rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
       }else{
-      data3 <- data.frame(Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+      data3 <- data.frame(Gene_set_name = data2$gs_name, Description = data2$gs_description,
                           setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                           pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                           rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)

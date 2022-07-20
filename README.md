@@ -2,8 +2,8 @@
 RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application (https://kan-e.shinyapps.io/RNAseqChef/) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>
 
 # Manual
-Manual：           https://kan-e.github.io/RNAseqChef_manual/
-Manual (Japanese)：https://kan-e.github.io/RNAseqChef_manual_japanese/
+Manual：           https://kan-e.github.io/RNAseqChef_manual/ <br>
+Manual (Japanese)：https://kan-e.github.io/RNAseqChef_manual_japanese/ <br>
 
 # Local installation
 To run this app locally on your machine, R environment setup is required.

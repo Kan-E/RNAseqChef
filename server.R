@@ -1198,7 +1198,6 @@ shinyServer(function(input, output, session) {
     }else{
       colnames(data)[1] <- "gs_name"
       H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
-      H_t2g <- H_t2g[,-2]
       data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
       if(input$Gene_set == "DoRothEA regulon (activator)" || input$Gene_set == "DoRothEA regulon (repressor)"){
         data3 <- data.frame(Gene_set_name = data2$gs_name, Confidence = data2$confidence,
@@ -1206,10 +1205,17 @@ shinyServer(function(input, output, session) {
                             pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                             rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
       }else{
+        if(input$Gene_set == "Custom gene set"){
+          data3 <- data.frame(Gene_set_name = data2$gs_name,
+                              setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                              pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                              rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+        }else{
       data3 <- data.frame(Gene_set_name = data2$gs_name, Description = data2$gs_description,
                           setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                           pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                           rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+        }
       return(data3) 
       }
     }
@@ -2742,7 +2748,6 @@ shinyServer(function(input, output, session) {
     }else{
       colnames(data)[1] <- "gs_name"
       H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
-      H_t2g <- H_t2g[,-2]
       data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
       if(input$Gene_set6 == "DoRothEA regulon (activator)" || input$Gene_set6 == "DoRothEA regulon (repressor)"){
         data3 <- data.frame(Gene_set_name = data2$gs_name, Confidence = data2$confidence,
@@ -2750,10 +2755,17 @@ shinyServer(function(input, output, session) {
                             pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                             rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
       }else{
+        if(input$Gene_set6 == "Custom gene set"){
+          data3 <- data.frame(Gene_set_name = data2$gs_name,
+                              setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
+                              pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
+                              rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+        }else{
       data3 <- data.frame(Gene_set_name = data2$gs_name, Description = data2$gs_description,
                           setSize = data2$setSize, enrichmentScore = data2$enrichmentScore, NES = data2$NES, 
                           pvalue = data2$pvalue, p.adjust = data2$p.adjust, qvalue = data2$qvalue, 
                           rank = data2$rank, leading_edge = data2$leading_edge, core_enrichment = data2$core_enrichment)
+        }
       return(data3) 
       }
     }

@@ -54,9 +54,11 @@ read_df <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1)
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1)
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1,quote = "")
+    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
+    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
+    rownames(df) = gsub("\"", "", rownames(df))
+    colnames(df) = gsub("\"", "", colnames(df))
     return(df)
   }
 }
@@ -64,9 +66,11 @@ read_gene_list <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",")
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t")
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE,quote = "")
+    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
+    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
+    rownames(df) = gsub("\"", "", rownames(df))
+    colnames(df) = gsub("\"", "", colnames(df))
     return(df)
   }
 }
@@ -651,117 +655,145 @@ enrich_for_table <- function(data, H_t2g, Gene_set){
   }else{
     colnames(data)[1] <- "gs_name"
     H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
-    H_t2g <- H_t2g[,-2]
     data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
     if(Gene_set == "DoRothEA regulon (activator)" || Gene_set == "DoRothEA regulon (repressor)"){
       data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name, Confidence = data2$confidence,
                           Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
                           p.adjust = data2$p.adjust, qvalue = data2$qvalue, GeneSymbol = data2$geneID)
     }else{
-    data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
-                        Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
-                        p.adjust = data2$p.adjust, qvalue = data2$qvalue, GeneSymbol = data2$geneID)
-    return(data3) 
+      if(Gene_set == "Custom gene set"){
+        data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name,
+                            Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
+                            p.adjust = data2$p.adjust, qvalue = data2$qvalue, GeneSymbol = data2$geneID)
+      }else{
+        data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name, ID = data2$gs_id, Description = data2$gs_description,
+                            Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
+                            p.adjust = data2$p.adjust, qvalue = data2$qvalue, GeneSymbol = data2$geneID)
+        
+      }
+        return(data3) 
     }
   }
 }
 GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
   if(Species != "not selected" || is.null(Gene_set) || is.null(org)){
-      switch (Species,
-              "Mus musculus" = species <- "Mus musculus",
-              "Homo sapiens" = species <- "Homo sapiens",
-              "Rattus norvegicus" = species <- "Rattus norvegicus",
-              "Xenopus laevis" = species <- "Xenopus laevis",
-              "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-              "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
-      if(Gene_set == "MSigDB Hallmark"){
-        H_t2g <- msigdbr(species = species, category = "H") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HALLMARK_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
+    switch (Species,
+            "Mus musculus" = species <- "Mus musculus",
+            "Homo sapiens" = species <- "Homo sapiens",
+            "Rattus norvegicus" = species <- "Rattus norvegicus",
+            "Xenopus laevis" = species <- "Xenopus laevis",
+            "Drosophila melanogaster" = species <- "Drosophila melanogaster",
+            "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+    if(Gene_set == "MSigDB Hallmark"){
+      H_t2g <- msigdbr(species = species, category = "H") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HALLMARK_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
     if(Gene_set == "KEGG"){
       H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:KEGG") %>%
         dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="KEGG_", replacement = "")
       H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
     }
-      if(Gene_set == "Transcription factor targets"){
-        H_t2g <- msigdbr(species = species, category = "C3")
-        H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-      }
-      if(Gene_set == "DoRothEA regulon (activator)"){
-        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)", org = org)) %>%
-          dplyr::select(gs_name, entrez_gene, confidence)
-        H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-      }
-      if(Gene_set == "DoRothEA regulon (repressor)"){
-        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)", org = org)) %>%
-          dplyr::select(gs_name, entrez_gene, confidence)
-        H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
-      }
-      if(Gene_set == "Reactome"){
-        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:REACTOME") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="REACTOME_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "miRNA target"){
-        H_t2g <- msigdbr(species = species, category = "C3")
-        H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "MIR:MIRDB" | gs_subcat == "MIR:MIR_Legacy") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-      }
-      if(Gene_set == "GO biological process"){
-        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:BP") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOBP_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "GO cellular component"){
-        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:CC") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOCC_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "GO molecular function"){
-        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:MF") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOMF_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "Human phenotype ontology"){
-        H_t2g <- msigdbr(species = species, category = "C5", subcategory = "HPO") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HP_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "WikiPathways"){
-        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:WIKIPATHWAYS") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="WP_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "PID (Pathway Interaction Database)"){
-        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:PID") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="PID_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "BioCarta"){
-        H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:BIOCARTA") %>%
-          dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
-        H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="BIOCARTA_", replacement = "")
-        H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
-      }
-      if(Gene_set == "Custom gene set"){
-        if(!is.null(Custom_gene_list)){
-          H_t2g <- gene_list_convert_for_enrichment(data= Custom_gene_list, Species = Species)
-          H_t2g <- data.frame(gs_name = H_t2g$Group, entrez_gene = H_t2g$ENTREZID)
-          H_t2g$gs_name <- gsub(":", "_", H_t2g$gs_name)
-        }else H_t2g <- NULL
-      }
-      return(H_t2g)
+    if(Gene_set == "Transcription factor targets"){
+      H_t2g <- msigdbr(species = species, category = "C3")
+      H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
+    if(Gene_set == "DoRothEA regulon (activator)"){
+      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)", org = org)) %>%
+        dplyr::select(gs_name, entrez_gene, confidence)
+      H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+    }
+    if(Gene_set == "DoRothEA regulon (repressor)"){
+      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)", org = org)) %>%
+        dplyr::select(gs_name, entrez_gene, confidence)
+      H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
+    }
+    if(Gene_set == "Reactome"){
+      H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:REACTOME") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="REACTOME_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "miRNA target"){
+      H_t2g <- msigdbr(species = species, category = "C3")
+      H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "MIR:MIRDB" | gs_subcat == "MIR:MIR_Legacy") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
+    if(Gene_set == "GO biological process"){
+      H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:BP") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOBP_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "GO cellular component"){
+      H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:CC") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOCC_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "GO molecular function"){
+      H_t2g <- msigdbr(species = species, category = "C5", subcategory = "GO:MF") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="GOMF_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "Human phenotype ontology"){
+      H_t2g <- msigdbr(species = species, category = "C5", subcategory = "HPO") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HP_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "WikiPathways"){
+      H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:WIKIPATHWAYS") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="WP_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "PID (Pathway Interaction Database)"){
+      H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:PID") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="PID_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "BioCarta"){
+      H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:BIOCARTA") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="BIOCARTA_", replacement = "")
+      H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+    }
+    if(Gene_set == "Custom gene set"){
+      if(!is.null(Custom_gene_list)){
+        H_t2g <- gene_list_convert_for_enrichment(data= Custom_gene_list, Species = Species)
+        H_t2g <- data.frame(gs_name = H_t2g$Group, entrez_gene = H_t2g$ENTREZID)
+        H_t2g$gs_name <- gsub(":", "_", H_t2g$gs_name)
+      }else H_t2g <- NULL
+    }
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Tnf", replacement = "TNF")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Tgf", replacement = "TGF")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Il6_", replacement = "IL6_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Il2_", replacement = "IL2_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Kras", replacement = "KRas")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Uv_r", replacement = "UV_r")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Dna_", replacement = "DNA_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Rna_", replacement = "RNA_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mrna_", replacement = "mRNA_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="E2f", replacement = "E2F")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="P53", replacement = "p53")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="G2m", replacement = "G2M")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mtor", replacement = "mTOR")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Ecm_", replacement = "ECM_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Abc_", replacement = "ABC_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="No1_", replacement = "NO1_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_mirna", replacement = "_miRNA")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="gtpase_", replacement = "GTPase_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="rho_", replacement = "Rho_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="jnk_", replacement = "JNK_")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_jak", replacement = "_JAK")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_stat", replacement = "_STAT")
+    return(H_t2g)
   }else return(NULL)
 }
 GOIboxplot <- function(data){

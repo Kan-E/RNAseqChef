@@ -598,7 +598,7 @@ keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2
             d <- NULL
           } else{
             data$Description <- gsub("_", " ", data$Description)
-            data <- dplyr::mutate(data, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+            data <- dplyr::mutate(data, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
             data$x <- gsub(":","", data$x)
             data <- dplyr::arrange(data, x)
             idx <- order(data[["x"]], decreasing = FALSE)
@@ -608,8 +608,8 @@ keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2
                            geom_point() +
                            scale_color_continuous(low="red", high="blue",
                                                   guide=guide_colorbar(reverse=TRUE)) +
-                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL) +
-                           scale_y_discrete(labels = label_wrap_gen(30)))
+                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) +
+                           scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
           }}
           for (name in unique(data3$sig)) {
             if (name != "NS"){
@@ -916,7 +916,7 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
             df$GeneRatio <- parse_ratio(df$GeneRatio)
             df <- dplyr::filter(df, !is.na(qvalue))
             df$Description <- gsub("_", " ", df$Description)
-            df <- dplyr::mutate(df, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+            df <- dplyr::mutate(df, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
             df$x <- gsub(":","", df$x)
             df <- dplyr::arrange(df, x)
             idx <- order(df[["x"]], decreasing = FALSE)
@@ -926,8 +926,8 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
                             geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
-                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+
-                            scale_y_discrete(labels = label_wrap_gen(30)))
+                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL)+
+                            scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
             p <- plot_grid(p1)
             return(p)
           }

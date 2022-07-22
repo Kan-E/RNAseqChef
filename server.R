@@ -1052,18 +1052,18 @@ shinyServer(function(input, output, session) {
               p1 <- NULL
             } else{
               data$Description <- gsub("_", " ", data$Description)
-              data <- dplyr::mutate(data, x = paste0(Group, eval(parse(text = "GeneRatio"))))
+              data <- dplyr::mutate(data, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
               data$x <- gsub(":","", data$x)
               data <- dplyr::arrange(data, x)
               idx <- order(data[["x"]], decreasing = FALSE)
               data$Description <- factor(data$Description,
                                          levels=rev(unique(data$Description[idx])))
-              p1 <- as.grob(ggplot(data, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+              p1 <- as.grob(ggplot(data, aes_string(x = "Group",y= "Description",color="qvalue",size="GeneRatio"))+
                               geom_point() +
                               scale_color_continuous(low="red", high="blue",
                                                      guide=guide_colorbar(reverse=TRUE)) +
-                              scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL) + 
-                              scale_y_discrete(labels = label_wrap_gen(30)))
+                              scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) + 
+                              scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
             }}else p1 <- NULL
         }
         em3 <- enrichment_1_gsea()

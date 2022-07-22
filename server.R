@@ -3927,16 +3927,19 @@ shinyServer(function(input, output, session) {
   
   keggEnrichment2_1 <- reactive({
     return(keggEnrichment2(data3 = data_3degcount1_1(), data4 = data_3degcount2_1(), 
-                           Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_1_1(),
+                           Species = input$Species2, Gene_set = input$Gene_set2,
                            H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
   })
   
   output$keggenrichment2_1 <- renderPlot({
     if(!is.null(input$Gene_set2) && input$Species2 != "not selected"){
+      withProgress(message = "Enrichment analysis",{
       p <- keggEnrichment2_1()
       if(!is.null(p)){
         print(p) 
       }
+      incProgress(1)
+      })
     }
   })
   
@@ -3952,7 +3955,7 @@ shinyServer(function(input, output, session) {
   })
   keggEnrichment2_2 <- reactive({
     return(keggEnrichment2(data3 = data_3degcount1_2(), data4 = data_3degcount2_2(), 
-                           Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_2_1(),
+                           Species = input$Species2, Gene_set = input$Gene_set2,
                            H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
   })
   
@@ -3973,7 +3976,7 @@ shinyServer(function(input, output, session) {
   })
   keggEnrichment2_3 <- reactive({
     return(keggEnrichment2(data3 = data_3degcount1_3(), data4 = data_3degcount2_3(), 
-                           Species = input$Species2, Gene_set = input$Gene_set2, formula_res = enrichment3_3_1(),
+                           Species = input$Species2, Gene_set = input$Gene_set2,
                            H_t2g = Hallmark_cond3(),org = org2(),org_code = org_code2()))
   })
   

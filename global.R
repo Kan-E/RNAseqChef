@@ -304,7 +304,8 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
     }
-    if(specific == 1) {specific == collist[1]
+    if(specific == 1) {
+      specific = collist[1]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
@@ -312,7 +313,8 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
       Pattern1 <- "Pattern4"
       Pattern2 <- "Pattern5"
     }
-    if(specific == 2) {specific == collist[2]
+    if(specific == 2) {
+      specific = collist[2]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
@@ -320,7 +322,8 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
       Pattern1 <- "Pattern3"
       Pattern2 <- "Pattern5"
     }
-    if(specific == 3) {specific == collist[3]
+    if(specific == 3) {
+      specific = collist[3]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
       result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
@@ -336,16 +339,16 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     sig <- rep(3, nrow(result))
     sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
     sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
-                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
+    data3 <- data.frame(Row.names = result$Row.names, FC_x_axis = result$FC_x,
+                        FC_y_axis = result$FC_y, padj = result$FDR, sig = sig)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(specific,"_up"), paste0(specific,"_down"), "NS" )
+      new.levels <- c( paste0(specific,"_high"), paste0(specific,"_low"), "NS" )
       col = c("red","blue", "darkgray")}
     if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(specific,"_up: "), "NS" )
+      new.levels <- c(paste0(specific,"_high: "), "NS" )
       col = c("red", "darkgray")}
     if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(specific,"_down: "), "NS" )
+      new.levels <- c(paste0(specific,"_low: "), "NS" )
       col = c("blue", "darkgray")}
     if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
       new.levels <- c("NS")
@@ -408,7 +411,8 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
     }
-    if(specific == 1) {specific == collist[1]
+    if(specific == 1) {
+      specific = collist[1]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
@@ -416,7 +420,8 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
       Pattern1 <- "Pattern4"
       Pattern2 <- "Pattern5"
     }
-    if(specific == 2) {specific == collist[2]
+    if(specific == 2) {
+      specific = collist[2]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
@@ -424,7 +429,8 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
       Pattern1 <- "Pattern3"
       Pattern2 <- "Pattern5"
     }
-    if(specific == 3) {specific == collist[3]
+    if(specific == 3) {
+      specific = collist[3]
       FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
       result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
@@ -443,13 +449,13 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
     data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
                         FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
-      new.levels <- c( paste0(paste0(specific,"_up: "), sum(sig == 1)), paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
+      new.levels <- c( paste0(paste0(specific,"_high: "), sum(sig == 1)), paste0(paste0(specific,"_low: "), sum(sig == 2)), "NS" )
       col = c("red","blue", "darkgray")}
     if((sum(sig == 1) >= 1) && (sum(sig == 2) == 0)){
-      new.levels <- c(paste0(paste0(specific,"_up: "), sum(sig == 1)), "NS" )
+      new.levels <- c(paste0(paste0(specific,"_high: "), sum(sig == 1)), "NS" )
       col = c("red", "darkgray")}
     if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
-      new.levels <- c(paste0(paste0(specific,"_down: "), sum(sig == 2)), "NS" )
+      new.levels <- c(paste0(paste0(specific,"_low: "), sum(sig == 2)), "NS" )
       col = c("blue", "darkgray")}
     if((sum(sig == 1) == 0) && (sum(sig == 2) == 0)){
       new.levels <- c("NS")
@@ -463,8 +469,18 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
     labs_data2 <- utils::head(labs_data, 20)
     font.label <- data.frame(size=5, color="black", face = "plain")
     set.seed(42)
-    FC_x <- FC_y <- sig <- Row.names <- padj <- NULL
+    FC_x <- FC_y <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    p <- p  + geom_hline(yintercept = c(-log2(fc), log2(fc)), linetype = c(2, 2), color = c("black", "black"))+
+      geom_vline(xintercept = c(-log2(fc), log2(fc)),linetype = c(2, 2), color = c("black", "black"))
+    p <- p +
+      theme_bw()+ scale_color_manual(values = col)+
+      theme(legend.position = "top" , legend.title = element_blank(),
+            axis.text.x= ggplot2::element_text(size = 10),
+            axis.text.y= ggplot2::element_text(size = 10),
+            text = ggplot2::element_text(size = 10),
+            title = ggplot2::element_text(size = 10)) +
+      xlab(FC_xlab) + ylab(FC_ylab)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
       p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
       p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[2]),color = "blue", size= 0.25 )
@@ -481,16 +497,6 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
                                         force = 1, fontface = font.label$face,
                                         size = font.label$size/2, color = font.label$color)
     }
-    p <- p  + geom_hline(yintercept = c(-log2(fc), log2(fc)), linetype = c(2, 2), color = c("black", "black"))+
-      geom_vline(xintercept = c(-log2(fc), log2(fc)),linetype = c(2, 2), color = c("black", "black"))
-    p <- p +
-      theme_bw()+ scale_color_manual(values = col)+
-      theme(legend.position = "top" , legend.title = element_blank(),
-            axis.text.x= ggplot2::element_text(size = 10),
-            axis.text.y= ggplot2::element_text(size = 10),
-            text = ggplot2::element_text(size = 10),
-            title = ggplot2::element_text(size = 10)) +
-      xlab(FC_xlab) + ylab(FC_ylab)
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
     }else{
@@ -543,20 +549,18 @@ enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g)
           if (length(cnet_list) == 0){
             cnet1 <- NULL
             cnet2 <- NULL}
-          if((length(cnet1) = 0 ) && (length(cnet2) = 0)) {
-            data <- NA
-          }else if(is.null(cnet2)) {
-            data <- cnet1
-          }else data <- rbind(cnet1, cnet2)
-          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-          data$GeneRatio <- parse_ratio(data$GeneRatio)
+          if((length(colnames(cnet1)) != 2 ) && (length(colnames(cnet2)) != 2 )) data <- rbind(cnet1, cnet2)
+          if((length(colnames(cnet1)) == 2 ) && (length(colnames(cnet2)) != 2 )) data <- cnet2
+          if((length(colnames(cnet1)) != 2 ) && (length(colnames(cnet2)) == 2 )) data <- cnet1
+          if((length(colnames(cnet1)) == 2 ) && (length(colnames(cnet2)) == 2 )) data <- NULL
+          if(!is.null(data)) data$GeneRatio <- parse_ratio(data$GeneRatio)
           return(data)
           incProgress()
         })
     }
   }
 }
-keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, org_code, H_t2g){
+keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g){
   if(!is.null(Gene_set) && Species != "not selected"){
     if(is.null(data4)){
       return(NULL)
@@ -589,7 +593,6 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
           if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
           data <- dplyr::filter(data, !is.na(Group))
           data <- dplyr::filter(data, !is.na(Description))
-          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
           data$GeneRatio <- parse_ratio(data$GeneRatio)
           if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
             d <- NULL
@@ -608,7 +611,6 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL) +
                            scale_y_discrete(labels = label_wrap_gen(30)))
           }}
-        withProgress(message = "cnet plot",{
           for (name in unique(data3$sig)) {
             if (name != "NS"){
               if(is.null(H_t2g)){
@@ -634,8 +636,6 @@ keggEnrichment2 <- function(data3, data4, formula_res, Species, Gene_set, org, o
               }
             }
           }
-          incProgress()
-        })
       if (length(cnet_list) == 2){
         cnet1 <- cnet_list[[1]]
         cnet2 <- cnet_list[[2]]}
@@ -793,6 +793,7 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="jnk_", replacement = "JNK_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_jak", replacement = "_JAK")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_stat", replacement = "_STAT")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_nfkb", replacement = "_NFkB")
     return(H_t2g)
   }else return(NULL)
 }
@@ -864,7 +865,6 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
           }
           }
           if(length(df$ID) !=0){
-            df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
             df$GeneRatio <- parse_ratio(df$GeneRatio)
             return(df)
           }else return(NULL)

@@ -1070,6 +1070,19 @@ shinyUI(
                              placement = "right",options = list(container = "body")),
                    fluidRow(
                      column(6, selectInput("Species4", "Species", species_list, selected = "not selected"))),
+                   sliderInput("enrich_showCategory", "Most significant pathways",
+                              min = 1, max = 20, value = 5,step = 1),
+                   strong(span("Output plot size setting (0: default)"),
+                      span(icon("info-circle"), id = "enrich_pdf_icon", 
+                           options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("enrich_pdf_height", "pdf_height", value = 0)),
+                     column(5, numericInput("enrich_pdf_width", "pdf_width", value = 0))
+                   ),
+                   bsPopover("enrich_pdf_icon", "Output plot size setting (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>","Dotplot:", "height = 5, width = 6.5 <br>", "cnet plot:","height = 6, width = 6 <br><br>",
+                                           img(src="pdf setting.png", width = 450,height = 200))), 
                    actionButton("goButton4", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;

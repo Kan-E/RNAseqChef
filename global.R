@@ -339,8 +339,8 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     sig <- rep(3, nrow(result))
     sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
     sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, FC_x_axis = result$FC_x,
-                        FC_y_axis = result$FC_y, padj = result$FDR, sig = sig)
+    data3 <- data.frame(Row.names = result$Row.names, sig = sig, FC_x_axis = result$FC_x,
+                        FC_y_axis = result$FC_y, padj = result$FDR)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
       new.levels <- c( paste0(specific,"_high"), paste0(specific,"_low"), "NS" )
       col = c("red","blue", "darkgray")}
@@ -884,7 +884,7 @@ enrich_keggGO_global <- function(formula_res, Gene_set){
         }
       }
 }
-enrich_genelist <- function(data, Gene_set, H_t2g, org){
+enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
     if(!is.null(Gene_set)){
       if(is.null(data)){
         return(NULL)
@@ -902,8 +902,8 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
                 cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
                 cnet1$Group <- name
                 cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
-                if (length(cnet1$pvalue) > 5){
-                  cnet1 <- cnet1[1:5,]
+                if (length(cnet1$pvalue) > showCategory){
+                  cnet1 <- cnet1[1:showCategory,]
                 }
                 df <- rbind(df, cnet1)
               }
@@ -934,7 +934,7 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org){
         }
     }
 }
-cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code){
+cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code,showCategory=5){
     if(!is.null(Gene_set)){
       if(is.null(data) || is.null(group)){
         return(NULL)
@@ -956,7 +956,7 @@ cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code){
           p2 <- NULL
         } else{
           p2 <- try(as.grob(cnetplot(cnet1,
-                                     cex_label_gene = 0.7, cex_label_category = 0.75,showCategory = 5,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,showCategory = showCategory,
                                      cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
           if(length(class(p2)) == 1){
             if(class(p2) == "try-error") p2 <- NULL

@@ -5139,7 +5139,7 @@ shinyServer(function(input, output, session) {
   # enrichment plot ------------------------------------------------------------------------------
   enrich_H <- reactive({
     return(enrich_genelist(data = enrich_viewer1(), Gene_set = input$Gene_set3,
-                           org = org4(), H_t2g = Hallmark_enrich()))
+                           org = org4(), H_t2g = Hallmark_enrich(), showCategory = input$enrich_showCategory))
   })
   
   output$enrichment3 <- renderPlot({
@@ -5168,7 +5168,7 @@ shinyServer(function(input, output, session) {
   
   enrich2 <- reactive({
     cnet_global(data = enrich_viewer1(), group = input$which_group, Gene_set = input$Gene_set3, 
-                H_t2g = Hallmark_enrich(), org = org4(), org_code = org_code4())
+                H_t2g = Hallmark_enrich(), org = org4(), org_code = org_code4(), showCategory = input$enrich_showCategory)
   })
   
   output$enrichment4 <- renderPlot({
@@ -5183,7 +5183,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
           p1 <- enrich_H()
-        pdf(file, height = 5, width = 6.5)
+          if(input$enrich_pdf_height == 0){
+            pdf_height <- 5
+          }else pdf_height <- input$enrich_pdf_height
+          if(input$enrich_pdf_width == 0){
+            pdf_width <- 6.5
+          }else pdf_width <- input$enrich_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)
@@ -5197,7 +5203,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
         p1 <- enrich2()
-        pdf(file, height = 6, width = 6)
+        if(input$enrich_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$enrich_pdf_height
+        if(input$enrich_pdf_width == 0){
+          pdf_width <- 6
+        }else pdf_width <- input$enrich_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)

@@ -54,7 +54,7 @@ read_df <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1,quote = "")
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
@@ -66,7 +66,7 @@ read_gene_list <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE,quote = "")
+    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
@@ -285,6 +285,23 @@ pdf_w <- function(rowlist){
   if (length(rowlist) > 200) pdf_wsize <- 30
   return(pdf_wsize)
 }
+pdfSize_for_GOI <- paste(strong("Heatmap:"),"height = 10, width = 7 <br>", 
+                         strong("Boxplot:"),"<br>",
+                         "Gene number = 1,","height = 3, width = 3 <br>",
+                         "Gene number = 2,","height = 3, width = 6 <br>",
+                         "Gene number = 3,","height = 3, width = 9 <br>",
+                         "Gene number = 4,","height = 6, width = 6 <br>",
+                         "Gene number = 5 ~ 6,","height = 6, width = 9 <br>",
+                         "Gene number = 7 ~ 9,","height = 7.5, width = 6.75 <br>",
+                         "Gene number = 10 ~ 12,","height = 7.5, width = 9 <br>",
+                         "Gene number = 13 ~ 16,","height = 9, width = 9 <br>",
+                         "Gene number = 17 ~ 25,","height = 11.5, width = 11.5 <br>",
+                         "Gene number = 26 ~ 36,","height = 13.5, width = 13.5 <br>",
+                         "Gene number = 37 ~ 49,","height = 15.75, width = 15.75 <br>",
+                         "Gene number = 50 ~ 64,","height = 18, width = 18 <br>",
+                         "Gene number = 65 ~ 81,","height = 20.5, width = 20.5 <br>",
+                         "Gene number = 82 ~ 200,","height = 22.5, width = 22.5 <br>",
+                         "Gene number > 200,", "height = 30, width = 30 <br>")
 data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, basemean){
   if(is.null(data)){
     return(NULL)

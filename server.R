@@ -565,7 +565,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 4, width = 7)
+        if(input$pair_pdf_height == 0){
+          pdf_height <- 4
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(ma_heatmap_plot())
         dev.off()
         incProgress(1)
@@ -695,7 +701,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 5, width = 5)
+        if(input$pair_pdf_height == 0){
+          pdf_height <- 5
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- 5
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(pair_volcano())
         dev.off()
         incProgress(1)
@@ -768,7 +780,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 10, width = 7)
+        if(input$pair_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(pair_GOIheatmap())
         dev.off()
         incProgress(1)
@@ -866,7 +884,13 @@ shinyServer(function(input, output, session) {
           rownames(data2) <- data2$Row.names
         }
         rowlist <- rownames(data2)
-        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
+        if(input$pair_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(pair_GOIbox())
         dev.off()
         incProgress(1)
@@ -881,7 +905,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        if(input$pair_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- 9
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(PCAplot(data = deg_norm_count()))
         dev.off()
         incProgress(1)
@@ -1156,7 +1186,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
           p1 <- pair_enrich1_H()
         p2 <- pair_enrich2()
-        pdf(file, height = 10, width = 12)
+        if(input$pair_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$pair_pdf_height
+        if(input$pair_pdf_width == 0){
+          pdf_width <- 12
+        }else pdf_width <- input$pair_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1, p2, nrow =2))
         dev.off()
         incProgress(1)
@@ -2287,7 +2323,13 @@ shinyServer(function(input, output, session) {
           clusters <- multi_pattern2()$df
           clusterNumber <- length(unique(clusters$cluster))
           print(clusterNumber)
-          pdf(file, height = pdf_h(clusterNumber), width = pdf_w(clusterNumber))
+          if(input$multi_pdf_height == 0){
+            pdf_height <- pdf_h(clusterNumber)
+          }else pdf_height <- input$multi_pdf_height
+          if(input$multi_pdf_width == 0){
+            pdf_width <- pdf_w(clusterNumber)
+          }else pdf_width <- input$multi_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
           print(multi_boxplot_reactive()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -2530,7 +2572,13 @@ shinyServer(function(input, output, session) {
           clusters <- multi_kmeans_cluster()
           clusterNumber <- length(unique(clusters$Cluster))
           print(clusterNumber)
-          pdf(file, height = pdf_h(clusterNumber), width = pdf_w(clusterNumber))
+          if(input$multi_pdf_height == 0){
+            pdf_height <- pdf_h(clusterNumber)
+          }else pdf_height <- input$multi_pdf_height
+          if(input$multi_pdf_width == 0){
+            pdf_width <- pdf_w(clusterNumber)
+          }else pdf_width <- input$multi_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
           print(multi_kmeans_box()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -2567,7 +2615,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file){
       withProgress(message = "Preparing download",{
-        pdf(file, height = 10, width = 7)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(multi_kmeans())
         dev.off()
         incProgress(1)
@@ -2786,7 +2840,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
           p1 <- multi_enrich1_H()
-        pdf(file, height = 5, width = 7)
+          if(input$multi_pdf_height == 0){
+            pdf_height <- 5
+          }else pdf_height <- input$multi_pdf_height
+          if(input$multi_pdf_width == 0){
+            pdf_width <- pdf_w(clusterNumber)
+          }else pdf_width <- 7
+          pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1, nrow =1))
         dev.off()
         incProgress(1)
@@ -2995,7 +3055,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
           p1 <- multi_enrich_H()
-        pdf(file, height = 6, width = 8)
+          if(input$multi_pdf_height == 0){
+            pdf_height <- 6
+          }else pdf_height <- input$multi_pdf_height
+          if(input$multi_pdf_width == 0){
+            pdf_width <- 8
+          }else pdf_width <- input$multi_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -3010,7 +3076,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
           p1 <- multi_enrich_H2()
-        pdf(file, height = 6, width = 8)
+          if(input$multi_pdf_height == 0){
+            pdf_height <- 6
+          }else pdf_height <- input$multi_pdf_height
+          if(input$multi_pdf_width == 0){
+            pdf_width <- 8
+          }else pdf_width <- input$multi_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -3025,7 +3097,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
         p <- multi_enrich2()
-        pdf(file, height = 6, width = 6)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- 6
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -3040,7 +3118,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
         p <- multi_enrich12()
-        pdf(file, height = 6, width = 6)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- 6
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -3079,118 +3163,9 @@ shinyServer(function(input, output, session) {
   )
   
   #Multi PCA ------------------------------------------------------------------------------
-  multi_heat <- reactive({
-    data <- as.data.frame(multi_deg_norm_count())
-    meta <- multi_metadata()
-    dds <- multi_dds()
-    if(is.null(dds)){
-      return(NULL)
-    }else{
-      withProgress(message = "DEG heatmap",{
-        if (input$multi_data_file_type == "Row1"){
-          collist <- gsub("\\_.+$", "", colnames(data))
-          meta <- data.frame(condition = factor(collist))
-        }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
-        res <- results(dds)
-        
-        if(input$Species6 != "not selected"){
-          if(str_detect(rownames(data)[1], "ENS")) data <- data[, - which(colnames(data) == "SYMBOL")]
-        }
-        collist <- gsub("\\_.+$", "", colnames(data))
-        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
-        res <- as.data.frame(res)
-        data2 <- merge(res,data, by=0)
-        res <- data2[,1:7]
-        rownames(res) <- res$Row.names
-        
-        sig_res_LRT <- res %>% 
-          data.frame() %>%
-          rownames_to_column(var="gene") %>%
-          as_tibble() %>%
-          filter(padj < input$fdr6)
-        data <- data %>% 
-          data.frame() %>%
-          rownames_to_column(var="gene")
-        data <- merge(data, sig_res_LRT, by = "gene")
-        rownames(data) <- data$gene
-        data <- data[,2:(1+length(collist))]
-        if(length(rownames(data)) == 0){
-          ht <- NULL
-        }else{
-          data.z <- genescale(data, axis=1, method="Z")
-          ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                                clustering_method_columns = 'ward.D2',
-                                show_row_names = F, show_row_dend = T))
-          return(ht)
-        }
-      })
-    }
-  })
-  
   multi_pca_plot <- reactive({
-    ht <- multi_heat()
     data <- multi_deg_norm_count()
-    withProgress(message = "PCA",{
-      if(length(grep("SYMBOL", colnames(data))) != 0){
-        data <- data[, - which(colnames(data) == "SYMBOL")]
-      }
-      pca <- prcomp(data, scale. = T)
-      label<- colnames(data)
-      label<- gsub("\\_.+$", "", label)
-      lab_x <- paste(summary(pca)$importance[2,1]*100,
-                     "% of variance)", sep = "")
-      lab_x <- paste("PC1 (", lab_x, sep = "")
-      lab_y <- paste(summary(pca)$importance[2,2]*100,
-                     "% of variance)", sep = "")
-      lab_y <- paste("PC2 (", lab_y, sep = "")
-      pca$rotation <- as.data.frame(pca$rotation)
-      g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
-                                    y=pca$rotation[,2],
-                                    col=label, label = label)) +
-        geom_point()+
-        theme(panel.background =element_rect(fill=NA,color=NA),
-              panel.border = element_rect(fill = NA)) +
-        xlab(lab_x) + ylab(lab_y) + geom_text_repel()  +
-        theme(legend.position="none", aspect.ratio=1)
-      rho <- cor(data,method="spearman")
-      d <- dist(1-rho)
-      mds <- as.data.frame(cmdscale(d))
-      label<-colnames(data)
-      label<-gsub("\\_.+$", "", label)
-      g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
-                            col = label, label = label)) +
-        geom_point()+
-        theme(panel.background =element_rect(fill=NA,color=NA),
-              panel.border = element_rect(fill = NA)) +
-        xlab("dim 1") + ylab("dim 2") +
-        geom_text_repel() + theme(legend.position="none", aspect.ratio=1)
-      x <- NULL
-      y <- NULL
-      xend <- NULL
-      yend <- NULL
-      data.t <- t(data)
-      hc <- hclust(dist(data.t), "ward.D2")
-      dendr <- dendro_data(hc, type="rectangle")
-      g3 <- ggplot() +
-        geom_segment(data=segment(dendr),
-                     aes(x=x, y=y, xend=xend, yend=yend)) +
-        geom_text(data=label(dendr),
-                  aes(x, y, label=label, hjust=0), size=3) +
-        theme(legend.position = "none",
-              axis.line.x=element_blank(),
-              axis.text.x=element_blank(),
-              axis.ticks.x=element_blank(),axis.ticks.y=element_blank(),
-              axis.title.x=element_blank(),axis.text.y=element_blank(),
-              panel.grid.minor.x=element_blank(),
-              axis.title.y=element_blank(),panel.background=element_rect(fill="white"))+
-        coord_flip()+ scale_y_reverse(expand=c(0.6, 0))
-      if(is.null(ht)){
-        p2 <- gridExtra::grid.arrange(gridExtra::arrangeGrob(g1, g2, g3, ncol = 1), ncol = 2)
-      }else{
-        p2 <- gridExtra::grid.arrange(gridExtra::arrangeGrob(g1, g2, g3, ncol = 1), ht, ncol = 2)
-      }
-      return(p2)
-    })
+    PCAplot(data)
   })
   
   output$download_multi_PCA = downloadHandler(
@@ -3199,7 +3174,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 9, width = 7)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- 9
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(multi_pca_plot())
         dev.off()
         incProgress(1)
@@ -3275,7 +3256,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 4.7)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- 4.7
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(multi_umap())
         dev.off()
         incProgress(1)
@@ -3654,7 +3641,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 6, width = 10)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 10
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(cond3_scatter1_plot())
         dev.off()
       })
@@ -3694,7 +3687,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 6, width = 10)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 10
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(cond3_scatter2_plot())
         dev.off()
       })
@@ -3735,7 +3734,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 6, width = 10)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 10
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(cond3_scatter3_plot())
         dev.off()
       })
@@ -3757,7 +3762,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 9
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(PCAplot(data = deg_norm_count2()))
         dev.off()
       })
@@ -3891,7 +3902,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- cond3_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(cond3_GOIbox())
         dev.off()
         
@@ -3907,7 +3924,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- cond3_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = 10, width = 7)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(cond3_GOIheat())
         dev.off()
         incProgress(1)
@@ -4042,7 +4065,13 @@ shinyServer(function(input, output, session) {
         p1 <- keggEnrichment2_1()
         p2 <- keggEnrichment2_2()
         p3 <- keggEnrichment2_3()
-        pdf(file, height = 12, width = 15)
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 12
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 15
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1, p2, p3, nrow =3))
         dev.off()
         incProgress(1)
@@ -4242,7 +4271,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 9)
+        if(input$norm_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- 9
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(PCAplot(data = d_norm_count_matrix_cutofff()))
         dev.off()
       })
@@ -4322,7 +4357,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 3.5, width = 4.7)
+        if(input$norm_pdf_height == 0){
+          pdf_height <- 3.5
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- 4.7
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(norm_umap())
         dev.off()
         incProgress(1)
@@ -4464,7 +4505,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- norm_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
+        if(input$norm_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(norm_GOIbox())
         dev.off()
         incProgress(1)
@@ -4479,7 +4526,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- norm_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = 10, width = 7)
+        if(input$norm_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(norm_GOIheat())
         dev.off()
         incProgress(1)
@@ -4602,7 +4655,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file){
       withProgress(message = "Preparing download",{
-        pdf(file, height = 10, width = 7)
+        if(input$norm_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(norm_kmeans())
         dev.off()
         incProgress(1)
@@ -4720,7 +4779,13 @@ shinyServer(function(input, output, session) {
       }else{
         withProgress(message = "Preparing download",{
           gene_list <- files_table()
-          pdf(file, height = 3, width = 3)
+          if(input$venn_pdf_height == 0){
+            pdf_height <- 3
+          }else pdf_height <- input$venn_pdf_height
+          if(input$venn_pdf_width == 0){
+            pdf_width <- 3
+          }else pdf_width <- input$venn_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
           print((venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 1.0, sncs = 1.0 )))
           dev.off()
           incProgress(1)
@@ -4913,7 +4978,13 @@ shinyServer(function(input, output, session) {
     filename ="integrated_heatmap.pdf",
     content = function(file){
       withProgress(message = "Preparing download",{
-        pdf(file, height = 8, width = 8)
+        if(input$venn_pdf_height == 0){
+          pdf_height <- 8
+        }else pdf_height <- input$venn_pdf_height
+        if(input$venn_pdf_width == 0){
+          pdf_width <- 8
+        }else pdf_width <- input$venn_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(integrated_heatmap())
         dev.off()
         incProgress(1)
@@ -4990,7 +5061,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
           p1 <- multi_enrich_H()
-        pdf(file, height = 6, width = 8)
+          if(input$venn_pdf_height == 0){
+            pdf_height <- 6
+          }else pdf_height <- input$venn_pdf_height
+          if(input$venn_pdf_width == 0){
+            pdf_width <- 8
+          }else pdf_width <- input$venn_pdf_width
+          pdf(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -5056,7 +5133,13 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       withProgress(message = "Preparing download",{
         p <- venn_enrich2()
-        pdf(file, height = 6, width = 6)
+        if(input$venn_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$venn_pdf_height
+        if(input$venn_pdf_width == 0){
+          pdf_width <- 6
+        }else pdf_width <- input$venn_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -5470,7 +5553,13 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        pdf(file, height = 5, width = 5)
+        if(input$volcano_pdf_height == 0){
+          pdf_height <- 5
+        }else pdf_height <- input$volcano_pdf_height
+        if(input$volcano_pdf_width == 0){
+          pdf_width <- 5
+        }else pdf_width <- input$volcano_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(deg_volcano())
         dev.off()
         incProgress(1)
@@ -5575,7 +5664,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- deg_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = pdf_h(rowlist), width = pdf_w(rowlist))
+        if(input$volcano_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$volcano_pdf_height
+        if(input$volcano_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$volcano_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(deg_GOIbox())
         dev.off()
         incProgress(1)
@@ -5590,7 +5685,13 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         data <- deg_GOIcount()
         rowlist <- rownames(data)
-        pdf(file, height = 10, width = 7)
+        if(input$volcano_pdf_height == 0){
+          pdf_height <- 10
+        }else pdf_height <- input$volcano_pdf_height
+        if(input$volcano_pdf_width == 0){
+          pdf_width <- 7
+        }else pdf_width <- input$volcano_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
         print(DEG_GOIheat())
         dev.off()
         incProgress(1)

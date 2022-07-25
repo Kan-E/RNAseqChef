@@ -148,6 +148,17 @@ shinyUI(
                    bsPopover("icon4", "Option: Normalized count file (txt, csv, or xlsx):", 
                              content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
                              placement = "right",options = list(container = "body")),
+                   strong(span("Output plot size setting for pdf (0: default)"),
+                          span(icon("info-circle"), id = "pair_pdf_icon", 
+                               options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("pair_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("pair_pdf_width", "pdf_width", value = 0, min = 0))
+                   ),
+                   bsPopover("pair_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>",strong("Clustering:"), "height = 3.5, width = 9<br>", strong("MA-plot:"), "height = 4, width = 7 <br>",strong("Volcano plot:"), "height = 5, width = 5 <br>",pdfSize_for_GOI,
+                                           strong("Enrichment analysis:"), "height = 10, width = 12 <br>"),trigger = "click"), 
                    actionButton("goButton", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -355,6 +366,17 @@ shinyUI(
                    bsPopover("icon7", "Option: Normalized count file (txt, csv, or xlsx):", 
                              content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
                              placement = "right",options = list(container = "body")),
+                   strong(span("Output plot size setting for pdf (0: default)"),
+                          span(icon("info-circle"), id = "cond3_pdf_icon", 
+                               options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("cond3_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("cond3_pdf_width", "pdf_width", value = 0, min = 0))
+                   ),
+                   bsPopover("cond3_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>",strong("Clustering:"), "height = 3.5, width = 9<br>", strong("scatter plot:"), "height = 6, width = 10 <br>",pdfSize_for_GOI,
+                                           strong("Enrichment analysis:"), "height = 12, width = 15 <br>"),trigger = "click"), 
                    actionButton("goButton2", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -551,6 +573,17 @@ shinyUI(
                    bsPopover("icon10", "Option: Normalized count file (txt, csv, or xlsx):", 
                              content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
                              placement = "right",options = list(container = "body")),
+                   strong(span("Output plot size setting for pdf (0: default)"),
+                          span(icon("info-circle"), id = "multi_pdf_icon", 
+                               options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("multi_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("multi_pdf_width", "pdf_width", value = 0, min = 0))
+                   ),
+                   bsPopover("multi_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>",strong("Clustering:"), "height = 9, width = 7<br>", strong("UMAP:"), "height = 3.5, width = 4.7 <br>",pdfSize_for_GOI,
+                                           strong("Enrichment analysis:"), "height = 6, width = 8 <br>",strong("cnet plot:"), "height = 6, width = 6 <br>",strong("GSEA:"), "height = 5, width = 7 <br>"),trigger = "click"), 
                    actionButton("goButton6", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -587,10 +620,7 @@ shinyUI(
                               fluidRow(
                                 column(4, downloadButton("download_multi_PCA", "Download clustering analysis"))
                               ),
-                              div(
-                                plotOutput("multi_PCA", height = "100%"),
-                                style = "height: calc(100vh  - 100px)"
-                              ),
+                              plotOutput("multi_PCA"),
                               fluidRow(
                                 column(6, htmlOutput("multi_umap_n"),
                                        downloadButton("download_multi_umap", "Download umap"),
@@ -802,6 +832,17 @@ shinyUI(
                        label = "Option: Pre-zscoring",
                        multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))
                    ),
+                   strong(span("Output plot size setting for pdf (0: default)"),
+                          span(icon("info-circle"), id = "venn_pdf_icon", 
+                               options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("venn_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("venn_pdf_width", "pdf_width", value = 0, min = 0))
+                   ),
+                   bsPopover("venn_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>",strong("Venn diagram:"), "height = 3.5, width = 9<br>", strong("Integrated heatmap:"), "height = 8, width = 8 <br>",
+                                           strong("Enrichment analysis:"), "height = 6, width = 8 <br>",strong("cnet plot:"), "height = 6, width = 6 <br>"),trigger = "click"), 
                    actionButton("goButton_venn", "example data"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -947,6 +988,17 @@ shinyUI(
                      column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
                      )
                    ),
+                   strong(span("Output plot size setting for pdf (0: default)"),
+                          span(icon("info-circle"), id = "norm_pdf_icon", 
+                               options = list(template = popoverTempate))),
+                   fluidRow(
+                     column(5, numericInput("norm_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("norm_pdf_width", "pdf_width", value = 0, min = 0))
+                   ),
+                   bsPopover("norm_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                             content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                           "Default size: <br>",strong("Clustering:"), "height = 3.5, width = 9<br>", 
+                                           strong("UMAP:"), "height = 3.5, width = 4.7 <br>",pdfSize_for_GOI),trigger = "click"), 
                    actionButton("goButton3", "example data"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -1072,17 +1124,16 @@ shinyUI(
                      column(6, selectInput("Species4", "Species", species_list, selected = "not selected"))),
                    sliderInput("enrich_showCategory", "Most significant pathways",
                               min = 1, max = 20, value = 5,step = 1),
-                   strong(span("Output plot size setting (0: default)"),
+                   strong(span("Output plot size setting for pdf (0: default)"),
                       span(icon("info-circle"), id = "enrich_pdf_icon", 
                            options = list(template = popoverTempate))),
                    fluidRow(
-                     column(5, numericInput("enrich_pdf_height", "pdf_height", value = 0)),
-                     column(5, numericInput("enrich_pdf_width", "pdf_width", value = 0))
+                     column(5, numericInput("enrich_pdf_height", "pdf_height", value = 0, min = 0)),
+                     column(5, numericInput("enrich_pdf_width", "pdf_width", value = 0, min = 0))
                    ),
-                   bsPopover("enrich_pdf_icon", "Output plot size setting (default: 0): ", 
+                   bsPopover("enrich_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
                              content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
-                                           "Default size: <br>","Dotplot:", "height = 5, width = 6.5 <br>", "cnet plot:","height = 6, width = 6 <br><br>",
-                                           img(src="pdf setting.png", width = 450,height = 200))), 
+                                           "Default size: <br>","Dotplot:", "height = 5, width = 6.5 <br>", "cnet plot:","height = 6, width = 6 <br><br>"), trigger = "click"), 
                    actionButton("goButton4", "example data (mouse)"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -1165,6 +1216,16 @@ shinyUI(
                                 column(4, numericInput("fc4", "Fold Change", min   = 1, max   = NA, value = 2)),
                                 column(4, numericInput("fdr4", "FDR", min   = 0, max   = 1, value = 0.05))
                               ),
+                              strong(span("Output plot size setting for pdf (0: default)"),
+                                     span(icon("info-circle"), id = "volcano_pdf_icon", 
+                                          options = list(template = popoverTempate))),
+                              fluidRow(
+                                column(5, numericInput("volcano_pdf_height", "pdf_height", value = 0, min = 0)),
+                                column(5, numericInput("volcano_pdf_width", "pdf_width", value = 0, min = 0))
+                              ),
+                              bsPopover("volcano_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
+                                        content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
+                                                      "Default size: <br>","Volcano plot:", "height = 5, width = 5 <br>",pdfSize_for_GOI), trigger = "click"), 
                               actionButton("goButton5", "example data (mouse)"),
                               tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;

@@ -625,7 +625,7 @@ keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2
                            geom_point() +
                            scale_color_continuous(low="red", high="blue",
                                                   guide=guide_colorbar(reverse=TRUE)) +
-                           scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) +
+                           scale_size(range=c(1, 6))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) +
                            scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
           }}
           for (name in unique(data3$sig)) {
@@ -800,7 +800,7 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="E2f", replacement = "E2F")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="P53", replacement = "p53")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="G2m", replacement = "G2M")
-    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mtor", replacement = "mTOR")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mtorc", replacement = "mTORC")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Ecm_", replacement = "ECM_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Abc_", replacement = "ABC_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="No1_", replacement = "NO1_")
@@ -943,7 +943,7 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
                             geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
-                            scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL)+
+                            scale_size(range=c(1, 6))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL)+
                             scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
             p <- plot_grid(p1)
             return(p)

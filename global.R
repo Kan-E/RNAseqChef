@@ -58,7 +58,9 @@ read_df <- function(tmp){
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
-    colnames(df) = gsub("\"", "", colnames(df))
+    if(str_detect(colnames(df)[1], "X.")){
+    colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
+    }
     return(df)
   }
 }
@@ -70,7 +72,9 @@ read_gene_list <- function(tmp){
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
-    colnames(df) = gsub("\"", "", colnames(df))
+    if(str_detect(colnames(df)[1], "X.")){
+      colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
+    }
     return(df)
   }
 }
@@ -525,7 +529,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
       data.z <- genescale(data5, axis=1, method="Z")
       ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
                             clustering_method_columns = 'ward.D2',
-                            show_row_names = F, show_row_dend = T))
+                            show_row_names = F, show_row_dend = T,column_names_side = "top"))
     }
     
     p <- plot_grid(p, ht, rel_widths = c(2, 1))
@@ -790,6 +794,7 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
     }
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Tnf", replacement = "TNF")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Tgf", replacement = "TGF")
+    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Pi3k_akt_mtor", replacement = "PI3K_Akt_mTOR")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Il6_", replacement = "IL6_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Il2_", replacement = "IL2_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Kras", replacement = "KRas")

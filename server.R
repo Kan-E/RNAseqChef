@@ -553,7 +553,7 @@ shinyServer(function(input, output, session) {
       data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
       ht <- as.grob(Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                             clustering_method_columns = 'ward.D2',
-                            show_row_names = F, show_row_dend = F))
+                            show_row_names = F, show_row_dend = F,column_names_side = "top"))
     }
     p <- plot_grid(m1, ht, rel_widths = c(2, 1))
     return(p)
@@ -756,7 +756,7 @@ shinyServer(function(input, output, session) {
       data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
       ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                     clustering_method_columns = 'ward.D2',
-                    show_row_names = T, show_row_dend = F)
+                    show_row_names = T, show_row_dend = F,column_names_side = "top")
     }
     return(ht)
   })
@@ -1735,7 +1735,7 @@ shinyServer(function(input, output, session) {
           data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
           ht <- as.grob(Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                                 clustering_method_columns = 'ward.D2',
-                                show_row_names = F, show_row_dend = F))
+                                show_row_names = F, show_row_dend = F,column_names_side = "top"))
         }
         p <- plot_grid(m1, ht, rel_widths = c(2, 1))
         malist[[name]] <- p
@@ -2462,7 +2462,7 @@ shinyServer(function(input, output, session) {
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
                       row_km= input$multi_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
-                      show_row_names = F)
+                      show_row_names = F,column_names_side = "top")
         ht <- draw(ht)
         return(ht)
       })
@@ -3851,7 +3851,7 @@ shinyServer(function(input, output, session) {
       data.z <- na.omit(data.z)
       ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                     clustering_method_columns = 'ward.D2',
-                    show_row_names = T, show_row_dend = F)
+                    show_row_names = T, show_row_dend = F,column_names_side = "top")
     }
     return(ht)
   })
@@ -4455,7 +4455,7 @@ shinyServer(function(input, output, session) {
       data.z <- na.omit(data.z)
       ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                     clustering_method_columns = 'ward.D2',
-                    show_row_names = T, show_row_dend = F)
+                    show_row_names = T, show_row_dend = F,column_names_side = "top")
     }
     return(ht)
   })
@@ -4590,7 +4590,7 @@ shinyServer(function(input, output, session) {
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
                       row_km= input$norm_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
-                      show_row_names = F)
+                      show_row_names = F,column_names_side = "top")
         ht <- draw(ht)
         return(ht)
       })
@@ -4931,12 +4931,12 @@ shinyServer(function(input, output, session) {
             ht <- Heatmap(base_z, name = "z-score",
                           clustering_method_columns = 'ward.D2',
                           cluster_row_slices = T, show_row_names = T,
-                          top_annotation = HeatmapAnnotation(condition = cond))
+                          top_annotation = HeatmapAnnotation(condition = cond),column_names_side = "top")
           }else{
             ht <- Heatmap(base_z, name = "z-score",
                           clustering_method_columns = 'ward.D2',
                           cluster_row_slices = T, show_row_names = F,
-                          top_annotation = HeatmapAnnotation(condition = cond))
+                          top_annotation = HeatmapAnnotation(condition = cond),column_names_side = "top")
           }
           incProgress(1)
           return(draw(ht))
@@ -5614,7 +5614,7 @@ shinyServer(function(input, output, session) {
       data.z <- na.omit(data.z)
       ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                     clustering_method_columns = 'ward.D2',
-                    show_row_names = T, show_row_dend = F)
+                    show_row_names = T, show_row_dend = F,column_names_side = "top")
     }
     return(ht)
   })

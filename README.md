@@ -12,6 +12,8 @@ To run this app locally on your machine, R environment setup is required.
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
+    
+install.packages("https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz",repos = NULL, type = "source")
 
 pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel",
 "ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW",

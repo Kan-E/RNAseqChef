@@ -32,7 +32,7 @@ library(DOSE)
 library(msigdbr)
 library(genefilter)
 library(ComplexHeatmap)
-library(shinyBS)
+library(shinyBS, verbose = FALSE)
 library(plotly,verbose=FALSE)
 library('shinyjs', verbose = FALSE)
 library(BiocManager)
@@ -58,7 +58,7 @@ read_df <- function(tmp){
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
-    if(str_detect(colnames(df)[1], "X.")){
+    if(str_detect(colnames(df)[1], "^X\\.")){
     colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
     }
     return(df)
@@ -72,7 +72,7 @@ read_gene_list <- function(tmp){
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
     if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
-    if(str_detect(colnames(df)[1], "X.")){
+    if(str_detect(colnames(df)[1], "^X\\.")){
       colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
     }
     return(df)

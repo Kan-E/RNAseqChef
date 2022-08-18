@@ -4848,7 +4848,7 @@ shinyServer(function(input, output, session) {
           rownames(base) <- base$Row.names
           base <- data.matrix(base[,-1])
         }
-        colnames(base) <- gsub("(.y)$", "", colnames(base))
+        colnames(base) <- gsub("\\.y$", "", colnames(base))
         return(base)
       }
     }else return(NULL)
@@ -4909,7 +4909,7 @@ shinyServer(function(input, output, session) {
           base <- genescale(base, axis = 1, method = "Z")
           base_z <- na.omit(base)
         }
-        colnames(base_z) <- gsub("(.y)", "", colnames(base_z))
+        colnames(base_z) <- gsub("\\.y$", "", colnames(base_z))
         
         return(base_z)
       }

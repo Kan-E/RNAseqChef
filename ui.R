@@ -808,32 +808,51 @@ shinyUI(
                  sidebarPanel(
                    fileInput(
                      inputId = "files",
-                     label = "Select gene list files",
+                     strong(
+                       span("Select gene list files"),
+                       span(icon("info-circle"), id = "icon_venn", 
+                            options = list(template = popoverTempate))
+                     ),
                      multiple = TRUE,
                      accept = c("txt", "csv", "xlsx")
                    ),
-                   "Count extraction of intersection",
-                   fileInput(
-                     inputId = "file_for_venn",
-                     label = "Choose a normalized count file",
-                     multiple = TRUE,
-                     accept = c("txt", "csv", "xlsx")
-                   ),
-                   br(),br(),
+                   bsPopover("icon_venn", "Gene list files (txt, csv, or xlsx):", 
+                             content= paste("The first column is", strong("gene name"), ".<br>", 
+                             "The second and subsequent columns do not affect the analysis.<br>", 
+                             "The maximum number of uploads is",strong("7 files"), ".<br>", 
+                             "File names do not use `.` other than the extension.<br><br>", 
+                             img(src="venn_input.png", width = 100,height = 300)),
+                             placement = "right",options = list(container = "body")),
                    h4("Input for integrated heatmap"),
                    fileInput(
                      inputId = "countfiles",
-                     label = "Select normalized count files",
+                     strong(
+                       span("Select normalized count files"),
+                       span(icon("info-circle"), id = "icon_venn2", 
+                            options = list(template = popoverTempate))
+                     ),
                      multiple = TRUE,
                      accept = c("txt", "csv", "xlsx")
                    ),
+                   bsPopover("icon_venn2", "Count matrix format (txt, csv, or xlsx):", 
+                             content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br><br>",
+                                           img(src="input_format1.png", width = 400,height = 250)), 
+                             placement = "right",options = list(container = "body")),
                    fluidRow(
                      column(6, selectInput("Species7", "Species", species_list, selected = "not selected")),
                      column(6, selectInput(
                        inputId = "pre_zscoring",
-                       label = "Option: Pre-zscoring",
+                       strong(
+                         span("Option: Pre-zscoring"),
+                         span(icon("info-circle"), id = "icon_venn3", 
+                              options = list(template = popoverTempate))
+                       ),
                        multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))
                    ),
+                   bsPopover("icon_venn3", "Option: Pre-zscoring:", 
+                             content=paste("If True, each count data is z-scored before integrating multiple count data.<br><br>",
+                                           img(src="pre-zscoring.png", width = 450,height = 200)), 
+                             placement = "right",options = list(container = "body")),
                    strong(span("Output plot size setting for pdf (0: default)"),
                           span(icon("info-circle"), id = "venn_pdf_icon", 
                                options = list(template = popoverTempate))),
@@ -867,22 +886,9 @@ shinyUI(
                                 column(4, downloadButton("download_vennplot", "Download venn diagram"))
                               ),
                               plotOutput("venn"),
-                              bsCollapse(id="venn_collapse_panel",open="venn_result_panel",multiple = TRUE,
-                                         bsCollapsePanel(title="venn result:",
-                                                         value="venn_result_panel",
-                                                         downloadButton("download_venn_result", "Download venn result"),
-                                                         dataTableOutput("venn_result")
-                                         ),
-                                         bsCollapsePanel(title="intersection count table:",
-                                                         value="intersection_count_panel",
-                                                         fluidRow(
-                                                           column(4, htmlOutput("select_file1")),
-                                                           column(4, downloadButton("download_intersection_count_table", "Download intersection count table"))
-                                                         ),
-                                                         dataTableOutput("intersection_count")
-                                         )
-                              )
-                     ),
+                              downloadButton("download_venn_result", "Download venn result"),
+                              dataTableOutput("venn_result")
+                              ),
                      tabPanel("integrated_heatmap",
                               fluidRow(
                                 column(4, htmlOutput("select_file2")),

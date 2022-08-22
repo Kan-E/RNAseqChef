@@ -3590,15 +3590,15 @@ shinyServer(function(input, output, session) {
   
   output$download_3cond_DEG_table1 = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result1.txt", sep = "-")},
-    content = function(file){write.table(data_3degcount2_1(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(data_3degcount2_1(), file, row.names = F, sep = "\t", quote = F)}
   )
   output$download_3cond_DEG_table2 = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result2.txt", sep = "-")},
-    content = function(file){write.table(data_3degcount2_2(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(data_3degcount2_2(), file, row.names = F, sep = "\t", quote = F)}
   )
   output$download_3cond_DEG_table3 = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result3.txt", sep = "-")},
-    content = function(file){write.table(data_3degcount2_3(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(data_3degcount2_3(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   
@@ -4671,9 +4671,6 @@ shinyServer(function(input, output, session) {
   
   #venn diagram ------------------
   
-  output$select_file1 <- renderUI({
-    selectInput("selectfile1", "gene_list", choices = c("not selected", overlap_list()), selected = "not selected",multiple = F)
-  })
   output$select_file2 <- renderUI({
     if(is.null(overlap_list())){
       return(NULL)
@@ -4739,36 +4736,9 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  count_for_venn <- reactive({
-    tmp <- input$file_for_venn$datapath
-    if(is.null(input$file_for_venn) && input$goButton_venn > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example7.txt"
-    return(read_df(tmp = tmp))
-  })
-  
-  overlap_extract <- reactive({
-    cluster_file <- overlap_table2()
-    rownames(cluster_file) <- cluster_file$Gene
-    data <- count_for_venn()
-    if(is.null(data) || is.null(cluster_file)){
-      return(NULL)
-    }else{
-      cluster_name <- input$selectfile1
-      clusterCount <- dplyr::filter(cluster_file, Group == cluster_name)
-      clusterCount <- merge(clusterCount, data, by=0)
-      clusterCount <- clusterCount[,-2:-3]
-      rownames(clusterCount) <- clusterCount$Row.names
-      clusterCount <- clusterCount[,-1]
-      return(clusterCount)
-    }
-  })
-  
   
   output$venn_result <- renderDataTable({
     overlap_table2()
-  })
-  
-  output$intersection_count <- renderDataTable({
-    overlap_extract()
   })
   
   output$download_vennplot = downloadHandler(
@@ -4849,6 +4819,10 @@ shinyServer(function(input, output, session) {
           base <- data.matrix(base[,-1])
         }
         colnames(base) <- gsub("\\.y$", "", colnames(base))
+        if(length(names(files)) == 1) {
+          colnames(base) <- gsub(names(files),"",colnames(base))
+          colnames(base) <- gsub("^\\.", "", colnames(base))
+        }
         return(base)
       }
     }else return(NULL)
@@ -4910,7 +4884,10 @@ shinyServer(function(input, output, session) {
           base_z <- na.omit(base)
         }
         colnames(base_z) <- gsub("\\.y$", "", colnames(base_z))
-        
+        if(length(names(files)) == 1) {
+          colnames(base_z) <- gsub(names(files),"",colnames(base_z))
+          colnames(base_z) <- gsub("^\\.", "", colnames(base_z))
+        }
         return(base_z)
       }
     }else return(NULL)
@@ -4959,11 +4936,6 @@ shinyServer(function(input, output, session) {
   output$download_venn_result = downloadHandler(
     filename ="venn_result.txt",
     content = function(file){write.table(overlap_table2(), file, row.names = F, sep = "\t", quote = F)}
-  )
-  
-  output$download_intersection_count_table = downloadHandler(
-    filename = function(){paste0(paste("intersection",input$selectfile1, sep="_"), paste0(gsub("\\..+$", "", input$file_for_venn), ".txt"))},
-    content = function(file){write.table(overlap_extract(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   output$download_integrated_count_table = downloadHandler(

@@ -3524,11 +3524,11 @@ shinyServer(function(input, output, session) {
   })
   
   deg_norm_count2 <- reactive({
-    if(is.null(norm_count_matrix2())){
-      count <- d_row_count_matrix2()
+    count <- d_row_count_matrix2()
       if(is.null(count)){
         return(NULL)
       }else{
+        if(is.null(norm_count_matrix2())){
         collist <- gsub("\\_.+$", "", colnames(count))
         group <- data.frame(con = factor(collist))
         count <- data.matrix(count)
@@ -3541,6 +3541,9 @@ shinyServer(function(input, output, session) {
         conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
         Sizes <- MedianNorm(count)
         normalized_counts <- as.data.frame(GetNormalizedMat(count, Sizes))
+        }else{
+          normalized_counts <- norm_count_matrix2()
+        }
         if(input$Species2 != "not selected"){
           if(str_detect(rownames(count)[1], "ENS")){
             gene_IDs  <- gene_ID()
@@ -3553,9 +3556,6 @@ shinyServer(function(input, output, session) {
         }
         return(normalized_counts)
       }
-    }else{
-      return(norm_count_matrix2())
-    }
   })
   
   output$DEG_result2_1 <- DT::renderDataTable({
@@ -3621,7 +3621,7 @@ shinyServer(function(input, output, session) {
   cond3_scatter1_plot <- reactive({
     p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
                             result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 1,
-                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
+                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2, Species = input$Species2)
     return(p)
   })
   
@@ -3669,7 +3669,7 @@ shinyServer(function(input, output, session) {
   cond3_scatter2_plot <- reactive({
     p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_2(),
                             result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 2,
-                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
+                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2, Species = input$Species2)
     return(p)
   })
   
@@ -3716,7 +3716,7 @@ shinyServer(function(input, output, session) {
   cond3_scatter3_plot <- reactive({
     p <- cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_3(),
                             result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), specific = 3,
-                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2)
+                            fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2, Species = input$Species2)
     return(p)
   })
   
@@ -3747,13 +3747,44 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  output$download_3cond_scatter = downloadHandler(
+    filename = function(){
+      paste0(download_cond3_dir(), "_GOI_scatter.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        if(input$cond3_pdf_height == 0){
+          pdf_height <- 6
+        }else pdf_height <- input$cond3_pdf_height
+        if(input$cond3_pdf_width == 0){
+          pdf_width <- 10
+        }else pdf_width <- input$cond3_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
+        print(cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
+                                 result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
+                                 fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
+                                 y_axis = input$cond3_scatter_yrange,x_axis = input$cond3_scatter_xrange,heatmap = FALSE,
+                                 specific = cond3_specific_group2(), GOI = input$GOI2, Species = input$Species2))
+        dev.off()
+      })
+    }
+  )
+  
   
   #3conditions PCA--------------
   output$PCA2 <- renderPlot({
+    if(is.null(deg_norm_count2())){
+      return(NULL)
+    }else{
     print(PCAplot(data = deg_norm_count2()))
+    }
   })
   output$PCA3_data <- DT::renderDataTable({
+    if(is.null(deg_norm_count2())){
+      return(NULL)
+    }else{
     PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2())
+    }
   })
   
   output$download_3cond_PCA = downloadHandler(
@@ -3803,6 +3834,24 @@ shinyServer(function(input, output, session) {
     })
   })
   
+  cond3_specific_group <- reactive({
+    if(is.null(d_row_count_matrix2())){
+      return(NULL)
+    }else{
+    return(unique(gsub("\\_.+$", "", colnames(d_row_count_matrix2()))))
+      }
+  })
+  
+  output$cond3_GOI_pair<- renderUI({
+    if(is.null(d_row_count_matrix2())){
+      return(NULL)
+    }else{
+      withProgress(message = "Preparing GOI pair",{
+        selectInput("cond3_GOIpair", "Group of interest:", c(cond3_specific_group()),multiple = F)
+      })
+    }
+  })
+  
   output$GOI2 <- renderUI({
     if(is.null(d_row_count_matrix2())){
       return(NULL)
@@ -3812,6 +3861,33 @@ shinyServer(function(input, output, session) {
       })
     }
   })
+  
+  output$cond3_xrange <- renderUI({
+    sliderInput("cond3_scatter_xrange","X_axis range:",min = -100,
+                max=100, step = 1,
+                value = c(-10, 10))
+  })
+  output$cond3_yrange <- renderUI({
+    sliderInput("cond3_scatter_yrange","Y_axis range:",min = -100, max= 100, step = 1,
+                value = c(-10, 10))
+  })
+  
+  cond3_specific_group2 <- reactive({
+    if(!is.null(input$cond3_GOIpair)){
+      return(which(cond3_specific_group() == input$cond3_GOIpair))
+    }
+  })
+  
+  output$cond3_GOIscatter <- renderPlot({
+    if(!is.null(input$cond3_GOIpair) && !is.null(input$GOI2)){
+    cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
+                       result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
+                       fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
+                       y_axis = input$cond3_scatter_yrange,x_axis = input$cond3_scatter_xrange,heatmap = FALSE,
+                       specific = cond3_specific_group2(), GOI = input$GOI2, Species = input$Species2)
+    }
+  })
+  
   
   cond3_GOIcount <- reactive({
     count <- deg_norm_count2()
@@ -5714,4 +5790,87 @@ shinyServer(function(input, output, session) {
       paste0(input$msigdbr_gene_set, ".txt")
     },
     content = function(file) {write.table(msig_list(), file, quote = F, row.names = F, sep = "\t")})
+  
+  #Dorothea-----------------
+  Dorothea_list <- reactive({
+    if(input$dorothea_Species == "not selected" || is.null(Dorothea_type())){
+      return(NULL)
+    }else{
+      withProgress(message = "Prepare gene sets",{
+        dorothea_list <- dorothea(species = input$dorothea_Species, org = org(input$dorothea_Species), type = Dorothea_type(), confidence = input$dorothea_confidence)
+        dorothea_list <- dorothea_list[,-2]
+        colnames(dorothea_list)[1] <- "TF"
+        return(dorothea_list)
+      })
+    }
+  })
+  
+  Dorothea_type <- reactive({
+    if(input$dorothea_TFtype == "activator") return("DoRothEA regulon (activator)")
+    if(input$dorothea_TFtype == "repressor") return("DoRothEA regulon (repressor)")
+    if(input$dorothea_TFtype == "not selected") return(NULL)
+  })
+  
+  Dorothea_TF_list <- reactive({
+    if(input$dorothea_Species == "not selected" || input$dorothea_target_set == ""){
+      return(NULL)
+    }else{
+      data <- Dorothea_list() %>% 
+        dplyr::filter(target == input$dorothea_target_set) %>%
+        as.data.frame()
+      return(data)
+    }
+  }) 
+  
+  Dorothea_target_list <- reactive({
+    if(input$dorothea_Species == "not selected" || input$dorothea_tf_set == ""){
+      return(NULL)
+    }else{
+      data <- Dorothea_list() %>% 
+        dplyr::filter(TF == input$dorothea_tf_set) %>%
+        as.data.frame()
+      return(data)
+    }
+  }) 
+  
+  output$dorothea_tf_list <- renderDataTable({
+    Dorothea_TF_list()
+  })
+  output$dorothea_target_list <- renderDataTable({
+    Dorothea_target_list()
+  })
+  
+  observe({
+    if(is.null(Dorothea_list())){
+      return(NULL)
+    }else{
+      withProgress(message = "Prepare a list of DoRothEA gene set",{
+        dorothea_target <- unique(Dorothea_list()$target)
+        updateSelectizeInput(session, inputId = "dorothea_target_set",choices = c("", dorothea_target)) 
+        dorothea_tf <- unique(Dorothea_list()$TF)
+        updateSelectizeInput(session, inputId = "dorothea_tf_set",choices = c("", dorothea_tf)) 
+      })
+    }
+  })
+  
+  
+  output$download_dorothea_tf_list = downloadHandler(
+    filename = function(){
+      paste("DoRothEA_TF-search_", input$dorothea_target_set, ".txt", sep = "")
+    },
+    content = function(file) {write.table(Dorothea_TF_list(), file, quote = F, row.names = F, sep = "\t")})
+  
+  output$download_dorothea_target_list = downloadHandler(
+    filename = function(){
+      paste("DoRothEA_Target-search_", input$dorothea_tf_set, ".txt", sep = "")
+    },
+    content = function(file) {write.table(Dorothea_target_list(), file, quote = F, row.names = F, sep = "\t")})
+  
+  observeEvent(input$dorothea_tf_set, ({
+    updateCollapse(session,id =  "dorothea_collapse_panel", open="dorothea_target_panel")
+  }))
+  observeEvent(input$dorothea_target_set, ({
+    updateCollapse(session,id =  "dorothea_collapse_panel", open="dorothea_tf_panel")
+  }))
+  
 })

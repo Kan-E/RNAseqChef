@@ -100,13 +100,15 @@ gene_list_convert_for_enrichment <- function(data, Species){
       return(data)
     }
 }
-dorothea <- function(species, type, org){
+dorothea <- function(species, confidence = "recommend",type, org){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
   }else{
     net <- dorothea::dorothea_hs
   }
+  if(confidence == "recommend"){
   net2 <- net %>% filter(confidence != "D") %>% filter(confidence != "E")
+  }else net2 <- net
   if(type == "DoRothEA regulon (activator)") net2 <- net2%>% filter(mor == 1)
   if(type == "DoRothEA regulon (repressor)") net2 <- net2%>% filter(mor == -1)
   my.symbols <- gsub("\\..*","", net2$target)
@@ -172,6 +174,9 @@ PCAdata <- function(row_count, deg_norm_count){
     if(length(grep("SYMBOL", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "SYMBOL")]
     }
+    if(length(grep("Unique_ID", colnames(data))) != 0){
+      data <- data[, - which(colnames(data) == "Unique_ID")]
+    }
     pca <- prcomp(data, scale. = T)
     label<- colnames(data)
     label<- gsub("\\_.+$", "", label)
@@ -188,6 +193,9 @@ PCAdata <- function(row_count, deg_norm_count){
 PCAplot <- function(data){
   if(length(grep("SYMBOL", colnames(data))) != 0){
     data <- data[, - which(colnames(data) == "SYMBOL")]
+  }
+  if(length(grep("Unique_ID", colnames(data))) != 0){
+    data <- data[, - which(colnames(data) == "Unique_ID")]
   }
   pca <- prcomp(data, scale. = T)
   label<- colnames(data)
@@ -413,7 +421,9 @@ data_3degcount2 <- function(data3, Species, org){
     }
   }
 }
-cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, fc, fdr, basemean){
+cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
+                               fc, fdr, basemean, y_axis=NULL, x_axis=NULL,
+                               GOI=NULL, heatmap = TRUE, Species){
   if(is.null(data)){
     return(NULL)
   }else{
@@ -482,6 +492,11 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
       new.levels <- c("NS")
       col = "darkgray"}
     data3$sig <- factor(data3$sig, labels = new.levels)
+    if(str_detect(data3$Row.names[1], "ENS")){
+      if(Species != "not selected"){
+        data3 <- merge(data3, data, by="Row.names")
+      }
+    }
     complete_data <- stats::na.omit(data3)
     labs_data <- subset(complete_data, padj <= fdr & Row.names !=
                           "" & (FC_x)*(FC_y) >= log2(fc))
@@ -497,10 +512,10 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
     p <- p +
       theme_bw()+ scale_color_manual(values = col)+
       theme(legend.position = "top" , legend.title = element_blank(),
-            axis.text.x= ggplot2::element_text(size = 10),
-            axis.text.y= ggplot2::element_text(size = 10),
-            text = ggplot2::element_text(size = 10),
-            title = ggplot2::element_text(size = 10)) +
+            axis.text.x= ggplot2::element_text(size = 12),
+            axis.text.y= ggplot2::element_text(size = 12),
+            text = ggplot2::element_text(size = 15),
+            title = ggplot2::element_text(size = 15)) +
       xlab(FC_xlab) + ylab(FC_ylab)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
       p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "red", size= 0.25 )
@@ -512,12 +527,60 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
     if((sum(sig == 1) == 0) && (sum(sig == 2) >= 1)){
       p <- p + geom_point(data=dplyr::filter(data3, sig == new.levels[1]),color = "blue", size= 0.25 )
     }
-    if(!is.null(labs_data)) {
-      p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
-                                        box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
-                                        force = 1, fontface = font.label$face,
-                                        size = font.label$size/2, color = font.label$color)
+    if (heatmap==TRUE) {
+      if(!is.null(labs_data)) {
+        if(str_detect(data3$Row.names[1], "ENS")){
+          if(Species != "not selected"){
+            p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Unique_ID),
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                              force = 1, fontface = font.label$face,
+                                              size = font.label$size/2, color = font.label$color)
+          }else{
+            p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                              force = 1, fontface = font.label$face,
+                                              size = font.label$size/2, color = font.label$color)
+          }
+        }else{
+        p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+                                          box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
+                                          force = 1, fontface = font.label$face,
+                                          size = font.label$size/2, color = font.label$color)
+        }
+      } 
     }
+    if(!is.null(y_axis) && !is.null(x_axis)){
+      p <- p +  xlim(x_axis) + ylim(y_axis)
+    }
+    if(!is.null(GOI)) {
+      for(name in GOI){
+        if(str_detect(data3$Row.names[1], "ENS")){
+          if(Species != "not selected"){
+            data3$color[data3$Unique_ID == name] <- "GOI"
+          }else{
+            data3$color[data3$Row.names == name] <- "GOI"
+          }
+        }else{
+          data3$color[data3$Row.names == name] <- "GOI"
+        }
+      }
+      if(str_detect(data3$Row.names[1], "ENS")){
+        if(Species != "not selected"){
+          p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
+          p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+        }else{
+          p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
+          p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+        }
+      }else{
+        p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
+        p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
+                                          box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+      }
+    }
+    if(heatmap == TRUE){
     if(length(unique(data3$sig)) == 1){
       ht <- NULL
     }else{
@@ -533,6 +596,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
     }
     
     p <- plot_grid(p, ht, rel_widths = c(2, 1))
+    }
     return(p)
   }
 }
@@ -834,11 +898,12 @@ GOIboxplot <- function(data){
                          xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
   p <- (facet(p, facet.by = "Row.names",
               panel.labs.background = list(fill = "transparent", color = "transparent"),
-              scales = "free", short.panel.labs = T)+
-          theme(axis.text.x= element_text(size = 0),
-                axis.text.y= element_text(size = 10),
+              scales = "free", short.panel.labs = T, panel.labs.font = list(size=15))+ 
+          theme(axis.text.x = element_blank(),
                 panel.background = element_rect(fill = "transparent", size = 0.5),
-                title = element_text(size = 10),text = element_text(size = 20)))
+                title = element_text(size = 10),text = element_text(size = 12),
+                axis.title.y = element_text(size=15),legend.text = element_text(size=15),
+                legend.title = element_blank()))
   return(p)
 }
 enrich_viewer_forMulti1 <- function(df, Species, org){

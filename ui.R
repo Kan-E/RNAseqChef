@@ -459,9 +459,14 @@ shinyUI(
                                 column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("GOI2"))
+                                column(4, htmlOutput("GOI2"), htmlOutput("cond3_GOI_pair")),
+                                column(4, htmlOutput("cond3_xrange")),
+                                column(4, htmlOutput("cond3_yrange"))
                               ),
-                              plotOutput("cond3_GOIheatmap"),
+                              fluidRow(
+                                column(8, plotOutput("cond3_GOIscatter")),
+                                column(4, plotOutput("cond3_GOIheatmap"))
+                              ),
                               div(
                                 plotOutput("cond3_GOIboxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
@@ -1303,6 +1308,38 @@ shinyUI(
                                 column(4, downloadButton("download_msigdbr_list", "Download"))
                               ),
                               dataTableOutput('msigdbr_geneset')
+                            )
+                          ) #sidebarLayout
+                 ),
+                 tabPanel("DoRothEA regulon",
+                          sidebarLayout(
+                            # DoRothEA gene list---------------------------------
+                            sidebarPanel(
+                              selectInput("dorothea_Species", "Species", c("Homo sapiens", "Mus musculus"), selected = "Homo sapiens"),
+                              selectInput("dorothea_TFtype", "TF type", c("activator", "repressor"), selected = "activator"),
+                              radioButtons('dorothea_confidence','Confidence:',
+                                           c('recommend (A, B, and C)'="recommend",
+                                             'All (A, B, C, D, and E)'="All"
+                                           ),selected = "recommend"),
+                              selectizeInput("dorothea_target_set", label="Target name for TF search", choices = ''),
+                              selectizeInput("dorothea_tf_set", label="TF name for target search", choices = '')
+                              #sidebarPanel
+                            ),
+                            
+                            # Main Panel -------------------------------------
+                            mainPanel(
+                              bsCollapse(id="dorothea_collapse_panel",open="dorothea_tf_panel",multiple = TRUE,
+                                         bsCollapsePanel(title="TF search:",
+                                                         value="dorothea_tf_panel",
+                                                         downloadButton("download_dorothea_tf_list", "Download"),
+                                                         dataTableOutput("dorothea_tf_list")
+                                         ),
+                                         bsCollapsePanel(title="Target search:",
+                                                         value="dorothea_target_panel",
+                                                         downloadButton("download_dorothea_target_list", "Download"),
+                                                         dataTableOutput("dorothea_target_list")
+                                         )
+                              )
                             )
                           ) #sidebarLayout
                  ),

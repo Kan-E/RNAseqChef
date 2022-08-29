@@ -498,7 +498,6 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {write.table(data_degcount_down(), file, quote = F, row.names = T, sep = "\t")})
   
-  
   # pair-wise MA ------------------------------------------------------------------------------
   output$MA <- renderPlot({
     withProgress(message = "MA plot and heatmap",{
@@ -3599,6 +3598,17 @@ shinyServer(function(input, output, session) {
   output$download_3cond_DEG_table3 = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"DEG_result3.txt", sep = "-")},
     content = function(file){write.table(data_3degcount2_3(), file, row.names = F, sep = "\t", quote = F)}
+  )
+  
+  output$cond3_result <- DT::renderDataTable({
+    data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                    result_FDR = deg_result2(), specific = 1,result_list=TRUE) %>% as.data.frame()
+  })
+  output$download_cond3_result = downloadHandler(
+    filename = function() {paste(download_cond3_dir(),"DEG_result_ALL.txt", sep = "-")},
+    content = function(file){write.table(data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                                                         result_FDR = deg_result2(), specific = 1,result_list=TRUE), 
+                                         file, row.names = T, sep = "\t", quote = F)}
   )
   
   

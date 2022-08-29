@@ -437,7 +437,14 @@ shinyUI(
                               ),
                               plotOutput("scatter_3"),
                               dataTableOutput("DEG_result2_3"),
-                              bsCollapse(id="input_collapse_3_DEG",open="norm_panel2",multiple = TRUE,
+                              bsCollapse(id="input_collapse_3_DEG",open="cond3_result_panel",multiple = TRUE,
+                                         bsCollapsePanel(title="Result:",
+                                                         value="cond3_result_panel",
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_cond3_result", "Download result"))
+                                                         ),
+                                                         dataTableOutput("cond3_result")
+                                         ),
                                          bsCollapsePanel(title="Normalized_Count_matrix:",
                                                          value="norm_panel2",
                                                          fluidRow(

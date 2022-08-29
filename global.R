@@ -314,7 +314,8 @@ pdfSize_for_GOI <- paste(strong("Heatmap:"),"height = 10, width = 7 <br>",
                          "Gene number = 65 ~ 81,","height = 20.5, width = 20.5 <br>",
                          "Gene number = 82 ~ 200,","height = 22.5, width = 22.5 <br>",
                          "Gene number > 200,", "height = 30, width = 30 <br>")
-data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, basemean){
+
+data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, basemean,result_list=NULL){
   if(is.null(data)){
     return(NULL)
   }else{
@@ -364,11 +365,45 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     result <- merge(result_Condm, result_FDR, by=0)
     data$Row.names <- rownames(data)
     data2 <- merge(data, result, by="Row.names")
-    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > basemean)
+      data3 <- data2[,- which(colnames(data2) == "Pattern1")]
+      data3 <- data3[,- which(colnames(data3) == "Pattern2")]
+      data3 <- data3[,- which(colnames(data3) == "Pattern3")]
+      data3 <- data3[,- which(colnames(data3) == "Pattern4")]
+      data3 <- data3[,- which(colnames(data3) == "Pattern5")]
+      data3 <- data3[,- which(colnames(data3) == "C1")]
+      data3 <- data3[,- which(colnames(data3) == "C2")]
+      data3 <- data3[,- which(colnames(data3) == "C3")]
+      data3 <- data3[,- which(colnames(data3) == "PPDE")]
+      Pattern <- rep(3, nrow(data3))
+      Pattern[which(data3$MAP == "Pattern1")] = paste(collist[1], "=", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "Pattern2" & data3$FC_y > 0)] = paste(collist[1], "=", collist[2], ">", collist[3])
+      Pattern[which(data3$MAP == "Pattern2" & data3$FC_y < 0)] = paste(collist[1], "=", collist[2], "<", collist[3])
+      Pattern[which(data3$MAP == "Pattern3" & data3$FC_x > 0)] = paste(collist[1], "=", collist[3], ">", collist[2])
+      Pattern[which(data3$MAP == "Pattern3" & data3$FC_x < 0)] = paste(collist[1], "=", collist[3], "<", collist[2])
+      Pattern[which(data3$MAP == "Pattern4" & data3$FC_x > 0 & (data3$FC_y > 0))] = paste(collist[1], ">", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "Pattern4" & data3$FC_x < 0 & (data3$FC_y < 0))] = paste(collist[1], "<", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], ">", collist[2], ">", collist[3])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], ">", collist[3], ">", collist[2])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], "<", collist[3], "<", collist[2])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], "<", collist[2], "<", collist[3])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y < 0))] = paste(collist[2], "<", collist[1], "<", collist[3])
+      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y > 0))] = paste(collist[3], "<", collist[1], "<", collist[2])
+      data3$Pattern <- Pattern
+      if(!is.null(result_list)){
+      data3 <- dplyr::select(data3, Row.names, Pattern, FDR, FC_x, FC_y, everything())
+      colnames(data3)[3] <- "padj"
+      colnames(data3)[4] <- FC_xlab
+      colnames(data3)[5] <- FC_ylab
+      data3 <- data3[,- which(colnames(data3) == "MAP")]
+      rownames(data3) <- data3$Row.names
+      data3 <- data3[,-1]
+      return(data3)
+    }else{
+    result <- dplyr::filter(data3, apply(data3[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > basemean)
     sig <- rep(3, nrow(result))
     sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
     sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
-    data3 <- data.frame(Row.names = result$Row.names, sig = sig, FC_x_axis = result$FC_x,
+    data3 <- data.frame(Row.names = result$Row.names, sig = sig, Pattern = result$Pattern, FC_x_axis = result$FC_x,
                         FC_y_axis = result$FC_y, padj = result$FDR)
     if((sum(sig == 1) >= 1) && (sum(sig == 2) >= 1)){
       new.levels <- c( paste0(specific,"_high"), paste0(specific,"_low"), "NS" )
@@ -385,8 +420,10 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     
     data3$sig <- factor(data3$sig, labels = new.levels)
     return(data3)
+    }
   }
 }
+
 data_3degcount2 <- function(data3, Species, org){
   if(is.null(data3)){
     return(NULL)

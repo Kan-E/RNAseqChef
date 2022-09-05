@@ -1304,20 +1304,19 @@ shinyServer(function(input, output, session) {
   dds_batch <- reactive({
     count_files <- batch_files()
     count_list <- list()
+    withProgress(message = "DEG analysis",{
+      file_num <- length(names(count_files))
     for (name in names(count_files)) {
       count <- count_files[[name]]
       collist <- gsub("\\_.+$", "", colnames(count))
       if (input$DEG_method == "DESeq2") {
-        withProgress(message = "DESeq2",{
           group <- data.frame(con = factor(collist))
           dds<- DESeqDataSetFromMatrix(countData = round(count),colData = group, design = ~ con)
           dds$con <- factor(dds$con, levels = unique(collist))
           dds <- DESeq(dds)
-          incProgress(1)
-        })
+          incProgress(1/file_num, message = paste("DEG analysis of", name))
       }
       if (input$DEG_method == "edgeR") {
-        withProgress(message = "edgeR",{
           group <- factor(collist)
           dds <- DGEList(counts = count, group = group)
           keep <- filterByExpr(dds)
@@ -1325,11 +1324,11 @@ shinyServer(function(input, output, session) {
           dds <- calcNormFactors(dds)
           dds <- estimateCommonDisp(dds)
           dds <- estimateTagwiseDisp(dds)
-          incProgress(1)
-        })
+          incProgress(1/file_num, message = paste("DEG analysis of", name))
       }
       count_list[name] <- list(dds)
     }
+    })
     return(count_list)
   })
   
@@ -1337,11 +1336,11 @@ shinyServer(function(input, output, session) {
   deg_result_batch <- reactive({
     count_files <- batch_files()
     count_list <- list()
+    file_num <- length(names(count_files))
     for (name in names(count_files)) {
       count <- count_files[[name]]
       collist <- gsub("\\_.+$", "", colnames(count))
       if (input$DEG_method == "DESeq2") {
-        withProgress(message = "DESeq2",{
           dds <- dds_batch()[[name]]
           contrast <- c("con", unique(collist))
           res <- results(dds,  contrast = contrast)
@@ -1354,11 +1353,8 @@ shinyServer(function(input, output, session) {
             qvalue <- qvalue::qvalue(res$pvalue)
             res$padj <- qvalue$qvalues
           }
-          incProgress(1)
-        })
       }
       if (input$DEG_method == "edgeR") {
-        withProgress(message = "edgeR",{
           group <- factor(collist)
           dds <- dds_batch()[[name]]
           result <- exactTest(dds, pair = c(unique(group)[2],unique(group)[1]))
@@ -1372,11 +1368,9 @@ shinyServer(function(input, output, session) {
           if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
           if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}
           colnames(res) <- label
-          incProgress(1)
-        })
       }
       if(input$DEG_method == "EBSeq"){
-        withProgress(message = "EBSeq",{
+        withProgress(message = paste("DEG analysis of", name),{
           count <- data.matrix(count)
           vec <- c()
           for (i in 1:length(unique(collist))) {
@@ -3392,9 +3386,11 @@ shinyServer(function(input, output, session) {
     }
   })
   
+
+  
   # 3 conditions DEG ------------------------------------------------------------------------------
   MultiOut <- reactive({
-    withProgress(message = "EBSeq multiple comparison test takes a few minutes",{
+    withProgress(message = "EBSeq multiple comparison test takes 5 - 10 minutes",{
       count <- d_row_count_matrix2()
       collist <- gsub("\\_.+$", "", colnames(count))
       count <- data.matrix(count)
@@ -3889,7 +3885,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$cond3_GOIscatter <- renderPlot({
-    if(!is.null(input$cond3_GOIpair) && !is.null(input$GOI2)){
+    if(!is.null(input$cond3_GOIpair) && !is.null(input$cond3_scatter_yrange) && !is.null(input$cond3_scatter_xrange)){
     cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
                        result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
                        fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
@@ -5126,7 +5122,9 @@ shinyServer(function(input, output, session) {
             pdf_width <- 8
           }else pdf_width <- input$venn_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
-        print(p1)
+          dotplot_for_output(data = venn_enrich_viewer2(),
+                             plot_genelist = venn_enrich_H(), Gene_set = input$Gene_set9, 
+                             Species = input$Species7)
         dev.off()
         incProgress(1)
       })

@@ -732,7 +732,7 @@ keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2
                            geom_point() +
                            scale_color_continuous(low="red", high="blue",
                                                   guide=guide_colorbar(reverse=TRUE)) +
-                           scale_size(range=c(1, 6))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) +
+                           scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) +
                            scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
           }}
           for (name in unique(data3$sig)) {
@@ -1052,7 +1052,7 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
                             geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
-                            scale_size(range=c(1, 6))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL)+
+                            scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL)+
                             scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
             p <- plot_grid(p1)
             return(p)

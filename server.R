@@ -582,7 +582,7 @@ shinyServer(function(input, output, session) {
   
   # pair-wise volcano--------------
   GOI_list <- reactive({
-    withProgress(message = "Preparing GOI list",{
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
       data <- data_degcount()
       count <- deg_norm_count()
       if(is.null(d_row_count_matrix())){
@@ -1300,7 +1300,6 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  
   dds_batch <- reactive({
     count_files <- batch_files()
     count_list <- list()
@@ -1338,6 +1337,7 @@ shinyServer(function(input, output, session) {
     count_list <- list()
     file_num <- length(names(count_files))
     for (name in names(count_files)) {
+      if(name != "combined"){
       count <- count_files[[name]]
       collist <- gsub("\\_.+$", "", colnames(count))
       if (input$DEG_method == "DESeq2") {
@@ -1408,6 +1408,7 @@ shinyServer(function(input, output, session) {
         }
       }
       count_list[name] <- list(res)
+      }
     }
     return(count_list)
   })
@@ -1416,22 +1417,42 @@ shinyServer(function(input, output, session) {
   
   deg_norm_count_batch <- reactive({
     if(!is.null(norm_count_matrix())){
-      return(norm_count_matrix())
+      files <- norm_count_matrix()
+      files["combined"] <- list(batch_count_combined())
+      return(files)
     }else{
       count_files <- batch_files()
+      count_files["combined"] <- list(batch_count_combined())
       count_list <- list()
       for (name in names(count_files)) {
         count <- count_files[[name]]
         collist <- gsub("\\_.+$", "", colnames(count))
         group <- data.frame(con = factor(collist))
         if (input$DEG_method == "DESeq2") {
+          if(name != "combined"){
           dds <- dds_batch()[[name]]
           contrast <- c("con", unique(collist))
+          }else{
+            meta <- data.frame(condition = factor(collist))
+            dds<- DESeqDataSetFromMatrix(countData = round(count),colData = meta, design = ~ condition)
+            dds$meta <- factor(paste0(dds[[colnames(meta)[1]]], dds[[colnames(meta)[2]]]))
+            design(dds) <- ~ meta
+            dds <- DESeq(dds,test = "LRT", full = ~ meta, reduced = ~ 1)
+          }
           normalized_counts <- counts(dds, normalized=TRUE)
         }
         if (input$DEG_method == "edgeR") {
+          if(name != "combined"){
           dds <- dds_batch()[[name]]
           normalized_counts <- t(t(dds$pseudo.counts)*(dds$samples$norm.factors))
+          }else{
+            group <- factor(collist)
+            dds <- DGEList(counts = count, group = group)
+            keep <- filterByExpr(dds)
+            dds = dds[keep, , keep.lib.sizes=FALSE]
+            dds <- calcNormFactors(dds, method = "TMM")
+            normalized_counts <- cpm(dds)
+          }
         }
         if(input$DEG_method == "EBSeq"){
           count <- data.matrix(count)
@@ -1464,6 +1485,37 @@ shinyServer(function(input, output, session) {
       }
       return(count_list)
     }
+  })
+  
+  batch_count_combined <- reactive({
+    if(!is.null(batch_files())){
+      if(!is.null(norm_count_matrix())){
+        files <- norm_count_matrix()
+      }else{
+      files <- batch_files()
+      }
+      if(is.null(files)){
+        return(NULL)
+      }else{
+        matrix_list <- list()
+        for (name in names(files)) {
+          matrix <- as.data.frame(files[name])
+          matrix_2 <- matrix
+          matrix_3 <- merge(matrix, matrix_2, by = 0)[,-2:-(1 + length(colnames(matrix)))]
+          matrix_list[name] <- list(matrix_3)
+        }
+        base <- matrix_list[[1]]
+        int_matrix <- lapply(matrix_list[-1], function(i) base <<- merge(base, i, by = "Row.names"))
+        rownames(base) <- base$Row.names
+        base <- data.matrix(base[,-1])
+        colnames(base) <- gsub("\\.y$", "", colnames(base))
+        if(length(names(files)) == 1) {
+          colnames(base) <- gsub(names(files),"",colnames(base))
+          colnames(base) <- gsub("^\\.", "", colnames(base))
+        }
+        return(base)
+      }
+    }else return(NULL)
   })
   
   gene_ID_pair_batch <- reactive({
@@ -1500,6 +1552,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for (name in names(data1)) {
+        if(name != "combined"){
         data <- data1[[name]]
         count <- count1[[name]]
         if(str_detect(rownames(data)[1], "ENS")){
@@ -1568,6 +1621,7 @@ shinyServer(function(input, output, session) {
           genenames <- as.vector(data$Row.names)
         }
         deglist[name] <- list(data)
+        }
       }
       return(deglist)
     }
@@ -1581,6 +1635,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for (name in names(data1)) {
+        if(name != "combined"){
         data <- data1[[name]]
         count <- count1[[name]]
         collist <- factor(gsub("\\_.+$", "", colnames(count)))
@@ -1600,6 +1655,7 @@ shinyServer(function(input, output, session) {
           data3 <- dplyr::filter(data2, abs(data2$padj) < input$fdr)
           deglist[name]<- list(data3)
         }
+        }
       }
       return(deglist)
     }
@@ -1613,6 +1669,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for (name in names(data1)) {
+        if(name != "combined"){
         data <- data1[[name]]
         count <- count1[[name]]
         collist <- factor(gsub("\\_.+$", "", colnames(count)))
@@ -1636,6 +1693,7 @@ shinyServer(function(input, output, session) {
           }
         }
         deglist[name] <- list(up_all)
+        }
       }
       return(deglist)
     }
@@ -1649,6 +1707,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for (name in names(data1)) {
+        if(name != "combined"){
         data <- data1[[name]]
         count <- count1[[name]]
         collist <- factor(gsub("\\_.+$", "", colnames(count)))
@@ -1672,6 +1731,7 @@ shinyServer(function(input, output, session) {
           }
         }
         deglist[name] <- list(down_all)
+        }
       }
       return(deglist)
     }
@@ -1685,6 +1745,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       for (name in names(data1)) {
+        if(name != "combined"){
         data <- data1[[name]]
         count <- count1[[name]]
         if(str_detect(rownames(data)[1], "ENS")){
@@ -1732,6 +1793,7 @@ shinyServer(function(input, output, session) {
         }
         p <- plot_grid(m1, ht, rel_widths = c(2, 1))
         malist[[name]] <- p
+        }
       }
       return(malist)
     }
@@ -1769,28 +1831,30 @@ shinyServer(function(input, output, session) {
         down_c <- data_degcount_down_batch()
         ma_r <- ma_heatmap_plot_batch()
         pca_r <- pair_pca_plot_batch()
-        for(name in names(files)){
-          DEG <- paste0("DEG_result/" ,paste0(name, ".txt"))
-          norm_count <- paste0("normalized_count/" ,paste0(name, ".txt"))
-          UP <- paste0("up/" ,paste0(name, ".txt"))
-          DOWN <- paste0("down/" ,paste0(name, ".txt"))
-          MA <- paste0("MAplot/" ,paste0(name, ".pdf"))
-          PCA <- paste0("clustering/" ,paste0(name, ".pdf"))
-          fs <- c(fs, DEG, norm_count, UP, DOWN, MA, PCA)
-          deg <- deg_r[[name]]
-          norm <- norm_c[[name]]
-          up <- up_c[[name]]
-          down <- down_c[[name]]
-          write.table(deg, DEG, quote = F, row.names = T, sep = "\t")
-          write.table(norm, norm_count, quote = F, row.names = T, sep = "\t")
-          write.table(up, UP, quote = F, row.names = T, sep = "\t")
-          write.table(down, DOWN, quote = F, row.names = T, sep = "\t")
-          pdf(PCA, height = 3.5, width = 9)
-          print(pca_r[[name]])
-          dev.off()
-          pdf(MA, height = 4, width = 7)
-          print(ma_r[[name]])
-          dev.off()
+        for(name in names(norm_c)){
+            DEG <- paste0("DEG_result/" ,paste0(name, ".txt"))
+            norm_count <- paste0("normalized_count/" ,paste0(name, ".txt"))
+            UP <- paste0("up/" ,paste0(name, ".txt"))
+            DOWN <- paste0("down/" ,paste0(name, ".txt"))
+            MA <- paste0("MAplot/" ,paste0(name, ".pdf"))
+            PCA <- paste0("clustering/" ,paste0(name, ".pdf"))
+            fs <- c(fs, DEG, norm_count, UP, DOWN, MA, PCA)
+            deg <- deg_r[[name]]
+            norm <- norm_c[[name]]
+            up <- up_c[[name]]
+            down <- down_c[[name]]
+            if(name != "combined"){
+            write.table(deg, DEG, quote = F, row.names = T, sep = "\t")
+            write.table(up, UP, quote = F, row.names = T, sep = "\t")
+            write.table(down, DOWN, quote = F, row.names = T, sep = "\t")
+            pdf(MA, height = 4, width = 7)
+            print(ma_r[[name]])
+            dev.off() 
+            }
+            write.table(norm, norm_count, quote = F, row.names = T, sep = "\t")
+            pdf(PCA, height = 3.5, width = 9)
+            print(pca_r[[name]])
+            dev.off()
         }
         zip(zipfile=fname, files=fs)
       })
@@ -3820,7 +3884,7 @@ shinyServer(function(input, output, session) {
   )
   #3conditions GOI------------------------------------------------------
   GOI_list2 <- reactive({
-    withProgress(message = "Preparing GOI list",{
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
       count <- deg_norm_count2()
       if(is.null(d_row_count_matrix2())){
         return(NULL)
@@ -3862,7 +3926,7 @@ shinyServer(function(input, output, session) {
     if(is.null(d_row_count_matrix2())){
       return(NULL)
     }else{
-      withProgress(message = "Preparing GOI list",{
+      withProgress(message = "Preparing GOI list (about 10 sec)",{
         selectizeInput("GOI2", "genes of interest (GOI)", c(GOI_list2()),multiple = TRUE, options = list(delimiter = " ", create = T))
       })
     }
@@ -4470,7 +4534,7 @@ shinyServer(function(input, output, session) {
   })
   
   GOI_list3 <- reactive({
-    withProgress(message = "Preparing GOI list",{
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
       count <- d_norm_count_cutoff_uniqueID()
       if(is.null(count)){
         return(NULL)
@@ -4493,7 +4557,7 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      withProgress(message = "Preparing GOI list",{
+      withProgress(message = "Preparing GOI list (about 10 sec)",{
         selectizeInput("GOI3", "genes of interest (GOI)", c(GOI_list3()),multiple = TRUE, options = list(delimiter = " ", create = T))
       })
     }
@@ -4789,7 +4853,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       gene_list <- files_table()
-      venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 1.0, sncs = 1.0 )
+      venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)
     }
   })
   
@@ -4838,7 +4902,7 @@ shinyServer(function(input, output, session) {
             pdf_width <- 3
           }else pdf_width <- input$venn_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
-          print((venn::venn(gene_list, ilabels = TRUE, zcolor = "style", ilcs = 1.0, sncs = 1.0 )))
+          print((venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1, sncs = 1 )))
           dev.off()
           incProgress(1)
         })
@@ -5487,7 +5551,7 @@ shinyServer(function(input, output, session) {
   })
   
   GOI_DEG <- reactive({
-    withProgress(message = "Preparing GOI list",{
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
       count <- DEG_uniqueID()
       if(is.null(count)){
         return(NULL)
@@ -5510,7 +5574,7 @@ shinyServer(function(input, output, session) {
     if(is.null(DEG_uniqueID())){
       return(NULL)
     }else{
-      withProgress(message = "Preparing GOI list",{
+      withProgress(message = "Preparing GOI list (about 10 sec)",{
         selectizeInput("degGOI", "genes of interest (GOI)", c(GOI_DEG()),multiple = TRUE, options = list(delimiter = " ", create = T))
       })
     }

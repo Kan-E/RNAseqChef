@@ -893,7 +893,7 @@ shinyUI(
                  mainPanel(
                    tabsetPanel(
                      type = "tabs",
-                     tabPanel("Input gene lists",
+                     tabPanel("Venn diagram analysis",
                               fluidRow(
                                 column(4, downloadButton("download_vennplot", "Download venn diagram"))
                               ),

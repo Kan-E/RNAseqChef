@@ -582,7 +582,6 @@ shinyServer(function(input, output, session) {
   
   # pair-wise volcano--------------
   GOI_list <- reactive({
-    withProgress(message = "Preparing GOI list (about 10 sec)",{
       data <- data_degcount()
       count <- deg_norm_count()
       if(is.null(d_row_count_matrix())){
@@ -599,17 +598,31 @@ shinyServer(function(input, output, session) {
         }
         return(GOI)
       }
-      incProgress(1)
-    })
   })
   
   output$GOI <- renderUI({
-    if(is.null(d_row_count_matrix())){
+    if(is.null(deg_norm_count())){
       return(NULL)
     }else{
-      selectizeInput("GOI", "genes of interest (GOI)", c(GOI_list()),multiple = TRUE, options = list(delimiter = " ", create = T))
+      withProgress(message = "Preparing GOI list (about 10 sec)",{
+      selectizeInput("GOI", "genes of interest (GOI)", c(GOI_list()),multiple = TRUE, 
+                     options = list(delimiter = " ", create = T))
+      })
     }
   })
+  output$GOIreset_pair <- renderUI({
+      actionButton("GOIreset_pair", "GOI reset")
+  })
+  observeEvent(input$GOIreset_pair, {
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
+    updateSelectizeInput(session, "GOI", choices = c(GOI_list()), 
+                         selected = character(0),
+                         options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+  })
+  })
+  
+
+  
   output$volcano_x <- renderUI({
     sliderInput("xrange","X_axis range:",min = -100,
                 max=100, step = 1,
@@ -1048,8 +1061,8 @@ shinyServer(function(input, output, session) {
         } else{
           group1 <- as.data.frame(em_up)
           group2 <- as.data.frame(em_down)
-          group1$Group <- "Up"
-          group2$Group <- "Down"
+          group1$Group <- paste("Up", "\n(",length(dplyr::filter(data3, group == "Up")$ENTREZID),")",sep = "")
+          group2$Group <- paste("Down", "\n(",length(dplyr::filter(data3, group == "Down")$ENTREZID),")",sep = "")
           if(length(as.data.frame(em_up)$ID) != 0){
             if (length(group1$pvalue) > 5){
               group1 <- group1[sort(group1$pvalue, decreasing = F, index=T)$ix,]
@@ -1091,7 +1104,7 @@ shinyServer(function(input, output, session) {
                               geom_point() +
                               scale_color_continuous(low="red", high="blue",
                                                      guide=guide_colorbar(reverse=TRUE)) +
-                              scale_size(range=c(3, 8))+ theme_dose(font.size=8)+ylab(NULL)+xlab(NULL) + 
+                              scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) + 
                               scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
             }}else p1 <- NULL
         }
@@ -1100,9 +1113,9 @@ shinyServer(function(input, output, session) {
           p4 <- NULL
         } else{
           if (length(as.data.frame(em3)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F))
+            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14))
           }else{
-            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F))
+            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14))
           }
         }
         p <- plot_grid(p1, p4, nrow = 1)
@@ -1285,9 +1298,9 @@ shinyServer(function(input, output, session) {
     if(is.null(input$file11)){
       if(input$goButton > 0 ){
         df <- list()
-        df["day0"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day0.txt",header = T, row.names = 1))
-        df["day1"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day1.txt",header = T, row.names = 1))
-        df["day5"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/day5.txt",header = T, row.names = 1))
+        df["day0"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/iwat-raw/day0.txt",header = T, row.names = 1))
+        df["day1"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/iwat-raw/day1.txt",header = T, row.names = 1))
+        df["day5"] <- list(read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/iwat-raw/day5.txt",header = T, row.names = 1))
         return(df)
       }
       return(NULL)
@@ -2238,7 +2251,8 @@ shinyServer(function(input, output, session) {
           rownames(meta) <- colnames(count)
           clusters <- degPatterns(cluster_rlog, metadata = meta, time = "condition", col=colnames(meta)[2], plot = FALSE)
         }
-        
+        rownames(clusters$df) <- rownames(cluster_rlog)
+        clusters$df$genes <- rownames(cluster_rlog)
         return(clusters)
       })
     }
@@ -2274,12 +2288,12 @@ shinyServer(function(input, output, session) {
         if (input$multi_data_file_type == "Row1"){
           p <- degPlotCluster(table, time = "condition", process = TRUE)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
-            theme_bw()+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+            theme_bw(base_size = 15)+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
         else{
           p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
-            theme_bw()+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+            theme_bw(base_size = 15)+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
         return(p)
       })
@@ -2306,7 +2320,6 @@ shinyServer(function(input, output, session) {
   
   multi_pattern_extract <- reactive({
     data <- as.data.frame(multi_deg_norm_count())
-    count <- multi_d_row_count_matrix()
     clusters <- multi_pattern2()$df
     if(is.null(data) || is.null(clusters)){
       return(NULL)
@@ -2598,12 +2611,12 @@ shinyServer(function(input, output, session) {
         if (input$multi_data_file_type == "Row1"){
           p <- degPlotCluster(table, time = "condition", process = TRUE)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
-            theme_bw()+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+            theme_bw(base_size = 15)+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
         else{
           p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
-            theme_bw()+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+            theme_bw(base_size = 15)+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
         return(p)
       })
@@ -2831,9 +2844,9 @@ shinyServer(function(input, output, session) {
           p4 <- NULL
         } else{
           if (length(as.data.frame(em3)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F))
+            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14))
           }else{
-            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F))
+            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14))
           }
         }
         p <- plot_grid(p4, nrow = 1)
@@ -3884,7 +3897,6 @@ shinyServer(function(input, output, session) {
   )
   #3conditions GOI------------------------------------------------------
   GOI_list2 <- reactive({
-    withProgress(message = "Preparing GOI list (about 10 sec)",{
       count <- deg_norm_count2()
       if(is.null(d_row_count_matrix2())){
         return(NULL)
@@ -3900,8 +3912,6 @@ shinyServer(function(input, output, session) {
         }
         return(GOI)
       }
-      incProgress(1)
-    })
   })
   
   cond3_specific_group <- reactive({
@@ -3930,6 +3940,16 @@ shinyServer(function(input, output, session) {
         selectizeInput("GOI2", "genes of interest (GOI)", c(GOI_list2()),multiple = TRUE, options = list(delimiter = " ", create = T))
       })
     }
+  })
+  output$GOIreset_cond3 <- renderUI({
+    actionButton("GOIreset_cond3", "GOI reset")
+  })
+  observeEvent(input$GOIreset_cond3, {
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
+    updateSelectizeInput(session, "GOI2", choices = c(GOI_list2()), 
+                         selected = character(0),
+                         options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+    })
   })
   
   output$cond3_xrange <- renderUI({
@@ -4534,7 +4554,6 @@ shinyServer(function(input, output, session) {
   })
   
   GOI_list3 <- reactive({
-    withProgress(message = "Preparing GOI list (about 10 sec)",{
       count <- d_norm_count_cutoff_uniqueID()
       if(is.null(count)){
         return(NULL)
@@ -4550,7 +4569,6 @@ shinyServer(function(input, output, session) {
         }
         return(GOI)
       }
-    })
   })
   
   output$GOI3 <- renderUI({
@@ -4561,6 +4579,16 @@ shinyServer(function(input, output, session) {
         selectizeInput("GOI3", "genes of interest (GOI)", c(GOI_list3()),multiple = TRUE, options = list(delimiter = " ", create = T))
       })
     }
+  })
+  output$GOIreset_norm <- renderUI({
+    actionButton("GOIreset_norm", "GOI reset")
+  })
+  observeEvent(input$GOIreset_norm, {
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
+    updateSelectizeInput(session, "GOI3", choices = c(GOI_list3()), 
+                         selected = character(0),
+                         options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+    })
   })
   
   norm_GOIcount <- reactive({
@@ -5579,6 +5607,17 @@ shinyServer(function(input, output, session) {
       })
     }
   })
+  output$GOIreset_deg <- renderUI({
+    actionButton("GOIreset_deg", "GOI reset")
+  })
+  observeEvent(input$GOIreset_deg, {
+    withProgress(message = "Preparing GOI list (about 10 sec)",{
+      updateSelectizeInput(session, "degGOI", choices = c(GOI_DEG()), 
+                           selected = character(0),
+                           options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+    })
+  })
+  
   
   output$deg_volcano_x <- renderUI({
     sliderInput("deg_xrange","X_axis range:",min = -100,

@@ -697,12 +697,13 @@ keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2
               cnet_list2 <- NULL
             }else{
               H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+              sum <- length(data4$ENTREZID[data4$sig == name])
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
               cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
-              cnet1$Group <- name
+              cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
               cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
               cnet1 <- cnet1[1:5,]
               cnet_list2[[name]] = cnet1
@@ -813,6 +814,7 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
         dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="HALLMARK_", replacement = "")
       H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
+      H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="P53", replacement = "p53")
     }
     if(Gene_set == "KEGG"){
       H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CP:KEGG") %>%
@@ -906,7 +908,6 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Rna_", replacement = "RNA_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mrna_", replacement = "mRNA_")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="E2f", replacement = "E2F")
-    H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="P53", replacement = "p53")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="G2m", replacement = "G2M")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Mtorc", replacement = "mTORC")
     H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Ecm_", replacement = "ECM_")
@@ -980,11 +981,12 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
           for (name in unique(data3$Group)) {
+            sum <- length(data3$ENTREZID[data3$Group == name])
             em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) != 0) {
               if(length(colnames(as.data.frame(em))) == 9){
                 cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
-                cnet1$Group <- name
+                cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
                 df <- rbind(df, cnet1)
               }
             }
@@ -1022,11 +1024,12 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
           for (name in unique(data$Group)) {
+            sum <- length(data$ENTREZID[data$Group == name])
             em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) != 0) {
               if(length(colnames(as.data.frame(em))) == 9){
                 cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
-                cnet1$Group <- name
+                cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
                 cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
                 if (length(cnet1$pvalue) > showCategory){
                   cnet1 <- cnet1[1:showCategory,]

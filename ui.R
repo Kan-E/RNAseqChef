@@ -254,7 +254,7 @@ shinyUI(
                               ),
                               fluidRow(
                                 column(4, htmlOutput("GOI")),
-                                column(4, htmlOutput("volcano_x")),
+                                column(4, htmlOutput("volcano_x"), htmlOutput("GOIreset_pair")),
                                 column(4, htmlOutput("volcano_y"))
                               ),
                               fluidRow(
@@ -467,7 +467,7 @@ shinyUI(
                               ),
                               fluidRow(
                                 column(4, htmlOutput("GOI2"), htmlOutput("cond3_GOI_pair")),
-                                column(4, htmlOutput("cond3_xrange")),
+                                column(4, htmlOutput("cond3_xrange"), htmlOutput("GOIreset_cond3")),
                                 column(4, htmlOutput("cond3_yrange"))
                               ),
                               fluidRow(
@@ -1096,7 +1096,7 @@ shinyUI(
                                 column(4, downloadButton("download_norm_GOIheat", "Download heatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("GOI3")),
+                                column(4, htmlOutput("GOI3"), htmlOutput("GOIreset_norm")),
                                 column(8, plotOutput("norm_GOIheatmap"))
                               ),
                               div(
@@ -1282,7 +1282,7 @@ shinyUI(
                                          ),
                                          fluidRow(
                                            column(4, htmlOutput("degGOI")),
-                                           column(4, htmlOutput("deg_volcano_x")),
+                                           column(4, htmlOutput("deg_volcano_x"),htmlOutput("GOIreset_deg")),
                                            column(4, htmlOutput("deg_volcano_y"))
                                          ),
                                          fluidRow(

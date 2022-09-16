@@ -2314,7 +2314,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       clusters$cluster <- paste0("Group",clusters$cluster)
-      selectInput("multi_selectfile1", "cluster_list", choices = c("not selected", unique(clusters$cluster)), selected = "not selected",multiple = F)
+      selectInput("multi_selectfile1", "cluster_list", choices = c(unique(clusters$cluster)), multiple = F)
     }
   })
   
@@ -2358,7 +2358,7 @@ shinyServer(function(input, output, session) {
       clusters
     }
   })
-  output$multi_pattern1_count <- DT::renderDataTable({
+  output$multi_pattern1_count <- DT::renderDT({
     res <- multi_pattern_extract()
     return(res)
   })
@@ -2378,8 +2378,52 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {write.table(multi_pattern_extract(), file, quote = F, row.names = T, sep = "\t")})
   
+  multi_GOIbox <- reactive({
+    if(!is.null(input$multi_pattern1_count_rows_selected)){
+    data <- multi_pattern_extract()[input$multi_pattern1_count_rows_selected,]
+    if(input$Species6 != "not selected"){
+      if(str_detect(rownames(data)[1], "ENS")){
+        rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
+    }
+    return(data)
+  }
+  })
+  
+  output$multi_pattern_boxplot <- renderPlot({
+    if(!is.null(input$multi_pattern1_count_rows_selected)){
+      GOIboxplot(data = multi_GOIbox())
+    }
+  })
+  
+  output$download_deg_pattern_boxplot = downloadHandler(
+    filename = function(){
+      paste(paste(download_multi_overview_dir(), input$multi_selectfile1, sep = "_"), 
+            "_boxplot.pdf", sep = "_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- multi_GOIbox()
+        rowlist <- rownames(data)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
+        print(GOIboxplot(data = data))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
   
   
+  observeEvent(input$multi_pattern1_count_rows_selected, ({
+    updateCollapse(session,id =  "multi_collapse_panel1", open="multi_deg_pattern_boxplot_panel")
+  }))
   
   output$download_multi_boxplot = downloadHandler(
     filename = function(){
@@ -2704,7 +2748,7 @@ shinyServer(function(input, output, session) {
     if(is.null(clusters)){
       return(NULL)
     }else{
-      selectInput("multi_selectfile2", "cluster_list", choices = c("not selected", unique(clusters$Cluster)), selected = "not selected",multiple = F)
+      selectInput("multi_selectfile2", "cluster_list", choices = c(unique(clusters$Cluster)), multiple = F)
     }
   })
   
@@ -2714,7 +2758,7 @@ shinyServer(function(input, output, session) {
     if(is.null(clusters)){
       return(NULL)
     }else{
-      if(input$multi_selectfile2 == "not selected" || is.null(input$multi_selectfile2)){
+      if(is.null(input$multi_selectfile2)){
         return(NULL)
       }else{
         cluster_name <- input$multi_selectfile2
@@ -2725,8 +2769,26 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$multi_pattern2_count <- DT::renderDataTable({
-    if(input$multi_selectfile2 == "not selected" || is.null(input$multi_selectfile2)){
+  multi_kmeans_extract<- reactive({
+    if(is.null(input$multi_selectfile2)){
+      return(NULL)
+    }else{
+      clusters <- multi_kmeans_pattern_extract()
+      data <- as.data.frame(multi_deg_norm_count())
+      if(input$Species6 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")){
+          data <- data.frame(SYMBOL=data$SYMBOL, row.names = rownames(data))
+          clusters <- merge(clusters,data, by=0)
+          rownames(clusters) <- clusters$Row.names
+          clusters <- clusters[,-1]
+        }
+      }
+      return(clusters)
+    }
+  })
+  
+  output$multi_pattern2_count <- DT::renderDT({
+    if(is.null(input$multi_selectfile2)){
       return(NULL)
     }else{
       clusters <- multi_kmeans_pattern_extract()
@@ -2742,12 +2804,61 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  
+  multi_kmeans_GOIbox <- reactive({
+    if(!is.null(input$multi_pattern2_count_rows_selected)){
+      data <- multi_kmeans_extract()[input$multi_pattern2_count_rows_selected,]
+      if(input$Species6 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")){
+          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+          data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
+      }
+      return(data)
+    }
+  })
+  
+  output$multi_kmeans_GOIboxplot <- renderPlot({
+    if(!is.null(input$multi_pattern2_count_rows_selected)){
+      GOIboxplot(data = multi_kmeans_GOIbox())
+    }
+  })
+  
+  output$download_deg_kmeans_boxplot = downloadHandler(
+    filename = function(){
+      paste(paste(download_multi_overview_dir(), input$multi_selectfile2, sep = "_"), 
+            "_boxplot.pdf", sep = "_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- multi_kmeans_GOIbox()
+        rowlist <- rownames(data)
+        if(input$multi_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$multi_pdf_height
+        if(input$multi_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$multi_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
+        print(GOIboxplot(data = data))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  
+  observeEvent(input$multi_pattern2_count_rows_selected, ({
+    updateCollapse(session,id =  "multi_collapse_panel2", open="multi_deg_kmeans_boxplot_panel")
+  }))
+  
+  
   output$download_deg_kmeans_pattern_count = downloadHandler(
     filename = function() {
       paste(paste(download_multi_overview_dir(),input$multi_selectfile2, sep = "_"), 
             "kmeans_count_table.txt", sep = "_")
     },
-    content = function(file){write.table(multi_kmeans_pattern_extract(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_kmeans_extract(), file, row.names = T, sep = "\t", quote = F)}
   )
   
   #Multi DEG enrichment------------
@@ -4813,9 +4924,64 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$norm_kmeans_count_table <- DT::renderDataTable({
+  output$norm_kmeans_count_table <- renderDT({
     norm_kmeans_cluster()
   })
+  
+  
+  norm_kmeans_GOIbox <- reactive({
+    if(!is.null(input$norm_kmeans_count_table_rows_selected)){
+      data <- norm_kmeans_cluster()[input$norm_kmeans_count_table_rows_selected,]
+      if(input$Species3 != "not selected"){
+        if(str_detect(rownames(data)[1], "ENS")){
+          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+          data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
+      }
+      data <- data[, - which(colnames(data) == "Cluster")]
+      return(data)
+    }
+  })
+  
+  output$norm_kmeans_box <- renderPlot({
+    if(!is.null(input$norm_kmeans_count_table_rows_selected)){
+      GOIboxplot(data = norm_kmeans_GOIbox())
+    }
+  })
+  
+  output$download_norm_kmeans_box = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "_boxplot.pdf")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- norm_kmeans_GOIbox()
+        rowlist <- rownames(data)
+        if(input$norm_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$norm_pdf_height
+        if(input$norm_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$norm_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
+        print(GOIboxplot(data = data))
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  
+  observeEvent(input$norm_kmeans_count_table_rows_selected, ({
+    updateCollapse(session,id =  "norm_kmeans_collapse_panel", open="kmeans_box_panel")
+  }))
+  observeEvent(norm_count_input(), ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
+  }))
+  observeEvent(norm_metadata(), ({
+    updateCollapse(session,id =  "norm_input_collapse_panel", open="norm_Metadata_panel")
+  }))
+  
   
   output$download_norm_kmeans_cluster = downloadHandler(
     filename = function() {
@@ -5096,16 +5262,26 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  output$GOIbox_venn <- renderPlot({
+    if(!is.null(input$integrated_count_table_rows_selected)){
+      data <- as.data.frame(integrated_count())
+    GOIboxplot(data = data[input$integrated_count_table_rows_selected,])
+    }
+  })
+  
   output$intheatmap <- renderPlot({
     print(integrated_heatmap())
   })
-  output$integrated_count_table <- renderDataTable({
+  output$integrated_count_table <- renderDT({
     integrated_count()
   })
   output$integrated_count_z_table <- renderDataTable({
     integrated_count_z()
   })
   
+  observeEvent(input$integrated_count_table_rows_selected, ({
+    updateCollapse(session,id =  "int_result_collapse_panel", open="integrated_count_box_panel")
+  }))
   
   output$download_venn_result = downloadHandler(
     filename ="venn_result.txt",
@@ -5113,15 +5289,21 @@ shinyServer(function(input, output, session) {
   )
   
   output$download_integrated_count_table = downloadHandler(
-    filename ="integrated_count_table.txt",
+    filename = function(){
+      paste(input$selectfile, "integrated_count_table.txt", sep="_")
+    },
     content = function(file){write.table(integrated_count(), file, row.names = T, sep = "\t", quote = F)}
   )
   output$download_integrated_z_count_table = downloadHandler(
-    filename ="integrated_zscored_count_table.txt",
+    filename = function(){
+      paste(input$selectfile, "integrated_zscored_count_table.txt", sep="_")
+    },
     content = function(file){write.table(integrated_count_z(), file, row.names = T, sep = "\t", quote = F)}
   )
   output$download_integrated_heatmap = downloadHandler(
-    filename ="integrated_heatmap.pdf",
+    filename = function(){
+      paste(input$selectfile, "integrated_heatmap.pdf", sep="_")
+    },
     content = function(file){
       withProgress(message = "Preparing download",{
         if(input$venn_pdf_height == 0){
@@ -5132,6 +5314,28 @@ shinyServer(function(input, output, session) {
         }else pdf_width <- input$venn_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
         print(integrated_heatmap())
+        dev.off()
+        incProgress(1)
+      })
+    }
+  )
+  
+  output$download_GOIbox_venn = downloadHandler(
+    filename = function(){
+      paste(input$selectfile, "boxplot.pdf", sep="_")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        data <- as.data.frame(integrated_count())
+        rowlist <- rownames(data[input$integrated_count_table_rows_selected,])
+        if(input$venn_pdf_height == 0){
+          pdf_height <- pdf_h(rowlist)
+        }else pdf_height <- input$venn_pdf_height
+        if(input$venn_pdf_width == 0){
+          pdf_width <- pdf_w(rowlist)
+        }else pdf_width <- input$venn_pdf_width
+        pdf(file, height = pdf_height, width = pdf_width)
+        print(GOIboxplot(data = data[input$integrated_count_table_rows_selected,]))
         dev.off()
         incProgress(1)
       })

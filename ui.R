@@ -408,7 +408,7 @@ shinyUI(
                                          bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                          value="D_row_count_matrix_panel2",
                                                          fluidRow(
-                                                           column(4, downloadButton("download_cond3_d_row_count", "Download defined row count"))
+                                                           column(4, downloadButton("download_cond3_d_row_count", "Download defined raw count"))
                                                          ),
                                                          dataTableOutput('D_Row_count_matrix2')
                                          )
@@ -688,6 +688,7 @@ shinyUI(
                                 plotOutput("multi_boxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
+                              bsCollapse(id="multi_collapse_panel1",open="multi_deg_pattern_count_panel",multiple = TRUE,
                               bsCollapsePanel(title="DEG_pattern:",
                                               value="multi_deg_pattern_panel",
                                               fluidRow(
@@ -701,30 +702,46 @@ shinyUI(
                                                 column(4, htmlOutput("multi_select_file1")),
                                                 column(4, downloadButton("download_deg_pattern_count", "Download DEG pattern normalized count data"))
                                               ),
-                                              dataTableOutput("multi_pattern1_count")
+                                              DTOutput("multi_pattern1_count")
                               ),
-                              fluidRow(
-                                column(4, htmlOutput("multi_whichGroup1_1")),
-                                column(4, htmlOutput("Gene_set7")),
-                                column(4, downloadButton("download_multi_cluster_enrichment", "Download dot plot"))
+                              bsCollapsePanel(title= p(span("Boxplot"),span(icon("info-circle"), id = "icon_multi_boxplot", 
+                                                                                 options = list(template = popoverTempate))),
+                                              bsPopover("icon_multi_boxplot", "Boxplot of GOI:", 
+                                                        content=paste("Please select genes in", strong("DEG_pattern_normalized_count_data"),".<br><br>",
+                                                                      img(src="multi_GOIboxplot.png", width = 450,height = 640)), 
+                                                        placement = "right",options = list(container = "body")),
+                                              value="multi_deg_pattern_boxplot_panel",
+                                              fluidRow(
+                                                column(4, downloadButton("download_deg_pattern_boxplot", "Download boxplot"))
+                                              ),
+                                              plotOutput("multi_pattern_boxplot")
                               ),
-                              fluidRow(
-                                column(4, textOutput("multi_Spe"),
-                                       tags$head(tags$style("#multi_Spe{color: red;
+                              bsCollapsePanel(title="Enrichment analysis:",
+                                              value="multi_deg_pattern_enrichment_panel",
+                                              fluidRow(
+                                                column(4, htmlOutput("multi_whichGroup1_1")),
+                                                column(4, htmlOutput("Gene_set7")),
+                                                column(4, downloadButton("download_multi_cluster_enrichment", "Download dot plot"))
+                                              ),
+                                              fluidRow(
+                                                column(4, textOutput("multi_Spe"),
+                                                       tags$head(tags$style("#multi_Spe{color: red;
                                          font-size: 20px;
                                          font-style: bold;
                                       }")))
-                              ),
-                              plotOutput("multi_enrichment3"),
-                              fluidRow(
-                                column(4, htmlOutput("multi_whichGroup1_2")),
-                                column(4, downloadButton("download_multi_enrichment_cnet", "Download cnet plot"))
-                              ),
-                              plotOutput("multi_enrichment4"),
-                              fluidRow(
-                                column(4, downloadButton("download_multi_enrichment_table", "Download enrichment result"))
-                              ),
-                              dataTableOutput('multi_enrichment_result')
+                                              ),
+                                              plotOutput("multi_enrichment3"),
+                                              fluidRow(
+                                                column(4, htmlOutput("multi_whichGroup1_2")),
+                                                column(4, downloadButton("download_multi_enrichment_cnet", "Download cnet plot"))
+                                              ),
+                                              plotOutput("multi_enrichment4"),
+                                              fluidRow(
+                                                column(4, downloadButton("download_multi_enrichment_table", "Download enrichment result"))
+                                              ),
+                                              dataTableOutput('multi_enrichment_result')
+                              )
+                              )
                      ),
                      tabPanel("k-means clustering",
                               fluidRow(
@@ -746,8 +763,9 @@ shinyUI(
                                 plotOutput("multi_kmeans_boxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
+                              bsCollapse(id="multi_collapse_panel2",open="multi_deg_kmeans_pattern_count_panel",multiple = TRUE,
                               bsCollapsePanel(title="kmeans_result:",
-                                              value="multi_deg_kmeans_pattern_count_panel",
+                                              value="multi_deg_kmeans_pattern_panel",
                                               fluidRow(
                                                 column(4, downloadButton("download_multi_kmeans_cluster", "Download k-means clustering result"))
                                               ),
@@ -759,31 +777,46 @@ shinyUI(
                                                 column(4, htmlOutput("multi_select_file2")),
                                                 column(4, downloadButton("download_deg_kmeans_pattern_count", "Download DEG pattern normalized count data"))
                                               ),
-                                              dataTableOutput("multi_pattern2_count")
+                                              DTOutput("multi_pattern2_count")
                               ),
-                              
-                              fluidRow(
-                                column(4, htmlOutput("multi_whichGroup2_1")),
-                                column(4, htmlOutput("Gene_set8")),
-                                column(4, downloadButton("download_multi_cluster_enrichment2", "Download dot plot"))
+                              bsCollapsePanel(title= p(span("Boxplot"),span(icon("info-circle"), id = "icon_multi_boxplot2", 
+                                                                            options = list(template = popoverTempate))),
+                                              bsPopover("icon_multi_boxplot2", "Boxplot of GOI:", 
+                                                        content=paste("Please select genes in", strong("cluster_normalized_count_data"),".<br><br>",
+                                                                      img(src="multi_GOIboxplot2.png", width = 450,height = 640)), 
+                                                        placement = "right",options = list(container = "body")),
+                                              value="multi_deg_kmeans_boxplot_panel",
+                                              fluidRow(
+                                                column(4, downloadButton("download_deg_kmeans_boxplot", "Download boxplot"))
+                                              ),
+                                              plotOutput("multi_kmeans_GOIboxplot")
                               ),
-                              fluidRow(
-                                column(4, textOutput("multi_Spe2"),
-                                       tags$head(tags$style("#multi_Spe2{color: red;
+                              bsCollapsePanel(title="Enrichment analysis:",
+                                              value="multi_deg_kmeans_pattern_enrichment_panel",
+                                              fluidRow(
+                                                column(4, htmlOutput("multi_whichGroup2_1")),
+                                                column(4, htmlOutput("Gene_set8")),
+                                                column(4, downloadButton("download_multi_cluster_enrichment2", "Download dot plot"))
+                                              ),
+                                              fluidRow(
+                                                column(4, textOutput("multi_Spe2"),
+                                                       tags$head(tags$style("#multi_Spe2{color: red;
                                          font-size: 20px;
                                          font-style: bold;
                                       }")))
-                              ),
-                              plotOutput("multi_enrichment5"),
-                              fluidRow(
-                                column(4, htmlOutput("multi_whichGroup2_2")),
-                                column(4, downloadButton("download_multi_enrichment_cnet2", "Download cnet plot"))
-                              ),
-                              plotOutput("multi_enrichment6"),
-                              fluidRow(
-                                column(4, downloadButton("download_multi_enrichment_table2", "Download enrichment result"))
-                              ),
-                              dataTableOutput('multi_enrichment_result2')
+                                              ),
+                                              plotOutput("multi_enrichment5"),
+                                              fluidRow(
+                                                column(4, htmlOutput("multi_whichGroup2_2")),
+                                                column(4, downloadButton("download_multi_enrichment_cnet2", "Download cnet plot"))
+                                              ),
+                                              plotOutput("multi_enrichment6"),
+                                              fluidRow(
+                                                column(4, downloadButton("download_multi_enrichment_table2", "Download enrichment result"))
+                                              ),
+                                              dataTableOutput('multi_enrichment_result2')
+                              )
+                              )
                      ),
                      tabPanel("GSEA",
                               fluidRow(
@@ -911,14 +944,24 @@ shinyUI(
                                          bsCollapsePanel(title="integrated normalized count:",
                                                          value="integrated_count_panel",
                                                          downloadButton("download_integrated_count_table", "Download integrated count table"),
-                                                         dataTableOutput("integrated_count_table")
+                                                         DTOutput("integrated_count_table")
                                          ),
                                          bsCollapsePanel(title="integrated zscored normalized count:",
                                                          value="integrated_z_count_panel",
                                                          downloadButton("download_integrated_z_count_table", "Download integrated zscored count table"),
                                                          dataTableOutput("integrated_count_z_table")
+                                         ),
+                                         bsCollapsePanel(title= p(span("Boxplot"),span(icon("info-circle"), id = "icon_venn_boxplot", 
+                                                options = list(template = popoverTempate))),
+                                                bsPopover("icon_venn_boxplot", "Boxplot of GOI:", 
+                                                          content=paste("Please select genes in", strong("integrated normalized count table"),".<br><br>",
+                                                                        img(src="venn_boxplot.png", width = 450,height = 640)), 
+                                                          placement = "right",options = list(container = "body")),
+                                                         value="integrated_count_box_panel",
+                                                         downloadButton("download_GOIbox_venn", "Download boxplot"),
+                                                         plotOutput("GOIbox_venn")
                                          )
-                              )
+                              ),
                      ),
                      tabPanel("Enrichment analysis",
                               fluidRow(
@@ -1114,8 +1157,23 @@ shinyUI(
                                        downloadButton("download_norm_kmeans_heatmap", "Download heatmap")),
                                 column(8, plotOutput("norm_kmeans_heatmap"))
                               ),
-                              downloadButton("download_norm_kmeans_cluster", "Download k-means clustering result"),
-                              dataTableOutput("norm_kmeans_count_table")
+                              bsCollapse(id="norm_kmeans_collapse_panel",open="norm_kmeans_count",multiple = TRUE,
+                              bsCollapsePanel(title="k-means clustering result:",
+                                              value="norm_kmeans_count",
+                                              downloadButton("download_norm_kmeans_cluster", "Download k-means clustering result"),
+                                              DTOutput("norm_kmeans_count_table")
+                              ),
+                              bsCollapsePanel(title= p(span("Boxplot"),span(icon("info-circle"), id = "icon_norm_kmeans_boxplot", 
+                                                                            options = list(template = popoverTempate))),
+                                              bsPopover("icon_norm_kmeans_boxplot", "Boxplot of GOI:", 
+                                                        content=paste("Please select genes in", strong("k-means clustering result"),".<br><br>",
+                                                                      img(src="norm_GOIboxplot.png", width = 450,height = 640)), 
+                                                        placement = "right",options = list(container = "body")),
+                                              value="kmeans_box_panel",
+                                              downloadButton("download_norm_kmeans_box", "Download boxplot"),
+                                              plotOutput("norm_kmeans_box")
+                              )
+                              )
                      )
                    )
                  )
@@ -1354,7 +1412,7 @@ shinyUI(
                           fluidRow(
                             column(10,
                                    h2("To cite RNAseqChef:"),
-                                   p(strong("Web tool:"),br(), "Kan Etoh: RNAseqChef (2022)", a("https://kan-e.shinyapps.io/RNAseqChef/",href="https://kan-e.shinyapps.io/RNAseqChef/")),
+                                   p(strong("Web tool:"),br(), "Kan Etoh: RNAseqChef (2022)", a("https://imeg-ku.shinyapps.io/RNAseqChef/",href="https://imeg-ku.shinyapps.io/RNAseqChef/")),
                                    p(strong("Source code:"),br(), "Kan Etoh: RNAseqChef: web application for automated, systematic, and integrated RNA-seq differential expression analysis. (2022)", a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),
                                    br(),
                                    h2("Reference:"),

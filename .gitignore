@@ -43,3 +43,7 @@ RNAseqChef-Japanese.Rmd
 .DS_Store
 .Rhistory
 .Rhistory 2
+rsconnect/shinyapps.io/kan-e/RNAseqChef.dcf
+rsconnect/shinyapps.io/imeg-ku/RNAseqChef.dcf
+rsconnect/documents/RNAseqChef_app.R/shinyapps.io/kan-e/RNAseqChef.dcf
+*.dcf

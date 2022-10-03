@@ -3418,13 +3418,14 @@ shinyServer(function(input, output, session) {
     tmp <- input$norm_file2$datapath
     df <- read_df(tmp = tmp)
     if(!is.null(df)){
+      df <- anno_rep(df)
       if(input$Species2 != "not selected"){
         if(str_detect(rownames(df)[1], "ENS")){
           rownames(df) < gsub("\\..*","", rownames(df))
         }
       }
-    }
-    return(anno_rep(df))
+    }else df <- NULL
+    return(df)
   })
   
   d_row_count_matrix2 <- reactive({

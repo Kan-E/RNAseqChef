@@ -40,6 +40,11 @@ library(clusterProfiler.dplyr)
 library(dorothea)
 library(umap)
 library(biomaRt)
+library(monaLisa)
+library(GenomicRanges)
+library(BiocParallel)
+library(SummarizedExperiment)
+library(JASPAR2020)
 options(repos = BiocManager::repositories())
 
 msigdbr_species <- msigdbr_species()$species_name
@@ -77,9 +82,45 @@ read_gene_list <- function(tmp){
     if(str_detect(colnames(df)[1], "^X\\.")){
       colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
     }
+    if(rownames(df)[1] == 1){
+      df <- data.frame(Gene = df[,1], Group = df[,2])
+    }else{
+      df <- data.frame(Gene = rownames(df), Group = df[,1])
+    }
     return(df)
   }
 }
+anno_rep <- function(row){
+  if(!str_detect(colnames(row)[1], "_1")){
+    colnames(row) <- gsub("\\.[0-9]+$", "", colnames(row))
+    total <- length(colnames(row))
+    unique_col <- unique(colnames(row))
+    cond1 <- length(which(colnames(row) == unique_col[1]))
+    cond2 <- length(which(colnames(row) == unique_col[2]))
+    for(i in 1:cond1){
+      colnames(row)[i] <- paste0(colnames(row)[i], "_", i)
+    }
+    for(i in 1:cond2){
+      colnames(row)[(cond1 + i)] <- paste0(colnames(row)[(cond1 + i)], "_", i)
+    }
+  }
+  return(row)
+}
+anno_rep_meta <- function(meta){
+  if(!str_detect(meta[1,1], "_1")){
+    total <- length(meta[,1])
+    cond1 <- length(which(meta[,1] == unique(meta[,1])[1]))
+    cond2 <- length(which(meta[,1] == unique(meta[,1])[2]))
+    for(i in 1:cond1){
+      meta[i,1] <- paste0(meta[i,1], "_", i)
+    }
+    for(i in 1:cond2){
+      meta[(cond1 + i),1] <- paste0(meta[(cond1 + i),1], "_", i)
+    }
+  }
+  return(meta)
+}
+
 gene_list_convert_for_enrichment <- function(data, Species){
     if(is.null(data) || Species == "not selected"){
       return(NULL)
@@ -542,7 +583,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     labs_data<-  labs_data[sort(labs_data$FC_xy, decreasing = T, index=T)$ix,]
     labs_data <- dplyr::filter(labs_data, sig != "NS")
     labs_data2 <- utils::head(labs_data, 20)
-    font.label <- data.frame(size=5, color="black", face = "plain")
+    font.label <- data.frame(size=7.5, color="black", face = "bold.italic")
     set.seed(42)
     FC_x <- FC_y <- Row.names <- padj <- NULL
     p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
@@ -607,16 +648,16 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
         if(Species != "not selected"){
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
           p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),
-                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
         }else{
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
           p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
-                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
         }
       }else{
         p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
         p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
-                                          box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1)
+                                          box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
       }
     }
     if(heatmap == TRUE){
@@ -639,141 +680,122 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     return(p)
   }
 }
-enrichment3_1 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g){
-  if(!is.null(Gene_set) && Species != "not selected"){
-    cnet_list <- list()
-    if(is.null(data4)){
-      return(NULL)
-    }else{
+enrichment3_1 <- function(data3, data4, cnet_list2){
+  if(!is.null(cnet_list2)){
         withProgress(message = "dotplot",{
-          for (name in unique(data3$sig)) {
-            if (name != "NS"){
-              if(is.null(H_t2g)){
-                cnet_list <- NULL
-              }else{
-                H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-              em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
+          data <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+          colnames(data) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          for (name in names(cnet_list2)) {
+              em <- cnet_list2[[name]]
+              sum <- length(data4$ENTREZID[data4$sig == name])
               if (length(as.data.frame(em)$ID) == 0) {
                 cnet1 <- NULL
               } else {
-                cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
-                cnet1$Group <- name
+                cnet1 <- as.data.frame(em)
+                cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
                 cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-                cnet_list[[name]] = cnet1
+                data <- rbind(data, cnet1)
               }
-              }
-            }
           }
-          if (length(cnet_list) == 2){
-            cnet1 <- cnet_list[[1]]
-            cnet2 <- cnet_list[[2]]}
-          if (length(cnet_list) == 1){
-            cnet1 <- cnet_list[[1]]
-            cnet2 <- NULL}
-          if (length(cnet_list) == 0){
-            cnet1 <- NULL
-            cnet2 <- NULL}
-          if((length(colnames(cnet1)) != 2 ) && (length(colnames(cnet2)) != 2 )) data <- rbind(cnet1, cnet2)
-          if((length(colnames(cnet1)) == 2 ) && (length(colnames(cnet2)) != 2 )) data <- cnet2
-          if((length(colnames(cnet1)) != 2 ) && (length(colnames(cnet2)) == 2 )) data <- cnet1
-          if((length(colnames(cnet1)) == 2 ) && (length(colnames(cnet2)) == 2 )) data <- NULL
           if(!is.null(data)) data$GeneRatio <- parse_ratio(data$GeneRatio)
           return(data)
           incProgress()
         })
-    }
   }
 }
-keggEnrichment2 <- function(data3, data4, Species, Gene_set, org, org_code, H_t2g){
+
+keggEnrichment1 <- function(data3, data4, Species, Gene_set, org, H_t2g){
   if(!is.null(Gene_set) && Species != "not selected"){
     if(is.null(data4)){
       return(NULL)
     }else{
-      cnet_list <- list()
       cnet_list2 <- list()
-        for (name in unique(data3$sig)) {
-          if (name != "NS"){
-            if(is.null(H_t2g)){
-              cnet_list2 <- NULL
-            }else{
-              H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-              sum <- length(data4$ENTREZID[data4$sig == name])
+      for (name in unique(data3$sig)) {
+        if (name != "NS"){
+          if(is.null(H_t2g)){
+            cnet_list2 <- NULL
+          }else{
+            H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
             em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
             if (length(as.data.frame(em)$ID) == 0) {
               cnet1 <- NULL
             } else {
-              cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
-              cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
-              cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
-              cnet1 <- cnet1[1:5,]
+              cnet1 <- setReadable(em, org, 'ENTREZID')
               cnet_list2[[name]] = cnet1
-            }
             }
           }
         }
-        if (length(cnet_list2) == 0){
-          d <- NULL
-        }else{
-          if (length(cnet_list2) == 1) data <- cnet_list2[[1]]
-          if (length(cnet_list2) == 2) data<- rbind(cnet_list2[[1]], cnet_list2[[2]])
-          data <- dplyr::filter(data, !is.na(Group))
-          data <- dplyr::filter(data, !is.na(Description))
-          data$GeneRatio <- parse_ratio(data$GeneRatio)
-          if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
-            d <- NULL
-          } else{
-            data$Description <- gsub("_", " ", data$Description)
-            data <- dplyr::mutate(data, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
-            data$x <- gsub(":","", data$x)
-            data <- dplyr::arrange(data, x)
-            idx <- order(data[["x"]], decreasing = FALSE)
-            data$Description <- factor(data$Description,
-                                       levels=rev(unique(data$Description[idx])))
-            d <- as.grob(ggplot(data, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
-                           geom_point() +
-                           scale_color_continuous(low="red", high="blue",
-                                                  guide=guide_colorbar(reverse=TRUE)) +
-                           scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) +
-                           scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
-          }}
-          for (name in unique(data3$sig)) {
-            if (name != "NS"){
-              if(is.null(H_t2g)){
-                cnet_list <- NULL
-              }else{
-                H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-              em <- enricher(data4$ENTREZID[data4$sig == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
-              if (length(as.data.frame(em)$ID) == 0) {
-                cnet1 <- NULL
-              } else cnet1 <- setReadable(em, org, 'ENTREZID')
-              if ((length(as.data.frame(cnet1)$ID) == 0) || 
-                  length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
-                c <- NULL
-              } else{
-                c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
-                              cex_category = 0.75, colorEdge = TRUE)
-                c <- try(as.grob(c + guides(edge_color = "none")))
-                if(length(class(c)) == 1){
-                  if(class(c) == "try-error") c <- NULL
-                }
-                cnet_list[[name]] = c
-              }
-              }
-            }
-          }
-      if (length(cnet_list) == 2){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- cnet_list[[2]]}
-      if (length(cnet_list) == 1){
-        cnet1 <- cnet_list[[1]]
-        cnet2 <- NULL}
-      if (length(cnet_list) == 0){
-        cnet1 <- NULL
-        cnet2 <- NULL}
-      p <- plot_grid(d, cnet1, cnet2, nrow = 1)
+      }
+      return(cnet_list2)
     }
   }else return(NULL)
 }
+
+
+keggEnrichment2 <- function(data3, data4,cnet_list2){
+  if(!is.null(cnet_list2)){
+    data <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+    colnames(data) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+    cnet_list <- list()
+    for (name in names(cnet_list2)) {
+      sum <- length(data4$ENTREZID[data4$sig == name])
+      em <- cnet_list2[[name]]
+      if (length(as.data.frame(em)$ID) == 0) {
+        cnet1 <- NULL
+      } else {
+        cnet1 <- em
+        if ((length(as.data.frame(cnet1)$ID) == 0) || 
+            length(which(!is.na(unique(as.data.frame(cnet1)$qvalue))))==0) {
+          c <- NULL
+        } else{
+          c <- cnetplot(cnet1, cex_label_gene = 0.7, cex_label_category = 0.75,
+                        cex_category = 0.75, colorEdge = TRUE)
+          c <- try(as.grob(c + guides(edge_color = "none")))
+          if(length(class(c)) == 1){
+            if(class(c) == "try-error") c <- NULL
+          }
+          cnet_list[[name]] = c
+        }
+        cnet1 <- as.data.frame(em)
+        cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
+        cnet1 <- cnet1[sort(cnet1$qvalue, decreasing = F, index=T)$ix,]
+        cnet1 <- cnet1[1:5,]
+        data <- rbind(data, cnet1)
+      }
+    }
+    data <- dplyr::filter(data, !is.na(Group))
+    data <- dplyr::filter(data, !is.na(Description))
+    data$GeneRatio <- parse_ratio(data$GeneRatio)
+    if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
+      d <- NULL
+    } else{
+      data$Description <- gsub("_", " ", data$Description)
+      data <- dplyr::mutate(data, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
+      data$x <- gsub(":","", data$x)
+      data <- dplyr::arrange(data, x)
+      idx <- order(data[["x"]], decreasing = FALSE)
+      data$Description <- factor(data$Description,
+                                 levels=rev(unique(data$Description[idx])))
+      d <- as.grob(ggplot(data, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
+                     geom_point() +
+                     scale_color_continuous(low="red", high="blue",
+                                            guide=guide_colorbar(reverse=TRUE)) +
+                     scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) +
+                     scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
+    }
+    if (length(cnet_list) == 2){
+      cnet1 <- cnet_list[[1]]
+      cnet2 <- cnet_list[[2]]}
+    if (length(cnet_list) == 1){
+      cnet1 <- cnet_list[[1]]
+      cnet2 <- NULL}
+    if (length(cnet_list) == 0){
+      cnet1 <- NULL
+      cnet2 <- NULL}
+    p <- plot_grid(d, cnet1, cnet2, nrow = 1)
+  }else return(NULL)
+}
+
 enrich_for_table <- function(data, H_t2g, Gene_set){
   if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
     return(NULL)
@@ -938,7 +960,7 @@ GOIboxplot <- function(data){
                          xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
   p <- (facet(p, facet.by = "Row.names",
               panel.labs.background = list(fill = "transparent", color = "transparent"),
-              scales = "free", short.panel.labs = T, panel.labs.font = list(size=15))+ 
+              scales = "free", short.panel.labs = T, panel.labs.font = list(size=15, face = "italic"))+ 
           theme(axis.text.x = element_blank(),
                 panel.background = element_rect(fill = "transparent", size = 0.5),
                 title = element_text(size = 10),text = element_text(size = 12),
@@ -1012,23 +1034,46 @@ enrich_keggGO_global <- function(formula_res, Gene_set){
         }
       }
 }
-enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
-    if(!is.null(Gene_set)){
-      if(is.null(data)){
+
+enrich_gene_list <- function(data, Gene_set, H_t2g, org){
+  if(!is.null(Gene_set)){
+    if(is.null(data)){
+      return(NULL)
+    }else{
+      if(is.null(H_t2g)){
+        df <- NULL
+      }else{
+        H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+        df <- list()
+        for (name in unique(data$Group)) {
+          sum <- length(data$ENTREZID[data$Group == name])
+          em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
+          if (length(as.data.frame(em)$ID) != 0) {
+            if(length(colnames(as.data.frame(em))) == 9){
+              cnet1 <- setReadable(em, org, 'ENTREZID')
+              df[[name]] <- cnet1
+            }
+          }
+        }
+      }
+        return(df)
+      }
+    }
+  }
+
+
+enrich_genelist <- function(data, enrich_gene_list, showCategory=5){
+      if(is.null(data) || is.null(enrich_gene_list)){
         return(NULL)
       }else{
-          if(is.null(H_t2g)){
-            df <- NULL
-          }else{
-            H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
-          for (name in unique(data$Group)) {
+          for (name in names(enrich_gene_list)) {
             sum <- length(data$ENTREZID[data$Group == name])
-            em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
+            em <- enrich_gene_list[[name]]
             if (length(as.data.frame(em)$ID) != 0) {
               if(length(colnames(as.data.frame(em))) == 9){
-                cnet1 <- as.data.frame(setReadable(em, org, 'ENTREZID'))
+                cnet1 <- as.data.frame(em)
                 cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
                 cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
                 if (length(cnet1$pvalue) > showCategory){
@@ -1037,7 +1082,6 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
                 df <- rbind(df, cnet1)
               }
             }
-          }
           }
           if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
             p1 <- NULL
@@ -1061,31 +1105,18 @@ enrich_genelist <- function(data, Gene_set, H_t2g, org, showCategory=5){
             return(p)
           }
         }
-    }
 }
-cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code,showCategory=5){
-    if(!is.null(Gene_set)){
-      if(is.null(data) || is.null(group)){
+cnet_global <- function(data, group, enrich_gene_list, showCategory=5){
+      if(is.null(data) || is.null(group) || is.null(enrich_gene_list)){
         return(NULL)
       }else{
         data2 <- dplyr::filter(data, Group == group)
-          if(is.null(H_t2g)){
-            kk1 <- NULL
-          }else{
-            H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-          kk1 <- try(enricher(data2$ENTREZID, TERM2GENE=H_t2g2, qvalueCutoff = 0.05))
-          if (class(kk1) == "try-error") kk1 <- NA
-          }
-        if(length(as.data.frame(kk1)$ID) == 0){
-          cnet1 <- NULL
-        } else {
-          cnet1 <- setReadable(kk1, org, 'ENTREZID')
-        }
-        if (length(as.data.frame(cnet1)$ID) == 0) {
+          cnet1 <- enrich_gene_list[[group]]
+        if(length(as.data.frame(cnet1)$ID) == 0) {
           p2 <- NULL
-        } else{
+        }else{
           p2 <- try(as.grob(cnetplot(cnet1,
-                                     cex_label_gene = 0.7, cex_label_category = 0.75,showCategory = showCategory,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75, showCategory = showCategory,
                                      cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
           if(length(class(p2)) == 1){
             if(class(p2) == "try-error") p2 <- NULL
@@ -1094,7 +1125,6 @@ cnet_global <- function(data, group, Gene_set, H_t2g, org, org_code,showCategory
         p <- plot_grid(p2)
         return(p)
       }
-    }
 }
 dotplot_for_output <- function(data, plot_genelist, Gene_set, Species){
   if(!is.null(Gene_set)){
@@ -1126,5 +1156,192 @@ cnet_for_output <- function(data, plot_data, Gene_set, Species){
     }
 }
 
+getTargetSeq <- function(Species, upstream, downstream){
+  library(TFBSTools)
+  if(Species == "Mus musculus"){
+    library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+    txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
+  }
+  if(Species == "Homo sapiens"){
+    library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+    txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+  }
+  x <- promoters(genes(txdb), upstream = upstream, downstream = downstream)
+  return(x)
+}
 
+MotifAnalysis <- function(data, Species, x){
+  withProgress(message = "Motif analysis takes about 2 min per group",{
+    library(TFBSTools)
+    if(Species == "Mus musculus"){
+      library(BSgenome.Mmusculus.UCSC.mm10)
+      genome = BSgenome.Mmusculus.UCSC.mm10
+      tax <- 10090
+    }
+    if(Species == "Homo sapiens"){
+      library(BSgenome.Hsapiens.UCSC.hg19)
+      genome = BSgenome.Hsapiens.UCSC.hg19
+      tax <- 9606
+    }
+  pwms <- getMatrixSet(JASPAR2020,
+                       opts = list(matrixtype = "PWM",
+                                   tax_group = "vertebrates",
+                                   species = tax
+                                   ))
+  df <- data.frame(GeneID = data[,1], Group = data[,2])
+  df2 <- list()
+  group_file <- length(unique(df$Group))
+  perc <- 0
+  for(name in unique(df$Group)){
+    perc <- perc + 1
+    data <- dplyr::filter(df, Group == name)
+    my.symbols <- data$GeneID
+    group.name <- paste(name, "\n(", length(my.symbols),")",sep = "")
+    if(str_detect(my.symbols[1], "ENS")){
+      gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
+                                      keytype = "ENSEMBL",
+                                      columns = c("ENTREZID","ENSEMBL"))
+      colnames(gene_IDs) <- c("gene_id","ENSEMBL")
+    }else{
+      gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+                                        keytype = "SYMBOL",
+                                        columns = c("SYMBOL","ENTREZID"))
+      colnames(gene_IDs) <- c("SYMBOL","gene_id")
+    }
+    y <- subset(x, gene_id %in% gene_IDs$gene_id)
+    if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
+    seq <- getSeq(genome, y)
+    se <- calcBinnedMotifEnrR(seqs = seq,
+                              pwmL = pwms,
+                              background = "genome",
+                              genome = genome,
+                              genome.regions = subset(x, ! gene_id %in% gene_IDs$gene_id),
+                              genome.oversample = 2,
+                              BPPARAM = BiocParallel::SerialParam(RNGseed = 42),
+                              verbose = TRUE)
+      res <- data.frame(motif.id = elementMetadata(se)$motif.id, motif.name = elementMetadata(se)$motif.name,
+                        motif.percentGC = elementMetadata(se)$motif.percentGC,
+                        negLog10P = assay(se,"negLog10P"),negLog10Padj = assay(se,"negLog10Padj"), 
+                        log2enr = assay(se,"log2enr"),pearsonResid = assay(se,"pearsonResid"),
+                        expForegroundWgtWithHits = assay(se,"expForegroundWgtWithHits"),
+                        sumForegroundWgtWithHits = assay(se,"sumForegroundWgtWithHits"),
+                        sumBackgroundWgtWithHits = assay(se,"sumBackgroundWgtWithHits"),
+                        Group = group.name)
+      df2[[name]] <- res
+    incProgress(1/group_file, message = paste("Finish motif analysis of Group '", name, "', ", perc, "/", group_file,sep = ""))
+  }
+  return(df2)
+})
+}
+
+MotifRegion <- function(data, target_motif, Species, x){
+  if(Species == "Mus musculus"){
+    genome = BSgenome.Mmusculus.UCSC.mm10
+  }
+  if(Species == "Homo sapiens"){
+    genome = BSgenome.Hsapiens.UCSC.hg19
+  }
+  df <- data.frame(GeneID = data[,1], Group = data[,2])
+  name <- gsub("\\\n.+$", "", target_motif$Group)
+  data <- dplyr::filter(df, Group %in% name)
+  my.symbols <- data$GeneID
+  if(str_detect(my.symbols[1], "ENS")){
+    gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
+                                    keytype = "ENSEMBL",
+                                    columns = c("ENTREZID","ENSEMBL"))
+    colnames(gene_IDs) <- c("gene_id","ENSEMBL")
+  }else{
+    gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+                                      keytype = "SYMBOL",
+                                      columns = c("SYMBOL","ENTREZID"))
+    colnames(gene_IDs) <- c("SYMBOL","gene_id")
+  }
+  y <- subset(x, gene_id %in% gene_IDs$gene_id)
+  if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
+  seq <- getSeq(genome, y)
+  pfm <- getMatrixByID(JASPAR2020,target_motif$motif.id)
+  pwm <- toPWM(pfm)
+  res <- findMotifHits(query = pwm,
+                       subject = seq,
+                       min.score = 6.0,
+                       method = "matchPWM",
+                       BPPARAM = BiocParallel::SerialParam()) %>% as.data.frame()
+  my.symbols <- as.character(res$seqnames)
+  gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+                                    keytype = "ENTREZID",
+                                    columns = c("SYMBOL","ENTREZID"))
+  colnames(gene_IDs) <- c("seqnames","SYMBOL")
+  res2<-merge(gene_IDs,res,by="seqnames")
+  res2 <- res2[,-1]
+  return(res2)
+}
+
+Motifplot <- function(df2, showCategory=5,padj){
+  df <- data.frame(matrix(rep(NA, 11), nrow=1))[numeric(0), ]
+  for(name in names(df2)){
+    res <- df2[[name]]
+    res <- dplyr::filter(res, X1 > -log10(padj))
+    res <- res %>% dplyr::arrange(-X1.1)
+    if(length(rownames(res)) > showCategory){
+      res <- res[1:showCategory,]
+    }
+    df <- rbind(df, res)
+  }
+  colnames(df) <- c("motif.id", "motif.name","motif.percentGC", "negLog10P", "negLog10Padj", "log2enr",
+                    "pearsonResid", "expForegroundWgtWithHits", "sumForegroundWgtWithHits", "sumBackgroundWgtWithHits",
+                    "Group")
+  if(length(df$motif.id) == 0){
+    return(NULL)
+  }else{
+  df$padj <- 10^(-df$negLog10Padj)
+  df <- dplyr::mutate(df, x = paste0(Group, 1/-log10(eval(parse(text = "padj")))))
+  df$x <- gsub(":","", df$x)
+  df <- dplyr::arrange(df, x)
+  idx <- order(df[["x"]], decreasing = FALSE)
+  df$motif.name <- factor(df$motif.name,
+                          levels=rev(unique(df$motif.name[idx])))
+  d <- ggplot(df, aes(x = Group,y= motif.name,color=padj,size=log2enr))+
+    geom_point() +
+    scale_color_continuous(low="red", high="blue",
+                           guide=guide_colorbar(reverse=TRUE)) +
+    scale_size(range=c(1, 6))+ theme_dose(font.size=15)+ylab(NULL)+xlab(NULL) +
+    scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top")+
+    theme(plot.margin=margin(l=-0.75,unit="cm"))
+  
+  df <- df %>% distinct(motif.id, .keep_all = T)
+  width.seqlogo = 2
+  highlight <- NULL
+  clres <- FALSE
+  optsL <- list(ID = df$motif.id)
+  pfm1 <- TFBSTools::getMatrixSet(JASPAR2020, opts = optsL)
+  maxwidth <- max(vapply(TFBSTools::Matrix(pfm1), ncol, 0L))
+  grobL <- lapply(pfm1, seqLogoGrob, xmax = maxwidth, xjust = "center")
+  hmSeqlogo <- HeatmapAnnotation(logo = annoSeqlogo(grobL = grobL, 
+                                                    which = "row", space = unit(1, "mm"),
+                                                    width = unit(width.seqlogo, "inch")), 
+                                 show_legend = FALSE, show_annotation_name = FALSE, 
+                                 which = "row")
+  tmp <- matrix(rep(NA, length(df$motif.id)),ncol = 1, 
+                dimnames = list(df$motif.name, NULL))
+  
+  hmMotifs <- Heatmap(matrix = tmp, name = "names", width = unit(0, "inch"), 
+                      na_col = NA, col = c(`TRUE` = "green3",`FALSE` = "white"), 
+                      cluster_rows = clres, show_row_dend = show_dendrogram, 
+                      cluster_columns = FALSE, show_row_names = TRUE, row_names_side = "left", 
+                      show_column_names = FALSE, show_heatmap_legend = FALSE,
+                      left_annotation = hmSeqlogo)
+  h <- grid.grabExpr(print(hmMotifs),wrap.grobs=TRUE)
+  p <- plot_grid(plot_grid(NULL, h, ncol = 1, rel_heights = c(0.05:10)),as.grob(d))
+  
+  return(p)
+  }
+}
+
+GOIheatmap <- function(data.z, show_row_names = TRUE){
+  ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
+                clustering_method_columns = 'ward.D2',
+                show_row_names = show_row_names, show_row_dend = F,column_names_side = "top",
+                row_names_gp = gpar(fontface = "italic"))
+  return(ht)
+}
 

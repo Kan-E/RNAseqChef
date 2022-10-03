@@ -16,9 +16,9 @@ shinyUI(
             max-width: 500px;
           }"),
     navbarPage(
-      footer=p(hr(),p("ShinyApp created by Kan Etoh",align="center",width=4),
-               p(("Copyright (C) 2022, code licensed under GPLv3"),align="center",width=4),
-               p(("Code available on Github:"),a("https://github.com/Kan-E/RNAseqChef",href="https://github.com/Kan-E/RNAseqChef"),align="center",width=4)),
+      footer=p(hr(),p("Need help? Create an issue on", a("Github", href = "https://github.com/Kan-E/RNAseqChef/issues"), 
+                      "or", a("contact us", href = "kaneto@kumamoto-u.ac.jp"),".",align="center",width=4)
+               ),
       "",
       id='navBar',
       tabPanel("RNAseqChef" ,value='Title', icon = icon("utensils"),
@@ -30,27 +30,25 @@ shinyUI(
                           align="center"),br(),br(),style={'background-color:beige;font-size: 16px;'},
                  ),
                  column(12,br(),
-                        p(strong("Manual:"),br(), "English:", a("https://kan-e.github.io/RNAseqChef_manual/",href="https://kan-e.github.io/RNAseqChef_manual/"),br(),
-                          "Japanese", a("https://kan-e.github.io/RNAseqChef_manual_japanese/",href="https://kan-e.github.io/RNAseqChef_manual_japanese/")),
                         column(6,br(),
                                h4(strong("Pair-wise DEG")),
                                "Detects and visualizes differentially expressed genes",
                                img(src="Pair-wise_DEG.png", width = 600,height = 300),br(),hr(),
                                h4(strong("3 conditions DEG")),
                                "Detects and visualizes differentially expressed genes by EBSeq multi-comparison analysis",
-                               img(src="3cond_DEG.png", width = 600,height = 475),br(),hr(),
+                               img(src="3cond_DEG.png", width = 600,height = 375),br(),hr(),
                                h4(strong("Multi DEG")),
                                "Detects and visualizes differentially expressed genes by DESeq2 LRT following clustering analysis",
                                img(src="Multi DEG.png", width = 600,height = 682)),
                         column(6,hr(),
                                h4(strong("Venn diagram")),
                                "Detects and visualizes the overlap between DEGs from multiple datasets",
-                               img(src="Venn.png", width = 600,height = 230),br(),hr(),
+                               img(src="Venn.png", width = 600,height = 400),br(),hr(),
                                h4(strong("Normalized count analysis")),
                                "identifies similar samples and gene expression patterns by clustering methods",
-                               img(src="Normalized.png", width = 550,height = 500),hr(),
+                               img(src="Normalized.png", width = 550,height = 325),hr(),
                                h4(strong("Enrichment viewer")),
-                               "determines and visualizes biological functions of gene set of interest",
+                               "determines and visualizes biological functions and promoter motifs of gene sets of interest",
                                img(src="enrichment_viewer.png", width = 550,height = 250)
                         )
                  )
@@ -1229,7 +1227,7 @@ shinyUI(
                  mainPanel(
                    tabsetPanel(
                      type = "tabs",
-                     tabPanel("Input gene list for enrichment analysis",
+                     tabPanel("Input gene list",
                               dataTableOutput('enrichment_input')
                      ),
                      tabPanel("Enrichment analysis",
@@ -1252,6 +1250,57 @@ shinyUI(
                                 column(4, downloadButton("download_enrichment_table", "Download enrichment result"))
                               ),
                               dataTableOutput('enrichment_result')
+                     ),
+                     tabPanel("Promoter motif analysis",
+                              fluidRow(
+                                column(4, textOutput("motif_Spe"),
+                                       tags$head(tags$style("#motif_Spe{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))),
+                                column(3, downloadButton("download_motif_plot", "Download motif plot"))
+                              ),
+                              fluidRow(
+                                column(4, htmlOutput("promoter_upstream")),
+                                column(4, htmlOutput("promoter_downstream")),
+                                column(4, htmlOutput("promoter_padj"))
+                                       ),
+                              fluidRow(
+                                column(4, actionButton("motifButton", "Start"),
+                                       tags$head(tags$style("#motifButton{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"),
+                                                 tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                 ))
+                                )
+                              ),
+                              textOutput("motif_warning"),
+                              tags$head(tags$style("#motif_warning{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")),
+                              plotOutput("motif_plot"),
+                              bsCollapse(id="Promoter_motif_collapse_panel",open="motif_result_table",multiple = TRUE,
+                                         bsCollapsePanel(title="Motif table:",
+                                                         value="motif_result_table",
+                                                         downloadButton("download_motif_table", "Download motif enrichment result"),
+                                                         DTOutput('motif_result')
+                                         ),
+                                         bsCollapsePanel(title= p(span("Motif region"),span(icon("info-circle"), id = "icon_promoter_motif_region", 
+                                                                                            options = list(template = popoverTempate))),
+                                                         bsPopover("icon_promoter_motif_region", "Motif region:", 
+                                                                   content=paste("Please select genes in", strong("k-means clustering result"),".<br><br>",
+                                                                                 img(src="enrich_motif.png", width = 450,height = 600)), 
+                                                                   placement = "right",options = list(container = "body")),
+                                                         value="Promoter_motif_region_panel",
+                                                         downloadButton("download_promoter_motif_region", "Download motif region"),
+                                                         dataTableOutput("promoter_motif_region_table")
+                                         )
+                              )
                      )
                    )
                  )
@@ -1408,13 +1457,18 @@ shinyUI(
                             )
                           ) #sidebarLayout
                  ),
+                 tabPanel("Links",
+                          fluidRow(
+                            column(12,br(),
+                                   p(strong("Source code:"), a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),
+                                   p(strong("Manual:"),br(), "English:", a("https://kan-e.github.io/RNAseqChef_manual/",href="https://kan-e.github.io/RNAseqChef_manual/"),br(),
+                                     "Japanese", a("https://kan-e.github.io/RNAseqChef_manual_japanese/",href="https://kan-e.github.io/RNAseqChef_manual_japanese/")),
+                            )
+                          )
+                          ),
                  tabPanel("Reference",
                           fluidRow(
                             column(10,
-                                   h2("To cite RNAseqChef:"),
-                                   p(strong("Web tool:"),br(), "Kan Etoh: RNAseqChef (2022)", a("https://imeg-ku.shinyapps.io/RNAseqChef/",href="https://imeg-ku.shinyapps.io/RNAseqChef/")),
-                                   p(strong("Source code:"),br(), "Kan Etoh: RNAseqChef: web application for automated, systematic, and integrated RNA-seq differential expression analysis. (2022)", a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),
-                                   br(),
                                    h2("Reference:"),
                                    "- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
                                    "- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
@@ -1451,7 +1505,27 @@ shinyUI(
                                    "- Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr",br(),
                                    "- Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn",br(),
                                    "- Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr",br(),
-                                   "- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr"
+                                   "- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr",br(),
+                                   "- Machlab D, Burger L, Soneson C, Rijli FM, Schübeler D, Stadler MB. monaLisa: an R/Bioconductor package for identifying regulatory motifs. Bioinformatics (2022).",br(),
+                                   "- Lawrence M, Huber W, Pag\`es H, Aboyoun P, Carlson M, et al. (2013) Software for Computing and Annotating Genomic Ranges. PLoS Comput Biol 9(8): e1003118. doi:10.1371/journal.pcbi.1003118",br(),
+                                   "- Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel:
+  Bioconductor facilities for parallel evaluation_. R package version 1.30.3,
+  <https://github.com/Bioconductor/BiocParallel>.",br(),
+                                   "- Morgan M, Obenchain V, Hester J, Pagès H (2022). _SummarizedExperiment:
+  SummarizedExperiment container_. R package version 1.26.1,
+  <https://bioconductor.org/packages/SummarizedExperiment>.",br(),
+                                   "- Baranasic D (2020). _JASPAR2020: Data package for JASPAR database (version 2020)_. R
+  package version 0.99.10, <http://jaspar.genereg.net/>.",br(),
+                                   "- Team BC, Maintainer BP (2019). _TxDb.Mmusculus.UCSC.mm10.knownGene: Annotation package
+  for TxDb object(s)_. R package version 3.10.0.",br(),
+                                   "- Team TBD (2021). _BSgenome.Mmusculus.UCSC.mm10: Full genome sequences for Mus musculus
+  (UCSC version mm10, based on GRCm38.p6)_. R package version 1.4.3.",br(),
+                                   "- Carlson M, Maintainer BP (2015). _TxDb.Hsapiens.UCSC.hg19.knownGene: Annotation package
+  for TxDb object(s)_. R package version 3.2.2.",br(),
+                                   "- Team TBD (2020). _BSgenome.Hsapiens.UCSC.hg19: Full genome sequences for Homo sapiens
+  (UCSC version hg19, based on GRCh37.p13)_. R package version 1.4.3.",br(),
+                                   "Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor
+  binding site analysis. Bioinformatics 32, 1555-1556.",br()
                             )
                           )
                  )

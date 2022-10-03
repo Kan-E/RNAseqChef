@@ -21,8 +21,11 @@ pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn",
 "ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW",
 "qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db",
 "org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter",
-"ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea","umap", "biomaRt")
-
+"ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea","umap", "biomaRt",
+"monaLisa","GenomicRanges","BiocParallel","SummarizedExperiment","JASPAR2020",
+"TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
+"BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools")
+options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
 }
@@ -104,6 +107,20 @@ DEGreport (for divisive clustering analysis)
 
 venn (for venn diagram analysis)
 - Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn
+
+GenomicRanges, TxDb.Mmusculus.UCSC.mm10.knownGene, TxDb.Hsapiens.UCSC.hg19.knownGene, BSgenome.Mmusculus.UCSC.mm10, and BSgenome.Hsapiens.UCSC.hg19 (for promoter sequence)
+- Lawrence M, Huber W, Pag\`es H, Aboyoun P, Carlson M, et al. (2013) Software for Computing and Annotating Genomic Ranges. PLoS Comput Biol 9(8): e1003118. doi:10.1371/journal.pcbi.1003118"
+- Team BC, Maintainer BP (2019). _TxDb.Mmusculus.UCSC.mm10.knownGene: Annotation package for TxDb object(s)_. R package version 3.10.0.
+- Team TBD (2021). _BSgenome.Mmusculus.UCSC.mm10: Full genome sequences for Mus musculus (UCSC version mm10, based on GRCm38.p6)_. R package version 1.4.3.
+- Carlson M, Maintainer BP (2015). _TxDb.Hsapiens.UCSC.hg19.knownGene: Annotation package for TxDb object(s)_. R package version 3.2.2.
+- Team TBD (2020). _BSgenome.Hsapiens.UCSC.hg19: Full genome sequences for Homo sapiens (UCSC version hg19, based on GRCh37.p13)_. R package version 1.4.3.
+
+monaLisa, TFBSTools, BiocParallel, SummarizedExperiment, and JASPAR2020 (for promoter motif analysis)
+- Machlab D, Burger L, Soneson C, Rijli FM, Schübeler D, Stadler MB. monaLisa: an R/Bioconductor package for identifying regulatory motifs. Bioinformatics (2022).
+- Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor binding site analysis. Bioinformatics 32, 1555-1556.
+- Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel:Bioconductor facilities for parallel evaluation_. R package version 1.30.3, <https://github.com/Bioconductor/BiocParallel>.
+- Morgan M, Obenchain V, Hester J, Pagès H (2022). _SummarizedExperiment:SummarizedExperiment container_. R package version 1.26.1, <https://bioconductor.org/packages/SummarizedExperiment>.
+- Baranasic D (2020). _JASPAR2020: Data package for JASPAR database (version 2020)_. R package version 0.99.10, <http://jaspar.genereg.net/>.
 
 dplyr and tidyr (for data manipulation)
 - Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr

@@ -1,0 +1,16 @@
+title: "RNAseqChef manual"
+author: Kan Etoh
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
+    toc: true
+    toc_float:
+      collapse: true
+    df_print: "kable"
+output_dir: "docs"
+md_extensions: -ascii_identifiers
+self_contained: true
+bookdown::gitbook:
+  config:
+    search: yes

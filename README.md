@@ -10,7 +10,7 @@ Manual (Japanese)：https://kan-e.github.io/RNAseqChef_manual_japanese/ <br>
 # Local installation
 ## Method 1 (Docker is required)
 - Download Docker
-- Run the following commands once
+- Run the following commands once to get the docker image of RNAseqChef
 ```
 docker pull kanetoh1030/shiny-rnaseqchef
 ```

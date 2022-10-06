@@ -8,7 +8,21 @@ Manual：           https://kan-e.github.io/RNAseqChef_manual/ <br>
 Manual (Japanese)：https://kan-e.github.io/RNAseqChef_manual_japanese/ <br>
 
 # Local installation
-To run this app locally on your machine, R environment setup is required.
+## Method 1 (Docker is required)
+- Download Docker
+- Run the following commands once
+```
+docker pull kanetoh1030/shiny-rnaseqchef
+```
+You may now run RNAseqChef with just one command in the command line:
+```
+shiny::runGitHub("RNAseqChef", "Kan-E")
+```
+docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest
+```
+Please access http://localhost:3838 in your brower.
+
+## Method 2 (R environment setup is required)
 - Download R and RStudio (In the case of macOS, additionally install XQuartz and Xcode)
 - Run the following commands once
 ```

@@ -16,8 +16,6 @@ docker pull kanetoh1030/shiny-rnaseqchef
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```
-shiny::runGitHub("RNAseqChef", "Kan-E")
-```
 docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest
 ```
 Please access http://localhost:3838 in your brower.

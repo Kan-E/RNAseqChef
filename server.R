@@ -2093,7 +2093,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       selectizeInput("selectFC", "Select a pair for fold change cut-off", c(multi_select()),
-                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
     }
   })
@@ -2389,7 +2389,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       selectizeInput("selectFC2", "Select a pair for fold change cut-off", c(multi_select()),
-                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
     }
   })
@@ -2802,7 +2802,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       selectizeInput("selectEnrich_pair", "Select a pair for GSEA", c(multi_select()),
-                     selected = c(multi_select()[1], multi_select()[2]), multiple = TRUE, 
+                     selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
     }
   })
@@ -3764,7 +3764,7 @@ shinyServer(function(input, output, session) {
   
   output$download_3cond_scatter1 = downloadHandler(
     filename = function(){
-      paste0(download_cond3_dir(), "_scatter1.pdf")
+      paste0(download_cond3_dir(), "_DEG_overview.pdf")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
@@ -3775,7 +3775,9 @@ shinyServer(function(input, output, session) {
           pdf_width <- 10
         }else pdf_width <- input$cond3_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
-        print(cond3_scatter1_plot())
+        print(cond3_scatter1_plot()) 
+        print(cond3_scatter2_plot())
+        print(cond3_scatter3_plot())
         dev.off()
       })
     }
@@ -3808,24 +3810,6 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$download_3cond_scatter2 = downloadHandler(
-    filename = function(){
-      paste0(download_cond3_dir(), "_scatter2.pdf")
-    },
-    content = function(file) {
-      withProgress(message = "Preparing download",{
-        if(input$cond3_pdf_height == 0){
-          pdf_height <- 6
-        }else pdf_height <- input$cond3_pdf_height
-        if(input$cond3_pdf_width == 0){
-          pdf_width <- 10
-        }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
-        print(cond3_scatter2_plot())
-        dev.off()
-      })
-    }
-  )
   
   #3conditions DEG_3------------------------
   data_3degcount1_3 <- reactive({
@@ -3855,24 +3839,6 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$download_3cond_scatter3 = downloadHandler(
-    filename = function(){
-      paste0(download_cond3_dir(), "_scatter3.pdf")
-    },
-    content = function(file) {
-      withProgress(message = "Preparing download",{
-        if(input$cond3_pdf_height == 0){
-          pdf_height <- 6
-        }else pdf_height <- input$cond3_pdf_height
-        if(input$cond3_pdf_width == 0){
-          pdf_width <- 10
-        }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
-        print(cond3_scatter3_plot())
-        dev.off()
-      })
-    }
-  )
   
   output$download_3cond_scatter = downloadHandler(
     filename = function(){

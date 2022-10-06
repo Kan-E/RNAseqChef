@@ -418,23 +418,31 @@ shinyUI(
                               ),
                               plotOutput("PCA2"),
                               fluidRow(
-                                column(4, downloadButton("download_3cond_scatter1", "Download scatter plot1")),
-                                column(4, downloadButton("download_3cond_DEG_table1", "Download DEG_result1"))
+                                column(4, downloadButton("download_3cond_scatter1", "Download DEG overview"))
                               ),
                               plotOutput("scatter_1"),
-                              dataTableOutput("DEG_result2_1"),
-                              fluidRow(
-                                column(4, downloadButton("download_3cond_scatter2", "Download scatter plot2")),
-                                column(4, downloadButton("download_3cond_DEG_table2", "Download DEG_result2"))
-                              ),
                               plotOutput("scatter_2"),
-                              dataTableOutput("DEG_result2_2"),
-                              fluidRow(
-                                column(4, downloadButton("download_3cond_scatter3", "Download scatter plot3")),
-                                column(4, downloadButton("download_3cond_DEG_table3", "Download DEG_result3"))
-                              ),
                               plotOutput("scatter_3"),
-                              dataTableOutput("DEG_result2_3"),
+                              bsCollapse(id="input_cond3_scatter1",multiple = TRUE,
+                                         bsCollapsePanel(title="DEG signature 1:",
+                                                         value="Scatter_plot1_panel",
+                                                         fluidRow(
+                                                           downloadButton("download_3cond_DEG_table1", "Download DEG signature 1")),
+                                                         dataTableOutput("DEG_result2_1")
+                                                         ),
+                                         bsCollapsePanel(title="DEG signature 2:",
+                                                         value="Scatter_plot2_panel",
+                                                         fluidRow(
+                                                           downloadButton("download_3cond_DEG_table2", "Download DEG signature 2")),
+                                                         dataTableOutput("DEG_result2_2")
+                                         ),
+                                         bsCollapsePanel(title="DEG signature 3:",
+                                                         value="Scatter_plot3_panel",
+                                                         fluidRow(
+                                                           downloadButton("download_3cond_DEG_table3", "Download DEG signature 3")),
+                                                         dataTableOutput("DEG_result2_3")
+                                         )
+                                         ),
                               bsCollapse(id="input_collapse_3_DEG",open="cond3_result_panel",multiple = TRUE,
                                          bsCollapsePanel(title="Result:",
                                                          value="cond3_result_panel",

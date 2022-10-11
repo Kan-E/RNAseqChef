@@ -7,33 +7,7 @@ manual.Rmd
 日本語マニュアルPDF.tex
 manual.html
 .DS_Store
-manual_figure/cond 3 enrichment.png
-manual_figure/cond 3 goi.png
-manual_figure/cond 3 input.png
-manual_figure/cond 3 overview.png
-manual_figure/cond 3 set.png
-manual_figure/enrich enrichment.png
-manual_figure/enrich input.png
-manual_figure/enrich set.png
-manual_figure/graphical abstract.png
-manual_figure/input switch.png
-manual_figure/MSigDB.png
-manual_figure/multi set.png
-manual_figure/norm goi.png
-manual_figure/norm input.png
-manual_figure/norm kmeans.png
-manual_figure/norm overview.png
-manual_figure/norm set.png
-manual_figure/pair-wise enrichment analysis.png
-manual_figure/pair-wise GOI profiling.png
-manual_figure/pair-wise input.png
-manual_figure/pair-wise set.png
-manual_figure/panel.png
-manual_figure/venn enrichment.png
-manual_figure/venn integrated heatmap.png
-manual_figure/venn setting.png
-manual_figure/venn venn diagram.png
-manual_figure/volcano navi.png
+manual_figure
 .DS_Store
 *.png
 RNAseqChef Japanese.Rmd

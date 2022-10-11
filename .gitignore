@@ -1,7 +1,5 @@
-
 .Rhistory
-.DS_Store
-manual_figure
+.Rhistory 2
 .DS_Store
 *.dcf
 .Rproj.user

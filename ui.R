@@ -3,6 +3,9 @@ popoverTempate <-
 
 shinyUI(
   fluidPage(
+    tags$head(
+        includeScript("navAppend.js")
+      ),
     tags$head(includeHTML(("google-analytics.html"))),
     tags$style(
       type = 'text/css',
@@ -1465,18 +1468,9 @@ shinyUI(
                             )
                           ) #sidebarLayout
                  ),
-                 tabPanel("Links",
-                          fluidRow(
-                            column(12,br(),
-                                   p(strong("Source code:"), a("https://github.com/Kan-E/RNAseqChef/",href="https://github.com/Kan-E/RNAseqChef/")),
-                                   p(strong("Manual:"),br(), "English:", a("https://kan-e.github.io/RNAseqChef_manual/",href="https://kan-e.github.io/RNAseqChef_manual/"),br(),
-                                     "Japanese", a("https://kan-e.github.io/RNAseqChef_manual_japanese/",href="https://kan-e.github.io/RNAseqChef_manual_japanese/")),
-                            )
-                          )
-                          ),
                  tabPanel("Reference",
                           fluidRow(
-                            column(10,
+                            column(12,
                                    h2("Reference:"),
                                    "- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
                                    "- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
@@ -1533,8 +1527,8 @@ shinyUI(
                                    "- Team TBD (2020). _BSgenome.Hsapiens.UCSC.hg19: Full genome sequences for Homo sapiens
   (UCSC version hg19, based on GRCh37.p13)_. R package version 1.4.3.",br(),
                                    "Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor
-  binding site analysis. Bioinformatics 32, 1555-1556.",br()
-                            )
+  binding site analysis. Bioinformatics 32, 1555-1556.",br(),
+                                   )
                           )
                  )
       )

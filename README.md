@@ -1,5 +1,3 @@
-<meta name="google-site-verification" content="AKtpqQgvPScOVJFGeZDNIn71HNrOUUQSsv0XXnBUinI" />
-
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7095217.svg)](https://doi.org/10.5281/zenodo.7095217)
 
 # RNAseqChef

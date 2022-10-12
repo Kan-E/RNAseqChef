@@ -241,6 +241,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$goButton,({
+    updateSelectInput(session,inputId = "Species","Species",species_list, selected = "Mus musculus")
+  }))
+  
   observeEvent(input$file1, ({
     updateCollapse(session,id =  "input_collapse_panel", open="Row_count_matrix_panel")
   }))
@@ -2002,6 +2006,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$goButton6,({
+    updateSelectInput(session,inputId = "Species6","Species",species_list, selected = "Mus musculus")
+  }))
+  
   observeEvent(input$multi_file1, ({
     updateCollapse(session,id =  "multi_input_collapse_panel", open="multi_Row_count_panel")
   }))
@@ -3460,6 +3468,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$goButton2,({
+    updateSelectInput(session,inputId = "Species2","Species",species_list, selected = "Mus musculus")
+  }))
+  
   observeEvent(input$file7, ({
     updateCollapse(session,id =  "input_collapse_panel3", open="Norm_count_matrix_panel")
   }))
@@ -4403,6 +4415,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$goButton3,({
+    updateSelectInput(session,inputId = "Species3","Species",species_list, selected = "Mus musculus")
+  }))
+  
   observeEvent(input$file7, ({
     updateCollapse(session,id =  "norm_input_collapse_panel", open="Norm_count_panel")
   }))
@@ -4944,6 +4960,10 @@ shinyServer(function(input, output, session) {
       return(upload)
     }
   })
+  
+  observeEvent(input$goButton_venn,({
+    updateSelectInput(session,inputId = "Species7","Species",species_list, selected = "Mus musculus")
+  }))
   
   output$venn <- renderPlot({
     if(is.null(files_table())){
@@ -5595,6 +5615,10 @@ shinyServer(function(input, output, session) {
     content = function(file){write.table(enrich_viewer_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
+  observeEvent(input$goButton4,({
+    updateSelectInput(session,inputId = "Species4","Species",species_list, selected = "Mus musculus")
+  }))
+  
   #motif----------------
   output$motif_Spe <- renderText({
     if(input$Species4 == "not selected") {
@@ -5784,6 +5808,10 @@ shinyServer(function(input, output, session) {
       }else{ return(NULL) }
     }
   })
+  
+  observeEvent(input$goButton5,({
+    updateSelectInput(session,inputId = "Species5","Species",species_list, selected = "Mus musculus")
+  }))
   
   observeEvent(input$deg_file1, ({
     updateCollapse(session,id =  "DEG_input_collapse_panel", open="DEG_panel")

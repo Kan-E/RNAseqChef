@@ -1,16 +1,16 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7095217.svg)](https://doi.org/10.5281/zenodo.7095217)
 
 # RNAseqChef
-RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application (https://imeg-ku.shinyapps.io/RNAseqChef/) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>
+RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application ([https://imeg-ku.shinyapps.io/RNAseqChef/](https://imeg-ku.shinyapps.io/RNAseqChef/)) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>
 
 # Manual
-Manual：           https://github.com/Kan-E/RNAseqChef/wiki <br>
-Manual (Japanese)：https://kan-e.github.io/RNAseqChef_manual_japanese/ <br>
+Manual：           [https://github.com/Kan-E/RNAseqChef/wiki](https://github.com/Kan-E/RNAseqChef/wiki) <br>
+Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https://kan-e.github.io/RNAseqChef_manual_japanese/) <br>
 
 # Local installation
 ## Method 1 (Docker is required)
 - Download Docker
-- Run the following commands once to get the docker image of RNAseqChef
+- Run the following commands once to get the docker image of RNAseqChef<br>
 ```
 docker pull kanetoh1030/shiny-rnaseqchef
 ```
@@ -22,7 +22,8 @@ Please access http://localhost:3838 in your brower.
 
 ## Method 2 (R environment setup is required)
 - Download R and RStudio (In the case of macOS, additionally install XQuartz and Xcode)
-- Run the following commands once
+- Run the following commands once<br>
+
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -44,7 +45,7 @@ for(pkg in pkgs) if (!require(pkg, character.only = T)){
 devtools::install_github("YuLab-SMU/clusterProfiler.dplyr")
 ```
 
-You may now run RNAseqChef with just one command in R:
+You may now run RNAseqChef with just one command in R:<br>
 ```
 shiny::runGitHub("RNAseqChef", "Kan-E")
 ```
@@ -139,7 +140,7 @@ dplyr and tidyr (for data manipulation)
 - Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr
 
 # License
-This shiny code is licensed under the GPLv3. Please see the file LICENSE.md for information.
+This shiny code is licensed under the GPLv3. Please see the file [LICENSE.md](https://github.com/Kan-E/RNAseqChef/blob/main/LICENSE.md) for information.<br>
 ```
 RNAseqChef, an RNA-seq data controller highlighting gene expression features
 Shiny App for automated, systematic, and integrated RNA-seq differential expression analysis
@@ -163,4 +164,4 @@ You may contact the author of this code, Kan Etoh, at <kaneto@kumamoto-u.ac.jp>
 # Author
 
 Kan Etoh
-<kaneto@kumamoto-u.ac.jp>
+<[kaneto@kumamoto-u.ac.jp](mailto:kaneto@kumamoto-u.ac.jp)>

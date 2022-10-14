@@ -18,7 +18,7 @@ You may now run RNAseqChef with just one command in the command line:
 ```
 docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest
 ```
-Please access http://localhost:3838 in your brower.
+Please access http://localhost:3838 in your browser.
 
 ## Method 2 (R environment setup is required)
 - Download R and RStudio (In the case of macOS, additionally install XQuartz and Xcode)

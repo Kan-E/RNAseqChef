@@ -37,7 +37,8 @@ pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn",
 "ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea","umap", "biomaRt",
 "monaLisa","GenomicRanges","BiocParallel","SummarizedExperiment","JASPAR2020",
 "TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
-"BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools")
+"BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools", "org.Bt.eg.db",
+"org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db","org.Ss.eg.db","AnnotationHub")
 options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
@@ -96,14 +97,23 @@ clusterProfiler, DOSE, msigdbr, dorothea (for enrichment analysis)
   package version 7.5.1, <https://CRAN.R-project.org/package=msigdbr>.
 - Garcia-Alonso L, Holland CH, Ibrahim MM, Turei D, Saez-Rodriguez J. 'Benchmark and integration of resources for the estimation of human transcription factor activities.' Genome Research. 2019. DOI: 10.1101/gr.240663.118.
 
-AnnotationDbi, org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db, org.Xl.eg.db, org.Dm.eg.db, and org.Ce.eg.db (for genome wide annotation)
+AnnotationDbi,AnnotationHub, org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db, org.Xl.eg.db, org.Dm.eg.db, org.Ce.eg.db, org.Bt.eg.db, org.Cf.eg.db, org.Dr.eg.db, org.Gg.eg.db, org.Mmu.eg.db, org.Pt.eg.db, org.Sc.sgd.db, and org.Ss.eg.db (for genome wide annotation)
 - Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi
 - Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.
 - Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.
 - Marc Carlson (2022). org.Rn.eg.db: Genome wide annotation for Rat. R package version 3.15.0.
-- Marc Carlson (2022). org.Xl.eg.db: Genome wide annotation for Worm. R package version 3.15.0.
-- Marc Carlson (2022). org.Dm.eg.db: Genome wide annotation for Rat. R package version 3.15.0.
+- Marc Carlson (2022). org.Xl.eg.db: Genome wide annotation for Xenopus. R package version 3.15.0.
+- Marc Carlson (2022). org.Dm.eg.db: Genome wide annotation for Fly. R package version 3.15.0.
 - Marc Carlson (2022). org.Ce.eg.db: Genome wide annotation for Worm. R package version 3.15.0.
+- Marc Carlson (2022). org.Bt.eg.db: Genome wide annotation for Bovine. R package version 3.15.0.
+- Marc Carlson (2022). org.Cf.eg.db: Genome wide annotation for Canine. R package version 3.15.0.
+- Marc Carlson (2022). org.Dr.eg.db: Genome wide annotation for Zebrafish. R package version 3.15.0.
+- Marc Carlson (2022). org.Gg.eg.db: Genome wide annotation for Chicken. R package version 3.15.0.
+- Marc Carlson (2022). org.Mmu.eg.db: Genome wide annotation for Rhesus. R package version 3.15.0.
+- Marc Carlson (2022). org.Pt.eg.db: Genome wide annotation for Chimp. R package version 3.15.0.
+- Marc Carlson (2022). org.Sc.sgd.db: Genome wide annotation for Yeast. R package version 3.15.0.
+- Marc Carlson (2022). org.Ss.eg.db: Genome wide annotation for Pig. R package version 3.15.0.
+- Morgan M, Shepherd L (2022). AnnotationHub: Client to access AnnotationHub resources. R package version 3.4.0.
 
 genefilter (for z-score normalization)
 - R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.

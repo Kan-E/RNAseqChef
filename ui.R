@@ -1181,6 +1181,14 @@ shinyUI(
                                               value="kmeans_box_panel",
                                               downloadButton("download_norm_kmeans_box", "Download boxplot"),
                                               plotOutput("norm_kmeans_box")
+                              ),
+                              bsCollapsePanel(title="cluster count data:",
+                                              value="norm_kmeans_extract_count",
+                                              fluidRow(
+                                                column(4, htmlOutput("norm_select_kmean"))
+                                              ),
+                                              downloadButton("download_norm_kmeans_extract_count", "Download cluster count data"),
+                                              DTOutput("norm_kmeans_extract_table")
                               )
                               )
                      )

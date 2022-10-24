@@ -4834,6 +4834,36 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  
+  output$norm_select_kmean <- renderUI({
+    clusters <- norm_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      selectInput("norm_select_kmean", "cluster_list", choices = c(unique(clusters$Cluster)), multiple = F)
+    }
+  })
+  
+  norm_kmeans_pattern_extract <- reactive({
+    clusters <- norm_kmeans_cluster()
+    if(is.null(clusters)){
+      return(NULL)
+    }else{
+      if(is.null(input$norm_select_kmean)){
+        return(NULL)
+      }else{
+        cluster_name <- input$norm_select_kmean
+        clusterCount <- dplyr::filter(clusters, Cluster == cluster_name)
+        clusterCount <- clusterCount[,-1]
+        return(clusterCount)
+      }
+    }
+  })
+  
+  output$norm_kmeans_extract_table <- renderDT({
+    norm_kmeans_pattern_extract()
+  })
+  
   output$norm_kmeans_heatmap <- renderPlot({
     ht <- norm_kmeans()
     if(is.null(ht)){
@@ -4926,6 +4956,13 @@ shinyServer(function(input, output, session) {
         incProgress(1)
       })
     }
+  )
+  
+  output$download_norm_kmeans_extract_count = downloadHandler(
+    filename = function() {
+      paste0(download_norm_dir(),"kmeans_", input$norm_select_kmean,"_table.txt")
+    },
+    content = function(file){write.table(norm_kmeans_pattern_extract(), file, row.names = T, sep = "\t", quote = F)}
   )
   
   #venn diagram ------------------

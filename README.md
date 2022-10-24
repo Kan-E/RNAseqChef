@@ -37,7 +37,8 @@ pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn",
 "ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea","umap", "biomaRt",
 "monaLisa","GenomicRanges","BiocParallel","SummarizedExperiment","JASPAR2020",
 "TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
-"BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools")
+"BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools", "org.Bt.eg.db",
+"org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db","org.Ss.eg.db","AnnotationHub")
 options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)

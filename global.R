@@ -45,6 +45,14 @@ library(GenomicRanges)
 library(BiocParallel)
 library(SummarizedExperiment)
 library(JASPAR2020)
+library(org.Bt.eg.db)
+library(org.Cf.eg.db)
+library(org.Dr.eg.db)
+library(org.Gg.eg.db)
+library(org.Mmu.eg.db)
+library(org.Pt.eg.db)
+library(org.Sc.sgd.db)
+library(org.Ss.eg.db)
 options(repos = BiocManager::repositories())
 
 msigdbr_species <- msigdbr_species()$species_name
@@ -53,8 +61,10 @@ gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interact
                    "GO cellular component","GO molecular function", "Human phenotype ontology", 
                    "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
                    "Transcription factor targets", "miRNA target")
-species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus laevis", 
-                  "Drosophila melanogaster", "Caenorhabditis elegans")
+species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus tropicalis",
+                  "Drosophila melanogaster", "Caenorhabditis elegans", "Anolis carolinensis","Bos taurus","Canis lupus familiaris",
+                  "Danio rerio","Equus caballus","Felis catus","Gallus gallus","Macaca mulatta","Monodelphis domestica","Ornithorhynchus anatinus",
+                  "Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa")
 read_df <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
@@ -143,11 +153,13 @@ gene_list_convert_for_enrichment <- function(data, Species){
       return(data)
     }
 }
-dorothea <- function(species, confidence = "recommend",type, org){
+dorothea <- function(species, confidence = "recommend",type){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
+    spe <- "Mus musculus"
   }else{
     net <- dorothea::dorothea_hs
+    spe <- "Homo sapiens"
   }
   if(confidence == "recommend"){
   net2 <- net %>% filter(confidence != "D") %>% filter(confidence != "E")
@@ -155,7 +167,7 @@ dorothea <- function(species, confidence = "recommend",type, org){
   if(type == "DoRothEA regulon (activator)") net2 <- net2%>% filter(mor == 1)
   if(type == "DoRothEA regulon (repressor)") net2 <- net2%>% filter(mor == -1)
   my.symbols <- gsub("\\..*","", net2$target)
-  gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+  gene_IDs<-AnnotationDbi::select(org(spe),keys = my.symbols,
                                   keytype = "SYMBOL",
                                   columns = c("SYMBOL", "ENTREZID"))
   colnames(gene_IDs) <- c("target", "ENTREZID")
@@ -165,35 +177,105 @@ dorothea <- function(species, confidence = "recommend",type, org){
   net3 <- data.frame(gs_name = net2$tf, entrez_gene = net2$ENTREZID, target = net2$target, confidence = net2$confidence)
   net3 <- dplyr::arrange(net3, gs_name)
   if(species != "Mus musculus" && species != "Homo sapiens"){
+    withProgress(message = paste0("Gene ID conversion from human to ", species, "for the regulon gene set. It takes a few minutes."),{
     genes <- net3$entrez_gene
     switch (species,
             "Rattus norvegicus" = set <- "rnorvegicus_gene_ensembl",
-            "Xenopus laevis" = set <- "xtropicalis_gene_ensembl",
+            "Xenopus tropicalis" = set <- "xtropicalis_gene_ensembl",
             "Drosophila melanogaster" = set <- "dmelanogaster_gene_ensembl",
-            "Caenorhabditis elegans" = set <- "celegans_gene_ensembl")
+            "Caenorhabditis elegans" = set <- "celegans_gene_ensembl",
+            "Anolis carolinensis" = set <- "acarolinensis_gene_ensembl",
+            "Bos taurus" = set <- "btaurus_gene_ensembl",
+            "Canis lupus familiaris" = set <- "clfamiliaris_gene_ensembl",
+            "Danio rerio" = set <- "drerio_gene_ensembl",
+            "Equus caballus" = set <- "ecaballus_gene_ensembl",
+            "Felis catus" = set <- "fcatus_gene_ensembl",
+            "Gallus gallus" = set <- "ggallus_gene_ensembl",
+            "Macaca mulatta" = set <- "mmulatta_gene_ensembl",
+            "Monodelphis domestica" = set <- "mdomestica_gene_ensembl",
+            "Ornithorhynchus anatinus" = set <- "oanatinus_gene_ensembl",
+            "Pan troglodytes" = set <- "ptroglodytes_gene_ensembl",
+            "Saccharomyces cerevisiae" = set <-"scerevisiae_gene_ensembl", 
+            "Sus scrofa" = set <- "sscrofa_gene_ensembl")
     convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
     human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
-    genes = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
+    genes2 = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
                    values = genes ,mart = human,
-                   attributesL = c("entrezgene_id"),
+                 attributesL = c("entrezgene_id"),
                    martL = convert, uniqueRows=T)
-    colnames(genes) <- c("entrez_gene", "converted_entrez_gene")
-    genes <- genes %>% distinct(converted_entrez_gene, .keep_all = T)
-    merge <- merge(net3, genes, by = "entrez_gene") 
+    colnames(genes2) <- c("entrez_gene", "converted_entrez_gene")
+    genes2 <- genes2 %>% distinct(converted_entrez_gene, .keep_all = T)
+    merge <- merge(net3, genes2, by = "entrez_gene") 
     net3 <- data.frame(gs_name = merge$gs_name, entrez_gene = merge$converted_entrez_gene, confidence = merge$confidence)
     net3 <- dplyr::arrange(net3, gs_name)
+    })
   }
   return(net3)
 }
 org <- function(Species){
   if(Species != "not selected"){
+    if(Species == "Xenopus tropicalis"){
+      withProgress(message = "preparing a gene annotation",{
+      library(AnnotationHub)
+      hub <- AnnotationHub()
+      z <- hub[["AH101434"]]
+      org <- z
+      })
+    }
+    if(Species == "Anolis carolinensis"){
+      withProgress(message = "preparing a gene annotation",{
+        library(AnnotationHub)
+        hub <- AnnotationHub()
+        z <- hub[["AH101856"]]
+        org <- z
+      })
+    }
+    if(Species == "Equus caballus"){
+      withProgress(message = "preparing a gene annotation",{
+        library(AnnotationHub)
+        hub <- AnnotationHub()
+        z <- hub[["AH101134"]]
+        org <- z
+      })
+    }
+    if(Species == "Felis catus"){
+      withProgress(message = "preparing a gene annotation",{
+        library(AnnotationHub)
+        hub <- AnnotationHub()
+        z <- hub[["AH100961"]]
+        org <- z
+      })
+    }
+    if(Species == "Monodelphis domestica"){
+      withProgress(message = "preparing a gene annotation",{
+        library(AnnotationHub)
+        hub <- AnnotationHub()
+        z <- hub[["AH100991"]]
+        org <- z
+      })
+    }
+    if(Species == "Ornithorhynchus anatinus"){
+      withProgress(message = "preparing a gene annotation",{
+        library(AnnotationHub)
+        hub <- AnnotationHub()
+        z <- hub[["AH101284"]]
+        org <- z
+      })
+    }
     switch (Species,
             "Mus musculus" = org <- org.Mm.eg.db,
             "Homo sapiens" = org <- org.Hs.eg.db,
             "Rattus norvegicus" = org <- org.Rn.eg.db,
-            "Xenopus laevis" = org <- org.Xl.eg.db,
             "Drosophila melanogaster" = org <- org.Dm.eg.db,
-            "Caenorhabditis elegans" = org <- org.Ce.eg.db)
+            "Caenorhabditis elegans" = org <- org.Ce.eg.db,
+            "Bos taurus" = org <- org.Bt.eg.db,
+            "Canis lupus familiaris" = org <- org.Cf.eg.db,
+            "Danio rerio" = org <- org.Dr.eg.db,
+            "Gallus gallus" = org <- org.Gg.eg.db,
+            "Macaca mulatta" = org <- org.Mmu.eg.db,
+            "Pan troglodytes" = org <- org.Pt.eg.db,
+            "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
+            "Sus scrofa" = org <- org.Ss.eg.db)
     return(org)
   }
 }
@@ -203,9 +285,22 @@ org_code <- function(Species){
             "Mus musculus" = org_code <- "mmu",
             "Homo sapiens" = org_code <- "hsa",
             "Rattus norvegicus" = org_code <- "rno",
-            "Xenopus laevis" = org_code <- "xla",
+            "Xenopus tropicalis" = org_code <- "xtr",
             "Drosophila melanogaster" = org_code <- "dme",
-            "Caenorhabditis elegans" = org_code <- "cel")
+            "Caenorhabditis elegans" = org_code <- "cel",
+            "Anolis carolinensis" = org_code <- "acs",
+            "Bos taurus" = org_code <- "bta",
+            "Canis lupus familiaris" = org_code <- "cfa",
+            "Danio rerio" = org_code <- "dre",
+            "Equus caballus" = org_code <- "ecb",
+            "Felis catus" = org_code <- "fca",
+            "Gallus gallus" = org_code <- "gga",
+            "Macaca mulatta" = org_code <- "mcc",
+            "Monodelphis domestica" = org_code <- "mdo",
+            "Ornithorhynchus anatinus" = org_code <- "oaa",
+            "Pan troglodytes" = org_code <- "ptr",
+            "Saccharomyces cerevisiae" = org_code <- "sce",
+            "Sus scrofa" = org_code <- "ssc")
     return(org_code)
   }
 }
@@ -828,9 +923,22 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
             "Mus musculus" = species <- "Mus musculus",
             "Homo sapiens" = species <- "Homo sapiens",
             "Rattus norvegicus" = species <- "Rattus norvegicus",
-            "Xenopus laevis" = species <- "Xenopus laevis",
+            "Xenopus tropicalis" = species <- "Xenopus tropicalis",
             "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-            "Caenorhabditis elegans" = species <- "Caenorhabditis elegans")
+            "Caenorhabditis elegans" = species <- "Caenorhabditis elegans",
+            "Anolis carolinensis" = species <- "Anolis carolinensis",
+            "Bos taurus" = species <- "Bos taurus",
+            "Canis lupus familiaris" = species <- "Canis lupus familiaris",
+            "Danio rerio" = species <- "Danio rerio",
+            "Equus caballus" = species <- "Equus caballus",
+            "Felis catus" = species <- "Felis catus",
+            "Gallus gallus" = species <- "Gallus gallus",
+            "Macaca mulatta" = species <- "Macaca mulatta",
+            "Monodelphis domestica" = species <- "Monodelphis domestica",
+            "Ornithorhynchus anatinus" = species <- "Ornithorhynchus anatinus",
+            "Pan troglodytes" = species <- "Pan troglodytes",
+            "Saccharomyces cerevisiae" = species <- "Saccharomyces cerevisiae",
+            "Sus scrofa" = species <- "Sus scrofa")
     if(Gene_set == "MSigDB Hallmark"){
       H_t2g <- msigdbr(species = species, category = "H") %>%
         dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
@@ -850,12 +958,12 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
         dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
     }
     if(Gene_set == "DoRothEA regulon (activator)"){
-      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)", org = org)) %>%
+      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)")) %>%
         dplyr::select(gs_name, entrez_gene, confidence)
       H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
     }
     if(Gene_set == "DoRothEA regulon (repressor)"){
-      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)", org = org)) %>%
+      H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)")) %>%
         dplyr::select(gs_name, entrez_gene, confidence)
       H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
     }

@@ -4840,7 +4840,7 @@ shinyServer(function(input, output, session) {
     if(is.null(clusters)){
       return(NULL)
     }else{
-      selectInput("norm_select_kmean", "cluster_list", choices = c(unique(clusters$Cluster)), multiple = F)
+      selectInput("norm_select_kmean", "cluster_list", choices = c(unique(clusters$Cluster)), multiple = T)
     }
   })
   
@@ -4853,7 +4853,7 @@ shinyServer(function(input, output, session) {
         return(NULL)
       }else{
         cluster_name <- input$norm_select_kmean
-        clusterCount <- dplyr::filter(clusters, Cluster == cluster_name)
+        clusterCount <- dplyr::filter(clusters, Cluster %in% cluster_name)
         clusterCount <- clusterCount[,-1]
         return(clusterCount)
       }
@@ -4960,7 +4960,7 @@ shinyServer(function(input, output, session) {
   
   output$download_norm_kmeans_extract_count = downloadHandler(
     filename = function() {
-      paste0(download_norm_dir(),"kmeans_", input$norm_select_kmean,"_table.txt")
+      paste0(download_norm_dir(),"kmeans_selected_table.txt")
     },
     content = function(file){write.table(norm_kmeans_pattern_extract(), file, row.names = T, sep = "\t", quote = F)}
   )
@@ -6211,7 +6211,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       withProgress(message = "Prepare gene sets",{
-        dorothea_list <- dorothea(species = input$dorothea_Species, org = org(input$dorothea_Species), type = Dorothea_type(), confidence = input$dorothea_confidence)
+        dorothea_list <- dorothea(species = input$dorothea_Species, type = Dorothea_type(), confidence = input$dorothea_confidence)
         dorothea_list <- dorothea_list[,-2]
         colnames(dorothea_list)[1] <- "TF"
         return(dorothea_list)

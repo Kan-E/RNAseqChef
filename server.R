@@ -5478,9 +5478,48 @@ shinyServer(function(input, output, session) {
   })
   
   enrich_input <- reactive({
-    tmp <- input$enrich_data_file$datapath
-    if(is.null(input$enrich_data_file) && input$goButton4 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt"
-    return(read_gene_list(tmp))
+    upload = list()
+    name = c()
+    tmp <- NULL
+    if(!is.null(input$enrich_data_file[, 1])){
+      for(nr in 1:length(input$enrich_data_file[, 1])){
+        if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "xlsx") df <- read.xls(input$enrich_data_file[[nr, 'datapath']], header=TRUE)
+        if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "csv") df <- read.csv(input$enrich_data_file[[nr, 'datapath']], header=TRUE, sep = ",",quote = "")
+        if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "txt") df <- read.table(input$enrich_data_file[[nr, 'datapath']], header=TRUE, sep = "\t",quote = "")
+        name <- c(name, gsub("\\..+$", "", input$enrich_data_file[nr,]$name))
+        upload[nr] <- list(df)
+      }
+      names(upload) <- name
+      if(length(names(upload)) == 1){
+        tmp <- upload[[name]]
+        rownames(tmp) = gsub("\"", "", rownames(tmp))
+        if(str_detect(colnames(tmp)[1], "^X\\.")){
+          colnames(tmp) = str_sub(colnames(tmp), start = 3, end = -2) 
+        }
+        if(rownames(tmp)[1] == 1){
+          tmp <- data.frame(Gene = tmp[,1], Group = tmp[,2])
+        }else{
+          tmp <- data.frame(Gene = rownames(tmp), Group = tmp[,1])
+        }
+      }else{
+        df2 <- data.frame(matrix(rep(NA, 2), nrow=1))[numeric(0), ]
+      for(file in names(upload)){
+        df <- upload[[file]]
+        if(rownames(df)[1] == 1){
+        df[,1] = gsub("\"", "", df[,1])
+        df <- data.frame(Gene = df[,1], Group = file)
+        }else{
+          rownames(df) = gsub("\"", "", rownames(df))
+          df <- data.frame(Gene = rownames(df), Group = file)
+        }
+        df2 <- rbind(df2,df)
+      }
+      tmp <- df2
+      }
+    }else{
+      if(input$goButton4 > 0 )  tmp = read_gene_list("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt")
+    }
+    return(tmp)
   })
   
   Custom_input <- reactive({

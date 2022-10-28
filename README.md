@@ -16,7 +16,7 @@ Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https:
 docker pull kanetoh1030/shiny-rnaseqchef:latest
 
 ## for Mac(M1/M2) users
-docker pull kanetoh1030/shiny-rnaseqchef:latest-arm
+docker pull kanetoh1030/shiny-rnaseqchef:latest-arm64
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```

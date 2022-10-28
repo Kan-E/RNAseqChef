@@ -355,7 +355,7 @@ pre code {
 
 
 <h1 class="title toc-ignore">RNAseqChef</h1>
-<h4 class="date">22/10/28 16:09</h4>
+<h4 class="date">22/10/28 16:58</h4>
 
 </div>
 
@@ -389,10 +389,14 @@ RNAseqChef<br></li>
 docker pull kanetoh1030/shiny-rnaseqchef:latest
 
 ## for Mac(M1/M2) users
-docker pull kanetoh1030/shiny-rnaseqchef:latest-arm</code></pre>
+docker pull kanetoh1030/shiny-rnaseqchef:latest-arm64</code></pre>
 <p>You may now run RNAseqChef with just one command in the command
 line:</p>
-<pre><code>docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest</code></pre>
+<pre><code>## for Windows, Linux, and Mac(Intel) users
+docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest
+
+## for Mac(M1/M2) users
+docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest-arm64</code></pre>
 <p>Please access <a href="http://localhost:3838" class="uri">http://localhost:3838</a> in your browser.</p>
 </div>
 <div id="method-2-r-environment-setup-is-required" class="section level2">

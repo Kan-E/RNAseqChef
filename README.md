@@ -12,19 +12,11 @@ Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https:
 - Download Docker
 - Run the following commands once to get the docker image of RNAseqChef<br>
 ```
-## for Windows, Linux, and Mac(Intel) users
 docker pull kanetoh1030/shiny-rnaseqchef:latest
-
-## for Mac(M1/M2) users
-docker pull kanetoh1030/shiny-rnaseqchef:latest-arm64
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```
-## for Windows, Linux, and Mac(Intel) users
 docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest
-
-## for Mac(M1/M2) users
-docker run --rm -p 3838:3838 kanetoh1030/shiny-rnaseqchef:latest-arm64
 ```
 Please access http://localhost:3838 in your browser.
 

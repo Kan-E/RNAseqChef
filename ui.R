@@ -873,8 +873,7 @@ shinyUI(
                    bsPopover("icon_venn", "Gene list files (txt, csv, or xlsx):", 
                              content= paste("The first column is", strong("gene name"), ".<br>", 
                              "The second and subsequent columns do not affect the analysis.<br>", 
-                             "The maximum number of uploads is",strong("7 files"), ".<br>", 
-                             "File names do not use `.` other than the extension.<br><br>", 
+                             "The maximum number of uploads is",strong("7 files"), ".<br><br>", 
                              img(src="venn_input.png", width = 100,height = 300)),
                              placement = "right",options = list(container = "body")),
                    h4("Input for integrated heatmap"),
@@ -916,7 +915,7 @@ shinyUI(
                    ),
                    bsPopover("venn_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
                              content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
-                                           "Default size: <br>",strong("Venn diagram:"), "height = 3.5, width = 9<br>", strong("Integrated heatmap:"), "height = 8, width = 8 <br>",
+                                           "Default size: <br>",strong("Venn diagram:"), "height = 3, width = 3<br>", strong("Integrated heatmap:"), "height = 8, width = 8 <br>",
                                            strong("Enrichment analysis:"), "height = 6, width = 8 <br>",strong("cnet plot:"), "height = 6, width = 6 <br>"),trigger = "click"), 
                    actionButton("goButton_venn", "example data"),
                    tags$head(tags$style("#goButton{color: black;
@@ -1217,7 +1216,7 @@ shinyUI(
                                            strong("Multiple files upload:"),
                                            "<br>The first column is", strong("gene name"), ".<br>", 
                                            "The second and subsequent columns do not affect the analysis.<br>", 
-                                           "File names are used as", strong("group names"),".<br> File names do not use `.` other than the extension.<br><br>", 
+                                           "File names are used as", strong("group names"),".<br><br>",
                                            img(src="input_format_enrich.png", width = 250,height = 400)), 
                              placement = "right",options = list(container = "body")),
                    fluidRow(

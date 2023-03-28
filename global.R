@@ -71,8 +71,10 @@ read_df <- function(tmp){
   }else{
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
+    if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
+    rownames(df) = gsub(":", ".", rownames(df))
+    rownames(df) = gsub("\\\\", ".", rownames(df))
     if(length(colnames(df)) != 0){
     if(str_detect(colnames(df)[1], "^X\\.")){
     colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
@@ -87,7 +89,7 @@ read_gene_list <- function(tmp){
   }else{
     if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
-    if(tools::file_ext(tmp) == "txt") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
+    if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
     if(str_detect(colnames(df)[1], "^X\\.")){
       colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
@@ -137,7 +139,7 @@ gene_list_convert_for_enrichment <- function(data, Species){
     }else{
       df <- data.frame(GeneID = data[,1], Group = data[,2])
       my.symbols <- df$GeneID
-      if(str_detect(df$GeneID[1], "ENS")){
+      if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn")){
         gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
                                         keytype = "ENSEMBL",
                                         columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
@@ -467,7 +469,7 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     Cond_2 <- vec[2]
     Cond_3 <- vec[3]
     collist <- unique(collist)
-    if(str_detect(rownames(data)[1], "ENS")){
+    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
@@ -571,7 +573,7 @@ data_3degcount2 <- function(data3, Species, org){
       return(data4)
     } else {
       data4 <- dplyr::filter(data3, sig != "NS")
-      if(str_detect(data4$Row.names[1], "ENS")){
+      if(str_detect(data4$Row.names[1], "ENS") || str_detect(data4$Row.names[1], "FBgn")){
         if(Species != "not selected"){
           my.symbols <- data4$Row.names
           gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
@@ -612,7 +614,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     Cond_2 <- vec[2]
     Cond_3 <- vec[3]
     collist <- unique(collist)
-    if(str_detect(rownames(data)[1], "ENS")){
+    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
@@ -667,7 +669,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
       new.levels <- c("NS")
       col = "darkgray"}
     data3$sig <- factor(data3$sig, labels = new.levels)
-    if(str_detect(data3$Row.names[1], "ENS")){
+    if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
       if(Species != "not selected"){
         data3 <- merge(data3, data, by="Row.names")
       }
@@ -704,7 +706,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     }
     if (heatmap==TRUE) {
       if(!is.null(labs_data)) {
-        if(str_detect(data3$Row.names[1], "ENS")){
+        if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
           if(Species != "not selected"){
             p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Unique_ID),
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
@@ -729,7 +731,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     }
     if(!is.null(GOI)) {
       for(name in GOI){
-        if(str_detect(data3$Row.names[1], "ENS")){
+        if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
           if(Species != "not selected"){
             data3$color[data3$Unique_ID == name] <- "GOI"
           }else{
@@ -739,7 +741,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
           data3$color[data3$Row.names == name] <- "GOI"
         }
       }
-      if(str_detect(data3$Row.names[1], "ENS")){
+      if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
         if(Species != "not selected"){
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
           p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),
@@ -1081,7 +1083,7 @@ enrich_viewer_forMulti1 <- function(df, Species, org){
     return(NULL)
   }else{
     my.symbols <- df$GeneID
-    if(str_detect(df$GeneID[1], "ENS")){
+    if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn")){
       gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = "ENSEMBL",
                                       columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
@@ -1170,7 +1172,7 @@ enrich_gene_list <- function(data, Gene_set, H_t2g, org){
   }
 
 
-enrich_genelist <- function(data, enrich_gene_list, showCategory=5){
+enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL){
       if(is.null(data) || is.null(enrich_gene_list)){
         return(NULL)
       }else{
@@ -1194,6 +1196,20 @@ enrich_genelist <- function(data, enrich_gene_list, showCategory=5){
           if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
             p1 <- NULL
           } else{
+            if(section == "enrichmentviewer"){
+              df$Group <- gsub("_", " ", df$Group)
+              for(i in 1:length(df$Group)){
+                df$Group[i] <- paste(strwrap(df$Group[i], width = 15),collapse = "\n")
+              }
+              df$Group <- gsub(" \\(", "\n\\(", df$Group)
+            }
+            if(section == "venn"){
+              df$Group <- gsub(":", ": ", df$Group)
+              for(i in 1:length(df$Group)){
+                df$Group[i] <- paste(strwrap(df$Group[i], width = 15),collapse = "\n")
+              }
+              df$Group <- gsub(" \\(", "\n\\(", df$Group)
+            }
             df$GeneRatio <- parse_ratio(df$GeneRatio)
             df <- dplyr::filter(df, !is.na(qvalue))
             df$Description <- gsub("_", " ", df$Description)
@@ -1305,7 +1321,7 @@ MotifAnalysis <- function(data, Species, x){
     data <- dplyr::filter(df, Group == name)
     my.symbols <- data$GeneID
     group.name <- paste(name, "\n(", length(my.symbols),")",sep = "")
-    if(str_detect(my.symbols[1], "ENS")){
+    if(str_detect(my.symbols[1], "ENS") || str_detect(my.symbols[1], "FBgn")){
       gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
                                       keytype = "ENSEMBL",
                                       columns = c("ENTREZID","ENSEMBL"))
@@ -1353,7 +1369,7 @@ MotifRegion <- function(data, target_motif, Species, x){
   name <- gsub("\\\n.+$", "", target_motif$Group)
   data <- dplyr::filter(df, Group %in% name)
   my.symbols <- data$GeneID
-  if(str_detect(my.symbols[1], "ENS")){
+  if(str_detect(my.symbols[1], "ENS") || str_detect(my.symbols[1], "FBgn")){
     gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
                                     keytype = "ENSEMBL",
                                     columns = c("ENTREZID","ENSEMBL"))

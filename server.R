@@ -5021,6 +5021,10 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       gene_list <- files_table()
+      for(i in 1:length(names(gene_list))){
+        names(gene_list)[i] <- gsub("_", " ", names(gene_list)[i])
+        names(gene_list)[i] <- paste(strwrap(names(gene_list)[i], width = 15),collapse = "\n")
+      }
       venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)
     }
   })
@@ -5063,6 +5067,10 @@ shinyServer(function(input, output, session) {
       }else{
         withProgress(message = "Preparing download",{
           gene_list <- files_table()
+          for(i in 1:length(names(gene_list))){
+            names(gene_list)[i] <- gsub("_", " ", names(gene_list)[i])
+            names(gene_list)[i] <- paste(strwrap(names(gene_list)[i], width = 15),collapse = "\n")
+          }
           if(input$venn_pdf_height == 0){
             pdf_height <- 3
           }else pdf_height <- input$venn_pdf_height

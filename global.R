@@ -75,6 +75,9 @@ read_df <- function(tmp){
     rownames(df) = gsub("\"", "", rownames(df))
     rownames(df) = gsub(":", ".", rownames(df))
     rownames(df) = gsub("\\\\", ".", rownames(df))
+    if(length(grep("SYMBOL", colnames(df))) != 0){
+      df <- df[, - which(colnames(df) == "SYMBOL")]
+    }
     if(length(colnames(df)) != 0){
     if(str_detect(colnames(df)[1], "^X\\.")){
     colnames(df) = str_sub(colnames(df), start = 3, end = -2) 

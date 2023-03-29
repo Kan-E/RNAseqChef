@@ -1535,9 +1535,6 @@ shinyServer(function(input, output, session) {
         data <- merge(data,count, by=0)
         Type <- input$DEG_method
         data <- dplyr::filter(data, apply(data[,8:(7 + Cond_1 + Cond_2)],1,mean) > input$basemean)
-        
-        if(input$Species != "not selected"){
-        }
         if (Type == "EBSeq"){
           data$padj <- data$PPEE
           data$log2FoldChange <- -1 * log2(data$PostFC)
@@ -1647,9 +1644,10 @@ shinyServer(function(input, output, session) {
         up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
         if(input$Species != "not selected"){
           if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn")){
-            up_all <- merge(up_all, gene_ID_pair(), by=0)
+            print(up_all)
+            up_all <- merge(up_all, gene_ID_pair_batch(), by=0)
             rownames(up_all) <- up_all$Row.names
-            up_all <- up_all[,-1]
+            up_all <- up_all[,2:(1 + Cond_1 + Cond_2)]
           }
         }
         deglist[name] <- list(up_all)
@@ -1685,9 +1683,9 @@ shinyServer(function(input, output, session) {
         down_all <- down_all[,8:(7 + Cond_1 + Cond_2)]
         if(input$Species != "not selected"){
           if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn")){
-            down_all <- merge(down_all, gene_ID_pair(), by=0)
+            down_all <- merge(down_all, gene_ID_pair_batch(), by=0)
             rownames(down_all) <- down_all$Row.names
-            down_all <- down_all[,-1]
+            down_all <- down_all[,2:(1 + Cond_1 + Cond_2)]
           }
         }
         deglist[name] <- list(down_all)

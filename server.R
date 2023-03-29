@@ -5100,7 +5100,8 @@ shinyServer(function(input, output, session) {
       name = c()
       for(nr in 1:length(input$countfiles[, 1])){
         df <- read_df(input$countfiles[[nr, 'datapath']])
-        name <- c(name, gsub("\\..+$", "", input$countfiles[nr,]$name))
+        file_name <- gsub(paste0("\\.",tools::file_ext(input$countfiles[[nr, 'datapath']]),"$"), "", input$countfiles[nr,]$name)
+        name <- c(name, file_name)
         upload[[nr]] <- list(df)
       }
       names(upload) <- name

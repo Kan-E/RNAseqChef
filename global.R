@@ -780,6 +780,66 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     return(p)
   }
 }
+cond3_scatter_range <- function(data, data4, result_Condm, result_FDR, specific, 
+                                fc, fdr, basemean){
+  if(is.null(data)){
+    return(NULL)
+  }else{
+    collist <- factor(gsub("\\_.+$", "", colnames(data)))
+    vec <- c()
+    for (i in 1:length(unique(collist))) {
+      num <- length(collist[collist == unique(collist)[i]])
+      vec <- c(vec, num)
+    }
+    Cond_1 <- vec[1]
+    Cond_2 <- vec[2]
+    Cond_3 <- vec[3]
+    collist <- unique(collist)
+    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        data <- data[, - which(colnames(data) == "SYMBOL")]
+      }
+    }
+    if(specific == 1) {
+      specific = collist[1]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[2], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern4"
+      Pattern2 <- "Pattern5"
+    }
+    if(specific == 2) {
+      specific = collist[2]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
+      Pattern1 <- "Pattern3"
+      Pattern2 <- "Pattern5"
+    }
+    if(specific == 3) {
+      specific = collist[3]
+      FC_xlab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[1], ")"))
+      FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
+      result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
+      result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
+      Pattern1 <- "Pattern2"
+      Pattern2 <- "Pattern5"
+    }
+    result_FDR$FDR <- 1 - result_FDR$PPDE
+    result <- merge(result_Condm, result_FDR, by=0)
+    data$Row.names <- rownames(data)
+    data2 <- merge(data, result, by="Row.names")
+    result <- dplyr::filter(data2, apply(data2[,2:(Cond_1 + Cond_2 + Cond_3)],1,mean) > basemean)
+    sig <- rep(3, nrow(result))
+    sig[which(result$FDR <= fdr & result$FC_x < log2(1/fc) & result$FC_y < log2(1/fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 2
+    sig[which(result$FDR <= fdr & result$FC_x > log2(fc) & result$FC_y > log2(fc) & (result$MAP == Pattern1 | result$MAP == Pattern2))] = 1
+    data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
+                        FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
+    return(data3)
+  }
+}
 enrichment3_1 <- function(data3, data4, cnet_list2){
   if(!is.null(cnet_list2)){
         withProgress(message = "dotplot",{
@@ -1199,6 +1259,7 @@ enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL)
           if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
             p1 <- NULL
           } else{
+            if(!is.null(section)){
             if(section == "enrichmentviewer"){
               df$Group <- gsub("_", " ", df$Group)
               for(i in 1:length(df$Group)){
@@ -1212,6 +1273,7 @@ enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL)
                 df$Group[i] <- paste(strwrap(df$Group[i], width = 15),collapse = "\n")
               }
               df$Group <- gsub(" \\(", "\n\\(", df$Group)
+            }
             }
             df$GeneRatio <- parse_ratio(df$GeneRatio)
             df <- dplyr::filter(df, !is.na(qvalue))

@@ -2313,7 +2313,7 @@ shinyServer(function(input, output, session) {
   })
   output$download_deg_pattern_list = downloadHandler(
     filename = function(){
-      paste0(download_multi_overview_dir(), "_DEG_count_up.txt")
+      paste0(download_multi_overview_dir(), "_DEG_pattern.txt")
     },
     content = function(file) {
       clusters <- multi_pattern2()$df
@@ -3285,7 +3285,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste(download_multi_overview_dir(), paste0(input$Gene_set7,"_divisive_enrichment.txt"), sep="_")
     },
-    content = function(file){write.table(multi_enrich_div_table, file, row.names = F, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_enrich_div_table(), file, row.names = F, sep = "\t", quote = F)}
   )
   
   output$download_multi_enrichment_table2 = downloadHandler(
@@ -3396,7 +3396,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 4.7
         }else pdf_width <- input$multi_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
-        print(multi_umap())
+        print(multi_umap_plot())
         dev.off()
         incProgress(1)
       })
@@ -3987,13 +3987,24 @@ shinyServer(function(input, output, session) {
   })
   
   output$cond3_xrange <- renderUI({
-    sliderInput("cond3_scatter_xrange","X_axis range:",min = -100,
-                max=100, step = 1,
-                value = c(-10, 10))
+    data <- range_for_GOIscatter()
+    if(!is.null(data)){
+      min <- floor(min(data$FC_x))
+      max <- ceiling(max(data$FC_x))
+    sliderInput("cond3_scatter_xrange","X_axis range:",min = min-1,
+                max=max+1, step = 0.5,
+                value = c(min, max))
+    }
   })
   output$cond3_yrange <- renderUI({
-    sliderInput("cond3_scatter_yrange","Y_axis range:",min = -100, max= 100, step = 1,
-                value = c(-10, 10))
+    data <- range_for_GOIscatter()
+    if(!is.null(data)){
+      min <- floor(min(data$FC_y))
+      max <- ceiling(max(data$FC_y))
+    sliderInput("cond3_scatter_yrange","Y_axis range:",min = min-1,
+                max=max+1, step = 0.5,
+                value = c(min, max))
+    }
   })
   
   cond3_specific_group2 <- reactive({
@@ -4001,7 +4012,13 @@ shinyServer(function(input, output, session) {
       return(which(cond3_specific_group() == input$cond3_GOIpair))
     }
   })
-  
+  range_for_GOIscatter <- reactive({
+    if(!is.null(cond3_specific_group2())){
+    return(cond3_scatter_range(data = deg_norm_count2(), data4 = data_3degcount2_1(),
+                         result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
+                         fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,specific = cond3_specific_group2()))
+    }
+  })
   output$cond3_GOIscatter <- renderPlot({
     if(!is.null(input$cond3_GOIpair) && !is.null(input$cond3_scatter_yrange) && !is.null(input$cond3_scatter_xrange)){
     cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
@@ -5874,8 +5891,10 @@ shinyServer(function(input, output, session) {
     if(is.null(result)) {
       return(NULL)
     }else{
+      sign <- 1
+      if(input$volcano_inputType == "reverseON") sign <- -1
       result <- data.frame(row.names = rownames(result),
-                           log2FoldChange = result$log2FoldChange, padj = result$padj)
+                           log2FoldChange = sign * result$log2FoldChange, padj = result$padj)
       if(is.null(count)){
         return(result)
       }else{
@@ -6014,9 +6033,6 @@ shinyServer(function(input, output, session) {
       if(!is.null(input$degGOI)){
         label_data <- input$degGOI
       }else label_data <- NULL
-      if(input$volcano_inputType == "reverseON"){
-        data$log2FoldChange <- -1 * data$log2FoldChange
-      }
       data$color <- "NS"
       data$Row.names <- rownames(data)
       data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4] <- "down"

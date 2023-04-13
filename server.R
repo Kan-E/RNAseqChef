@@ -1094,12 +1094,12 @@ shinyServer(function(input, output, session) {
           p4 <- NULL
         } else{
           if (length(as.data.frame(em3)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14))
+            p4 <- gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
           }else{
-            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14))
+            p4 <- gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
           }
         }
-        p <- plot_grid(p1, p4, nrow = 1)
+        p <- plot_grid(p1, print(p4), nrow = 1)
         return(p)
     }else return(NULL)
   })
@@ -2903,13 +2903,12 @@ shinyServer(function(input, output, session) {
           p4 <- NULL
         } else{
           if (length(as.data.frame(em3)$ID) >= 5){
-            p4 <- as.grob(gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14))
+            p4 <- gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
           }else{
-            p4 <- as.grob(gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14))
+            p4 <- gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
           }
         }
-        p <- plot_grid(p4, nrow = 1)
-        return(p)
+        return(p4)
     }else return(NULL)
   })
   
@@ -2973,8 +2972,8 @@ shinyServer(function(input, output, session) {
             pdf_height <- 5
           }else pdf_height <- input$multi_pdf_height
           if(input$multi_pdf_width == 0){
-            pdf_width <- pdf_w(clusterNumber)
-          }else pdf_width <- 7
+            pdf_width <- 7
+          }else pdf_width <-input$multi_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1, nrow =1))
         dev.off()

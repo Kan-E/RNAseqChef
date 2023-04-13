@@ -2975,7 +2975,7 @@ shinyServer(function(input, output, session) {
             pdf_width <- 7
           }else pdf_width <-input$multi_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
-        print(plot_grid(p1, nrow =1))
+        print(p1)
         dev.off()
         incProgress(1)
       })

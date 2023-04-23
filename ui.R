@@ -172,6 +172,20 @@ shinyUI(
             padding: 0 !important;
           }"
                              )),
+                   conditionalPanel(condition="input.data_file_type!='Row11'",
+                                    fluidRow(column(7),
+                                             column(5, downloadButton("download_pair_report", "Download summary"),
+                                                    tags$head(tags$style("#download_pair_report{color: red;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                                              tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                              )),)
+                                    )
+                   ),
                    conditionalPanel(condition="input.data_file_type=='Row11'",
                                     fluidRow(column(7),
                                              column(5, downloadButton("downloadData", "Download zip"))
@@ -389,7 +403,19 @@ shinyUI(
           body {
             padding: 0 !important;
           }"
-                             ))
+                             )),
+                   fluidRow(column(7),
+                            column(5, downloadButton("download_3cond_report", "Download summary"),
+                                   tags$head(tags$style("#download_3cond_report{color: red;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                             tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                             )))
+                   )
                  ), #sidebarPanel
                  
                  # Main Panel -------------------------------------
@@ -616,7 +642,19 @@ shinyUI(
           body {
             padding: 0 !important;
           }"
-                             ))
+                             )),
+                   fluidRow(column(7),
+                            column(5, downloadButton("download_Multi_report", "Download summary"),
+                                   tags$head(tags$style("#download_Multi_report{color: red;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                             tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                             )),)
+                   )
                  ), #sidebarPanel
                  
                  # Main Panel -------------------------------------
@@ -1550,6 +1588,15 @@ shinyUI(
                                    "Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor
   binding site analysis. Bioinformatics 32, 1555-1556.",br(),
                                    )
+                          )
+                 ),
+                 tabPanel("Change log",
+                          fluidRow(
+                            column(12,
+                                   h2("Log:"),
+                                   h4("v1.0.5 (2023.4.24)"),
+                                   strong("・Add 'download summary' buttons in the setting panel for 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'."),br() 
+                            )
                           )
                  )
       )

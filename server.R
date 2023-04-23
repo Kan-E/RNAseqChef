@@ -383,7 +383,7 @@ shinyServer(function(input, output, session) {
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data <- merge(data, gene_IDs, by="Row.names")
-          data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = " - ")
+          data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = "\n- ")
           genenames <- as.vector(data$SYMBOL)
         }else{
           genenames=NULL
@@ -679,7 +679,7 @@ shinyServer(function(input, output, session) {
         data$color <- factor(data$color, levels = c("down","NS", "up"))
       }
       
-      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4)
+      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4,alpha=.5)
       v <- v  + geom_vline(xintercept = c(-log2(input$fc), log2(input$fc)), linetype = c(2, 2), color = c("black", "black")) +
         geom_hline(yintercept = c(-log10(input$fdr)), linetype = 2, color = c("black"))
       v <- v +theme_bw()+ scale_color_manual(values = Color)+
@@ -695,16 +695,16 @@ shinyServer(function(input, output, session) {
         if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn")){
           if(input$Species != "not selected"){
             v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),label.padding=.1,alpha = 0.6,label.size = NA, 
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
           }else{
             v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),label.padding=.1,alpha = 0.6,label.size = NA,
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
           }
         }else{
           v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-          v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+          v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),label.padding=.1,alpha = 0.6,label.size = NA,
                                             box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
         }
       }
@@ -1560,7 +1560,7 @@ shinyServer(function(input, output, session) {
             colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
             gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
             data <- merge(data, gene_IDs, by="Row.names")
-            data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = " - ")
+            data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = "\n- ")
             genenames <- as.vector(data$SYMBOL)
           }else{
             genenames=NULL
@@ -1813,6 +1813,103 @@ shinyServer(function(input, output, session) {
             pdf(PCA, height = 3.5, width = 9)
             print(pca_r[[name]])
             dev.off()
+        }
+        zip(zipfile=fname, files=fs)
+      })
+    },
+    contentType = "application/zip"
+  )
+  
+  output$download_pair_report = downloadHandler(
+    filename = function() {
+      paste0(format(Sys.time(), "%Y%m%d_"),download_pair_overview_dir(), "_Pair-wiseDEG",".zip")
+    },
+    content = function(fname){
+      withProgress(message = "Preparing download, please wait",{
+        fs <- c()
+        setwd(tempdir())
+        print(fs)
+        dir.create("DEG_result/",showWarnings = FALSE)
+        dir.create("Clustering/",showWarnings = FALSE)
+        DEG <- "DEG_result/DEG_result.txt"
+        up <- "DEG_result/up.txt"
+        down <- "DEG_result/down.txt"
+        count <- "DEG_result/normalized_count.txt"
+        PCA <- "Clustering/clustering.pdf"
+        PCA_table <- "Clustering/pca.txt"
+        MAplot <- "DEG_result/MAplot.pdf"
+        fs <- c(DEG, up,down,count,PCA,PCA_table,MAplot)
+        write.table(deg_result(), DEG, row.names = T, sep = "\t", quote = F)
+        write.table(deg_norm_count(), count, row.names = T, sep = "\t", quote = F)
+        write.table(data_degcount_down(), down, quote = F, row.names = T, sep = "\t")
+        write.table(data_degcount_up(), up, quote = F, row.names = T, sep = "\t")
+        write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), PCA_table, row.names = T, sep = "\t", quote = F)
+        pdf(PCA, height = 3.5, width = 9)
+        print(PCAplot(data = deg_norm_count()))
+        dev.off()
+        pdf(MAplot, height = 4, width = 7)
+        print(ma_heatmap_plot())
+        dev.off()
+        if(!is.null(input$xrange)){
+          dir.create("GOI_profiling/",showWarnings = FALSE)
+          volcano <- "GOI_profiling/volcano_plot.pdf"
+          fs <- c(fs,volcano)
+          pdf(volcano, height = 5, width = 5)
+          print(pair_volcano())
+          dev.off()
+          if(!is.null(input$GOI)){
+            boxplot <- "GOI_profiling/boxplot.pdf"
+            heat <- "GOI_profiling/heatmap.pdf"
+            fs <- c(fs,boxplot,heat)
+            data <- data_degcount()
+            count <- deg_norm_count()
+            if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
+              if(length(grep("SYMBOL", colnames(data))) != 0){
+                count <- count[, - which(colnames(count) == "SYMBOL")]
+              }
+            }
+            if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn")){
+              if(input$Species != "not selected"){
+                Unique_ID <- input$GOI
+                label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+                data2 <- merge(data, label_data, by="Unique_ID")
+                rownames(data2) <- data2$Unique_ID
+                data2 <- data2[, - which(colnames(data2) == "Row.names")]
+              }else{
+                Row.names <- input$GOI
+                label_data <- as.data.frame(Row.names, row.names = Row.names)
+                data2 <- merge(data, label_data, by="Row.names")
+                rownames(data2) <- data2$Row.names}
+            }else{
+              Row.names <- input$GOI
+              label_data <- as.data.frame(Row.names, row.names = Row.names)
+              data2 <- merge(data, label_data, by="Row.names")
+              rownames(data2) <- data2$Row.names
+            }
+            rowlist <- rownames(data2)
+            pdf_height <- pdf_h(rowlist)
+            pdf_width <- pdf_w(rowlist)
+            pdf(boxplot, height = pdf_height, width = pdf_width)
+            print(pair_GOIbox())
+            dev.off()
+            pdf(heat, height = 10, width = 7)
+            print(pair_GOIheatmap())
+            dev.off()
+          }
+        }
+        if(input$Species != "not selected" && !is.null(input$Gene_set)){
+          dir.create("Enrichment_analysis/",showWarnings = FALSE)
+          enrichplot <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set,".pdf")
+          enrich_table <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set,".txt")
+          enrich_gseatable <- paste0("Enrichment_analysis/GSEA_",input$Gene_set,".txt")
+          fs <- c(fs,enrichplot,enrich_table,enrich_gseatable)
+          p1 <- pair_enrich1_H()
+          p2 <- pair_enrich2()
+          pdf(enrichplot, height = 10, width = 12)
+          print(plot_grid(p1, p2, nrow =2))
+          dev.off()
+          write.table(pair_enrich_table(), enrich_table, row.names = F, sep = "\t", quote = F)
+          write.table(pair_gsea_table(), enrich_gseatable, row.names = F, sep = "\t", quote = F)
         }
         zip(zipfile=fname, files=fs)
       })
@@ -2332,7 +2429,7 @@ shinyServer(function(input, output, session) {
     data <- multi_pattern_extract()[input$multi_pattern1_count_rows_selected,]
     if(input$Species6 != "not selected"){
       if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
-        rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+        rownames(data) <- paste(data$SYMBOL,rownames(data), sep = "\n- ")
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
     }
@@ -2386,10 +2483,10 @@ shinyServer(function(input, output, session) {
           clusterNumber <- length(unique(clusters$cluster))
           print(clusterNumber)
           if(input$multi_pdf_height == 0){
-            pdf_height <- pdf_h(clusterNumber)
+            pdf_height <- pdf_h(clusterNumber)+2
           }else pdf_height <- input$multi_pdf_height
           if(input$multi_pdf_width == 0){
-            pdf_width <- pdf_w(clusterNumber)
+            pdf_width <- pdf_w(clusterNumber)+2
           }else pdf_width <- input$multi_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
           print(multi_boxplot_reactive()+
@@ -2635,10 +2732,10 @@ shinyServer(function(input, output, session) {
           clusterNumber <- length(unique(clusters$Cluster))
           print(clusterNumber)
           if(input$multi_pdf_height == 0){
-            pdf_height <- pdf_h(clusterNumber)
+            pdf_height <- pdf_h(clusterNumber)+2
           }else pdf_height <- input$multi_pdf_height
           if(input$multi_pdf_width == 0){
-            pdf_width <- pdf_w(clusterNumber)
+            pdf_width <- pdf_w(clusterNumber)+2
           }else pdf_width <- input$multi_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
           print(multi_kmeans_box()+
@@ -2758,7 +2855,7 @@ shinyServer(function(input, output, session) {
       data <- multi_kmeans_extract()[input$multi_pattern2_count_rows_selected,]
       if(input$Species6 != "not selected"){
         if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
-          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = "\n- ")
           data <- data[, - which(colnames(data) == "SYMBOL")]
         }
       }
@@ -2853,7 +2950,7 @@ shinyServer(function(input, output, session) {
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data <- merge(sig_res_LRT, gene_IDs, by="Row.names")
-          data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = " - ")
+          data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = "\n- ")
         }
       }else{
         if(input$Species6 != "not selected"){
@@ -3401,7 +3498,163 @@ shinyServer(function(input, output, session) {
       })
     }
   )
-  
+  output$download_Multi_report = downloadHandler(
+    filename = function() {
+      if (input$multi_data_file_type == "Row1"){
+        paste(format(Sys.time(), "%Y%m%d"),download_multi_overview_dir(),"MultiDEG.zip", sep ="_")
+      }else{
+        paste(format(Sys.time(), "%Y%m%d"),download_multi_overview_dir(), "MultiDEG.zip",sep ="_")
+      }
+    },
+    content = function(fname){
+      withProgress(message = "Preparing download, please wait",{
+        fs <- c()
+        setwd(tempdir())
+        print(fs)
+        dir.create("DEG_result/",showWarnings = FALSE)
+        dir.create("Clustering/",showWarnings = FALSE)
+        DEG <- "DEG_result/DEG_result.txt"
+        count <- "DEG_result/normalized_count.txt"
+        PCA <- "Clustering/clustering.pdf"
+        PCA_table <- "Clustering/pca.txt"
+        fs <- c(DEG,count,PCA,PCA_table)
+        write.table(multi_deg_result(), DEG, row.names = T, sep = "\t", quote = F)
+        write.table(multi_deg_norm_count(), count, row.names = T, sep = "\t", quote = F)
+        write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), PCA_table, row.names = T, sep = "\t", quote = F)
+        pdf(PCA, height = 3.5, width = 9)
+        print(multi_pca_plot())
+        dev.off()
+        if(length(multi_umap_plot()) != 1){
+          umap <- "Clustering/umap.pdf"
+          fs <- c(fs,umap)
+          pdf(umap, height = 3.5, width = 4.7)
+          print(multi_umap_plot())
+          dev.off()
+        }
+        if(!is.null(multi_boxplot_reactive) && length(input$selectFC) == 2){
+          dir.create(paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/"),showWarnings = FALSE)
+          DEG_pattern <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/DEG_pattern.txt")
+          DEG_pattern_count <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/DEG_pattern_norm_count_",input$multi_selectfile1,".txt")
+          summary_box1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/Divisive_boxplot.pdf")
+          fs <- c(fs, DEG_pattern,DEG_pattern_count,summary_box1)
+          clusters <- multi_pattern2()$df
+          clusters$cluster <- paste0("Group",clusters$cluster)
+          write.table(clusters, DEG_pattern, quote = F, row.names = F, sep = "\t")
+          write.table(multi_pattern_extract(), DEG_pattern_count, quote = F, row.names = T, sep = "\t")
+          
+          clusters <- multi_pattern2()$df
+          clusterNumber <- length(unique(clusters$cluster))
+          pdf_height <- pdf_h(clusterNumber)+2
+          pdf_width <- pdf_w(clusterNumber)+2
+          pdf(summary_box1, height = pdf_height, width = pdf_width)
+          print(multi_boxplot_reactive()+
+                  theme(axis.text.x= element_text(size = 8),
+                        axis.text.y= element_text(size = 8),
+                        title = element_text(size = 8),text = element_text(size = 8)))
+          dev.off()
+          if(!is.null(input$multi_pattern1_count_rows_selected)){
+            box1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/GOI_boxplot.pdf")
+            fs <- c(fs,box1)
+            data <- multi_GOIbox()
+            rowlist <- rownames(data)
+            pdf_height <- pdf_h(rowlist)
+            pdf_width <- pdf_w(rowlist)
+            pdf(box1, height = pdf_height, width = pdf_width)
+            print(GOIboxplot(data = data))
+            dev.off()
+          }
+          if(!is.null(input$Gene_set7) && !is.null(input$multi_whichGroup1_2)){
+            enrich1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/dotplot_",input$Gene_set7,".pdf")
+            enrichtxt <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/enrichment_",input$Gene_set7,".txt")
+            if(!is.null(input$multi_whichGroup1_1)){
+            fs <- c(fs,enrich1,enrichtxt)
+            p1 <- multi_enrich_H()
+            pdf(enrich1, height = 6, width = 8)
+            print(p1)
+            dev.off()
+            }
+            p <- multi_enrich2()
+            if(input$multi_whichGroup1_2 != "not selected"){
+            cnet1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/cnet_",input$Gene_set7,".pdf")
+            fs <- c(fs,cnet1)
+            pdf(cnet1, height = 6, width = 6)
+            print(p)
+            dev.off()
+            write.table(multi_enrich_div_table(), enrichtxt, row.names = F, sep = "\t", quote = F)
+            }
+          }
+        }
+        
+        if(!is.null(multi_kmeans_box()) && length(input$selectFC2) == 2){
+          dir.create(paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/"),showWarnings = FALSE)
+          kmeans_pattern <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_pattern.txt")
+          kmeans_pattern_count <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_pattern_norm_count_",input$multi_selectfile2,".txt")
+          summary_kmeansbox1 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_boxplot.pdf")
+          kmeans_heat<- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_heatmap.pdf")
+          fs <- c(fs, kmeans_pattern,kmeans_pattern_count,summary_kmeansbox1,kmeans_heat)
+          write.table(multi_kmeans_cluster(), kmeans_pattern, row.names = T, sep = "\t", quote = F)
+          clusters <- multi_kmeans_cluster()
+          clusterNumber <- length(unique(clusters$Cluster))
+          pdf_height <- pdf_h(clusterNumber)+2
+          pdf_width <- pdf_w(clusterNumber)+2
+          pdf(summary_kmeansbox1, height = pdf_height, width = pdf_width)
+          print(multi_kmeans_box()+
+                  theme(axis.text.x= element_text(size = 8),
+                        axis.text.y= element_text(size = 8),
+                        title = element_text(size = 8),text = element_text(size = 8)))
+          dev.off()
+          pdf(kmeans_heat, height = 10, width = 7)
+          print(multi_kmeans())
+          dev.off()
+          write.table(multi_kmeans_extract(), kmeans_pattern_count, row.names = T, sep = "\t", quote = F)
+          if(!is.null(input$multi_pattern2_count_rows_selected)){
+            box2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/GOI_boxplot.pdf")
+            fs <- c(fs,box2)
+            data <- multi_kmeans_GOIbox()
+            rowlist <- rownames(data)
+            pdf_height <- pdf_h(rowlist)
+            pdf_width <- pdf_w(rowlist)
+            pdf(box2, height = pdf_height, width = pdf_width)
+            print(GOIboxplot(data = data))
+            dev.off()
+          }
+          if(!is.null(input$Gene_set8) && !is.null(input$multi_whichGroup2_2)){
+            enrich2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/dotplot_",input$Gene_set8,".pdf")
+            enrichtxt2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/enrichment_",input$Gene_set8,".txt")
+            if(!is.null(input$multi_whichGroup2_1)){
+            fs <- c(fs,enrich2,enrichtxt2)
+            p1 <- multi_enrich_H2()
+            pdf(enrich2, height = 6, width = 8)
+            print(p1)
+            dev.off()
+            }
+            p <- multi_enrich12()
+            if(input$multi_whichGroup2_2 != "not selected"){
+            cnet2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/cnet_",input$Gene_set8,".pdf")
+            fs <- c(fs,cnet2)
+            pdf(cnet2, height = 6, width = 6)
+            print(p)
+            dev.off()
+            write.table(multi_enrich_k_table(), enrichtxt2, row.names = F, sep = "\t", quote = F)
+            }
+          }
+        }
+        if(!is.null(dds) && length(input$selectEnrich_pair) == 2 && input$Species6 != "not selected"){
+          dir.create("GSEA/",showWarnings = FALSE)
+          multiEnrich_table <- paste0("GSEA/GSEA_",input$Gene_set6,".txt")
+          multiEnrich <- paste0("GSEA/GSEA_",input$Gene_set6,".pdf")
+          fs <- c(fs, multiEnrich,multiEnrich_table)
+          write.table(multi_GSEA_table(), multiEnrich_table, row.names = F, sep = "\t", quote = F)
+          p1 <- multi_enrich1_H()
+          pdf(multiEnrich, height = 5, width = 7)
+          print(p1)
+          dev.off()
+        }
+        zip(zipfile=fname, files=fs)
+      })
+    },
+    contentType = "application/zip"
+  )
   
   # 3 conditions ------------------------------------------------------------------------------
   org2 <- reactive({
@@ -3688,7 +3941,7 @@ shinyServer(function(input, output, session) {
             gene_IDs  <- gene_ID()
             normalized_counts$Row.names <- rownames(normalized_counts)
             data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
-            data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
+            data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
             rownames(data2) <- data2$Row.names
             normalized_counts <- data2[,-1]
           }
@@ -4303,6 +4556,91 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  output$download_3cond_report = downloadHandler(
+    filename = function() {
+      paste0(format(Sys.time(), "%Y%m%d_"),download_cond3_dir(), "_3conditionsDEG",".zip")
+    },
+    content = function(fname){
+      withProgress(message = "Preparing download, please wait",{
+        fs <- c()
+        setwd(tempdir())
+        print(fs)
+        dir.create("DEG_result/",showWarnings = FALSE)
+        dir.create("Clustering/",showWarnings = FALSE)
+        DEG <- "DEG_result/DEG_result.txt"
+        result1 <- "DEG_result/DEG_signature1.txt"
+        result2 <- "DEG_result/DEG_signature2.txt"
+        result3 <- "DEG_result/DEG_signature3.txt"
+        count <- "DEG_result/normalized_count.txt"
+        PCA <- "Clustering/clustering.pdf"
+        PCA_table <- "Clustering/pca.txt"
+        scatter <- "DEG_result/scatter_plot.pdf"
+        fs <- c(DEG, result1,result2,result3,count,PCA,PCA_table,scatter)
+        write.table(data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
+                                    result_FDR = deg_result2(), specific = 1,result_list=TRUE), 
+                    DEG, row.names = T, sep = "\t", quote = F)
+        write.table(deg_norm_count2(), count, row.names = T, sep = "\t", quote = F)
+        write.table(data_3degcount2_1(), result1, row.names = F, sep = "\t", quote = F)
+        write.table(data_3degcount2_2(), result2, row.names = F, sep = "\t", quote = F)
+        write.table(data_3degcount2_3(), result3, row.names = F, sep = "\t", quote = F)
+        write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), PCA_table, row.names = T, sep = "\t", quote = F)
+        pdf(PCA, height = 3.5, width = 9)
+        print(PCAplot(data = deg_norm_count2()))
+        dev.off()
+        pdf(scatter, height = 6, width = 10)
+        print(cond3_scatter1_plot()) 
+        print(cond3_scatter2_plot())
+        print(cond3_scatter3_plot())
+        dev.off()
+        if(!is.null(input$cond3_GOIpair) && !is.null(input$cond3_scatter_yrange) && !is.null(input$cond3_scatter_xrange)){
+          dir.create("GOI_profiling/",showWarnings = FALSE)
+          goiscatter <- "GOI_profiling/scatter_plot.pdf"
+          fs <- c(fs,goiscatter)
+          pdf(goiscatter, height = 6, width = 10)
+          print(cond3_scatter_plot(data = deg_norm_count2(), data4 = data_3degcount2_1(),
+                                   result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
+                                   fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
+                                   y_axis = input$cond3_scatter_yrange,x_axis = input$cond3_scatter_xrange,heatmap = FALSE,
+                                   specific = cond3_specific_group2(), GOI = input$GOI2, Species = input$Species2))
+          dev.off()
+          if(!is.null(input$GOI2)){
+            boxplot <- "GOI_profiling/boxplot.pdf"
+            heat <- "GOI_profiling/heatmap.pdf"
+            fs <- c(fs,boxplot,heat)
+            data <- cond3_GOIcount()
+            rowlist <- rownames(data)
+            pdf_height <- pdf_h(rowlist)
+            pdf_width <- pdf_w(rowlist)
+            pdf(boxplot, height = pdf_height, width = pdf_width)
+            print(cond3_GOIbox())
+            dev.off()
+            pdf(heat, height = 10, width = 7)
+            print(cond3_GOIheat())
+            dev.off()
+          }
+        }
+        if(input$Species2 != "not selected" && !is.null(input$Gene_set2)){
+          dir.create("Enrichment_analysis/",showWarnings = FALSE)
+          enrichplot <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set2,".pdf")
+          enrich_table1 <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set2,"_1.txt")
+          enrich_table2 <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set2,"_2.txt")
+          enrich_table3 <- paste0("Enrichment_analysis/Enrichment_analysis_",input$Gene_set2,"_3.txt")
+          fs <- c(fs,enrichplot,enrich_table1,enrich_table2,enrich_table3)
+          p1 <- keggEnrichment2_1()
+          p2 <- keggEnrichment2_2()
+          p3 <- keggEnrichment2_3()
+          pdf(enrichplot, height = 12, width = 15)
+          print(plot_grid(p1, p2, p3, nrow =3))
+          dev.off()
+          write.table(cond3_enrich_table1(), enrich_table1, row.names = F, sep = "\t", quote = F)
+          write.table(cond3_enrich_table2(), enrich_table2, row.names = F, sep = "\t", quote = F)
+          write.table(cond3_enrich_table3(), enrich_table3, row.names = F, sep = "\t", quote = F)
+        }
+        zip(zipfile=fname, files=fs)
+      })
+    },
+    contentType = "application/zip"
+  )
   #normalized count analysis
   #norm_count_input-------------------
   org3 <- reactive({
@@ -4606,7 +4944,7 @@ shinyServer(function(input, output, session) {
         data2 <- merge(count, gene_IDs, by= 0)
         rownames(data2) <- data2[,1]
         data2 <- data2[, - which(colnames(data2) == "Row.names.y")]
-        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
         count <- data2[,-1]
       }
     }
@@ -4911,7 +5249,7 @@ shinyServer(function(input, output, session) {
       data <- norm_kmeans_cluster()[input$norm_kmeans_count_table_rows_selected,]
       if(input$Species3 != "not selected"){
         if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
-          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = " - ")
+          rownames(data) <- paste(data$SYMBOL,rownames(data), sep = "\n- ")
           data <- data[, - which(colnames(data) == "SYMBOL")]
         }
       }
@@ -5956,7 +6294,7 @@ shinyServer(function(input, output, session) {
         data2 <- merge(count, gene_IDs, by= 0)
         rownames(data2) <- data2[,1]
         data2 <- data2[, - which(colnames(data2) == "Row.names.y")]
-        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = " - ")
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
         count <- data2[,-1]
       }
     }
@@ -6056,7 +6394,7 @@ shinyServer(function(input, output, session) {
         data$color <- factor(data$color, levels = c("down","NS", "up"))
       }
       
-      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4)
+      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4,alpha=.5)
       v <- v  + geom_vline(xintercept = c(-log2(input$fc4), log2(input$fc4)), linetype = c(2, 2), color = c("black", "black")) +
         geom_hline(yintercept = c(-log10(input$fdr4)), linetype = 2, color = c("black"))
       v <- v +theme_bw()+ scale_color_manual(values = Color)+
@@ -6072,16 +6410,16 @@ shinyServer(function(input, output, session) {
         if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn")){
           if(input$Species5 != "not selected"){
             v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),alpha = 0.6,label.size = NA, 
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
           }else{
             v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-            v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),alpha = 0.6,label.size = NA, 
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
           }
         }else{
           v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
-          v <- v + ggrepel::geom_text_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),
+          v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),alpha = 0.6,label.size = NA, 
                                             box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
         }
       }

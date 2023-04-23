@@ -686,7 +686,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     font.label <- data.frame(size=7.5, color="black", face = "bold.italic")
     set.seed(42)
     FC_x <- FC_y <- Row.names <- padj <- NULL
-    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1)
+    p <- ggplot(data3, aes(x = FC_x, y = FC_y)) + geom_point(aes(color = sig),size = 0.1,alpha=.5)
     p <- p  + geom_hline(yintercept = c(-log2(fc), log2(fc)), linetype = c(2, 2), color = c("black", "black"))+
       geom_vline(xintercept = c(-log2(fc), log2(fc)),linetype = c(2, 2), color = c("black", "black"))
     p <- p +
@@ -711,18 +711,18 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
       if(!is.null(labs_data)) {
         if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
           if(Species != "not selected"){
-            p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Unique_ID),
+            p <- p + ggrepel::geom_label_repel(data = labs_data2, mapping = aes(label = Unique_ID),
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
                                               force = 1, fontface = font.label$face,
                                               size = font.label$size/2, color = font.label$color)
           }else{
-            p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+            p <- p + ggrepel::geom_label_repel(data = labs_data2, mapping = aes(label = Row.names),
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
                                               force = 1, fontface = font.label$face,
                                               size = font.label$size/2, color = font.label$color)
           }
         }else{
-        p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Row.names),
+        p <- p + ggrepel::geom_label_repel(data = labs_data2, mapping = aes(label = Row.names),
                                           box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
                                           force = 1, fontface = font.label$face,
                                           size = font.label$size/2, color = font.label$color)
@@ -747,16 +747,16 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
       if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn")){
         if(Species != "not selected"){
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
-          p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),
+          p <- p + ggrepel::geom_label_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),alpha = 0.6,label.size = NA, 
                                             box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
         }else{
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
-          p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
+          p <- p + ggrepel::geom_label_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),alpha = 0.6,label.size = NA, 
                                             box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
         }
       }else{
         p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
-        p <- p + ggrepel::geom_text_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),
+        p <- p + ggrepel::geom_label_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),alpha = 0.6,label.size = NA, 
                                           box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
       }
     }

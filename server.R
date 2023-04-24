@@ -451,6 +451,7 @@ shinyServer(function(input, output, session) {
           up_all <- merge(up_all, gene_ID_pair(), by=0)
           rownames(up_all) <- up_all$Row.names
           up_all <- up_all[,-1]
+          up_all <- up_all[, - which(colnames(up_all) == "Row.names.y")]
         }
       }
       return(up_all)
@@ -480,6 +481,7 @@ shinyServer(function(input, output, session) {
           down_all <- merge(down_all, gene_ID_pair(), by=0)
           rownames(down_all) <- down_all$Row.names
           down_all <- down_all[,-1]
+          down_all <- down_all[, - which(colnames(down_all) == "Row.names.y")]
         }
       }
       return(down_all)

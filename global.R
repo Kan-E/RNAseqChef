@@ -140,14 +140,17 @@ gene_list_convert_for_enrichment <- function(data, Species){
     if(is.null(data) || Species == "not selected"){
       return(NULL)
     }else{
-      df <- data.frame(GeneID = data[,1], Group = data[,2])
-      my.symbols <- df$GeneID
       if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn")){
+        df <- data.frame(GeneID = data[,1], Group = data[,2])
+        df$GeneID <- gsub("\\..*","", df$GeneID)
+        my.symbols <- df$GeneID
         gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
                                         keytype = "ENSEMBL",
                                         columns = c("ENSEMBL","SYMBOL", "ENTREZID"))
         colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
       }else{
+        df <- data.frame(GeneID = data[,1], Group = data[,2])
+        my.symbols <- df$GeneID
         gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
                                           keytype = "SYMBOL",
                                           columns = c("ENTREZID", "SYMBOL"))

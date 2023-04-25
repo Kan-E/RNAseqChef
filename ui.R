@@ -1595,7 +1595,8 @@ shinyUI(
                             column(12,
                                    h2("Log:"),
                                    h4("v1.0.5 (2023.4.24)"),
-                                   strong("・Add 'download summary' buttons in the setting panel for 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'."),br() 
+                                   strong("・Add 'download summary' buttons in the setting panel for 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'."),br(),
+                                   strong("・Add new species (Xenopus laevis and Arabidopsis thaliana) for KEGG and GO analysis."),br()
                             )
                           )
                  )

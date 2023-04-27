@@ -37,7 +37,6 @@ RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('EBSeq', update = F)" && \
     R -e "BiocManager::install('ggnewscale', update = F)" && \
     R -e "BiocManager::install('edgeR', update = F)" && \
-    R -e "BiocManager::install('IHW', update = F)" && \
     R -e "BiocManager::install('qvalue', update = F)" && \
     R -e "BiocManager::install('org.Hs.eg.db', update = F)" && \
     R -e "BiocManager::install('org.Mm.eg.db', update = F)" && \
@@ -78,7 +77,8 @@ RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('org.Sc.sgd.db', update = F)" && \
     R -e "BiocManager::install('org.Ss.eg.db', update = F)" && \
     R -e "BiocManager::install('AnnotationHub', update = F)" && \
-    R -e "BiocManager::install('tidyverse', update = F)"
+    R -e "BiocManager::install('tidyverse', update = F)" && \
+    R -e "BiocManager::install('org.At.tair.db', update = F)"
 RUN rm -rf /srv/shiny-server/hello
 RUN mkdir -p /srv/shiny-server/RNAseqChef
 COPY ui.R /srv/shiny-server/RNAseqChef/

@@ -11,23 +11,40 @@ RUN apt-get update && apt-get install -y \
 RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('shiny', update = F)" && \
     R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz',repos = NULL, type = 'source')" && \
-    R -e "BiocManager::install('DT', update = F)" && R -e "BiocManager::install('gdata', update = F)" && \
-    R -e "BiocManager::install('rstatix', update = F)" && R -e "BiocManager::install('multcomp', update = F)" && \
-    R -e "BiocManager::install('venn', update = F)" && R -e "BiocManager::install('ggrepel', update = F)" && \
-    R -e "BiocManager::install('ggdendro', update = F)" && R -e "BiocManager::install('ggplotify', update = F)" && \
-    R -e "BiocManager::install('gridExtra', update = F)" && R -e "BiocManager::install('cowplot', update = F)" && \
-    R -e "BiocManager::install('DESeq2', update = F)" && R -e "BiocManager::install('EBSeq', update = F)" && \
-    R -e "BiocManager::install('ggnewscale', update = F)" && R -e "BiocManager::install('edgeR', update = F)" && \
-    R -e "BiocManager::install('IHW', update = F)" && R -e "BiocManager::install('qvalue', update = F)" && \
-    R -e "BiocManager::install('org.Hs.eg.db', update = F)" && R -e "BiocManager::install('org.Mm.eg.db', update = F)" && \
-    R -e "BiocManager::install('org.Rn.eg.db', update = F)" && R -e "BiocManager::install('org.Xl.eg.db', update = F)" && \
-    R -e "BiocManager::install('org.Dm.eg.db', update = F)" && R -e "BiocManager::install('org.Ce.eg.db', update = F)" && \
-    R -e "BiocManager::install('DOSE', update = F)" && R -e "BiocManager::install('msigdbr', update = F)" && \
-    R -e "BiocManager::install('genefilter', update = F)" && R -e "BiocManager::install('ComplexHeatmap', update = F)" && \
-    R -e "BiocManager::install('shinyBS', update = F)" && R -e "BiocManager::install('plotly', update = F)" && \
-    R -e "BiocManager::install('shinyjs', update = F)" && R -e "BiocManager::install('DEGreport', update = F)" && \
-    R -e "BiocManager::install('dorothea', update = F)" && R -e "BiocManager::install('umap', update = F)" && \
-    R -e "BiocManager::install('ggpubr', update = F)" && R -e "BiocManager::install('biomaRt', update = F)" && \
+    R -e "BiocManager::install('DT', update = F)" && \
+    R -e "BiocManager::install('gdata', update = F)" && \
+    R -e "BiocManager::install('rstatix', update = F)" && \
+    R -e "BiocManager::install('multcomp', update = F)" && \
+    R -e "BiocManager::install('venn', update = F)" && \
+    R -e "BiocManager::install('ggrepel', update = F)" && \
+    R -e "BiocManager::install('ggdendro', update = F)" && \
+    R -e "BiocManager::install('ggplotify', update = F)" && \
+    R -e "BiocManager::install('gridExtra', update = F)" && \
+    R -e "BiocManager::install('cowplot', update = F)" && \
+    R -e "BiocManager::install('DESeq2', update = F)" && \
+    R -e "BiocManager::install('EBSeq', update = F)" && \
+    R -e "BiocManager::install('ggnewscale', update = F)" && \
+    R -e "BiocManager::install('edgeR', update = F)" && \
+    R -e "BiocManager::install('IHW', update = F)" && \
+    R -e "BiocManager::install('qvalue', update = F)" && \
+    R -e "BiocManager::install('org.Hs.eg.db', update = F)" && \
+    R -e "BiocManager::install('org.Mm.eg.db', update = F)" && \
+    R -e "BiocManager::install('org.Rn.eg.db', update = F)" && \
+    R -e "BiocManager::install('org.Xl.eg.db', update = F)" && \
+    R -e "BiocManager::install('org.Dm.eg.db', update = F)" && \
+    R -e "BiocManager::install('org.Ce.eg.db', update = F)" && \
+    R -e "BiocManager::install('DOSE', update = F)" && \
+    R -e "BiocManager::install('msigdbr', update = F)" && \
+    R -e "BiocManager::install('genefilter', update = F)" && \
+    R -e "BiocManager::install('ComplexHeatmap', update = F)" && \
+    R -e "BiocManager::install('shinyBS', update = F)" && \
+    R -e "BiocManager::install('plotly', update = F)" && \
+    R -e "BiocManager::install('shinyjs', update = F)" && \
+    R -e "BiocManager::install('DEGreport', update = F)" && \
+    R -e "BiocManager::install('dorothea', update = F)" && \
+    R -e "BiocManager::install('umap', update = F)" && \
+    R -e "BiocManager::install('ggpubr', update = F)" && \
+    R -e "BiocManager::install('biomaRt', update = F)" && \
     R -e  "devtools::install_github('YuLab-SMU/clusterProfiler.dplyr')" && \
     R -e "BiocManager::install('enrichplot', update = F)" && \
     R -e "BiocManager::install('clusterProfiler', update = F)" && \

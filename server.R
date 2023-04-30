@@ -6422,7 +6422,7 @@ shinyServer(function(input, output, session) {
     }
   })
   output$motif_warning <- renderText({
-    if(input$motifButton > 0){
+    if(input$motifButton > 0 && updateCounter$i > 0){
       if(length(motif_table()$motif.id) == 0){
         print("Cannot detect any motifs.")
       }

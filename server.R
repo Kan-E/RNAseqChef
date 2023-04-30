@@ -6379,9 +6379,23 @@ shinyServer(function(input, output, session) {
       return(x)
     }
   })
+  updateCounter <- reactiveValues(i = 0)
   
+  observe({
+    input$motifButton
+    isolate({
+      updateCounter$i <- updateCounter$i + 1
+    })
+  })
+  
+  
+  #Restart
+  defaultvalues <- observeEvent(enrich_motif(), {
+    isolate(updateCounter$i == 0)
+    updateCounter <<- reactiveValues(i = 0)
+  }) 
   enrich_motif <- reactive({
-    if(input$motifButton > 0){
+    if(updateCounter$i > 0 && input$motifButton > 0){
       return(MotifAnalysis(data= enrich_input(), Species = input$Species4, x = promoter()))
     }
   })

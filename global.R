@@ -54,6 +54,7 @@ library(org.Pt.eg.db)
 library(org.Sc.sgd.db)
 library(org.Ss.eg.db)
 library(org.At.tair.db)
+library(colorspace)
 options(repos = BiocManager::repositories())
 
 msigdbr_species <- msigdbr_species()$species_name

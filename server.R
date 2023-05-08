@@ -5819,17 +5819,21 @@ shinyServer(function(input, output, session) {
           cond <- gsub("\\_.+$", "", colnames(base_z))
           cond <- gsub(".+\\.", "", cond)
           cond <- factor(cond, levels = unique(cond), ordered = TRUE)
+          cond_color <- rainbow_hcl(length(unique(cond)),c=100)
+          names(cond_color) <- unique(cond)
           if(length(rownames(base_z)) <= 50){
             ht <- Heatmap(base_z, name = "z-score",
                           clustering_method_columns = 'ward.D2',
                           cluster_row_slices = T, show_row_names = T,
-                          top_annotation = HeatmapAnnotation(condition = cond),column_names_side = "top",
+                          top_annotation = HeatmapAnnotation(condition = cond, col = list(condition = cond_color)),
+                          column_names_side = "top",
                           row_names_gp = gpar(fontface = "italic"))
           }else{
             ht <- Heatmap(base_z, name = "z-score",
                           clustering_method_columns = 'ward.D2',
                           cluster_row_slices = T, show_row_names = F,
-                          top_annotation = HeatmapAnnotation(condition = cond),column_names_side = "top")
+                          top_annotation = HeatmapAnnotation(condition = cond, col = list(condition = cond_color)),
+                          column_names_side = "top")
           }
           incProgress(1)
           return(draw(ht))

@@ -281,7 +281,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(gsub("\\..+$", "", input$file1), paste0(gsub("\\..+$", "", input$file2),".txt"), sep ="-")
       }},
-    content = function(file){write.table(d_row_count_matrix(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(d_row_count_matrix(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_pair_DEG_result = downloadHandler(
     filename = function() {
@@ -290,7 +290,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(paste(gsub("\\..+$", "", input$file1), input$DEG_method, sep = "-"), paste0(input$FDR_method,".txt"), sep ="-")
       }},
-    content = function(file){write.table(deg_result(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(deg_result(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_pair_norm_count = downloadHandler(
     filename = function() {
@@ -299,7 +299,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(paste(gsub("\\..+$", "", input$file1), input$DEG_method, sep = "-"), "normalized.txt", sep ="-")
       }},
-    content = function(file){write.table(deg_norm_count(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(deg_norm_count(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   download_pair_overview_dir <-reactive({
     if (input$data_file_type == "Row1"){
@@ -512,13 +512,13 @@ shinyServer(function(input, output, session) {
     filename = function(){
       paste0(download_pair_overview_dir(), "_DEG_count_up.txt")
     },
-    content = function(file) {write.table(data_degcount_up(), file, quote = F, row.names = T, sep = "\t")})
+    content = function(file) {write.table(data_degcount_up(), file, quote = F, row.names = T, col.names=NA, sep = "\t")})
   
   output$download_pair_deg_count_down = downloadHandler(
     filename = function(){
       paste0(download_pair_overview_dir(), "_DEG_count_down.txt")
     },
-    content = function(file) {write.table(data_degcount_down(), file, quote = F, row.names = T, sep = "\t")})
+    content = function(file) {write.table(data_degcount_down(), file, quote = F, row.names = T, col.names=NA, sep = "\t")})
   
   # pair-wise MA ------------------------------------------------------------------------------
   output$MA <- renderPlot({
@@ -990,7 +990,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_pair_overview_dir(), "_PCA_table.txt")
     },
-    content = function(file){write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   output$download_pair_report = downloadHandler(
@@ -1012,11 +1012,11 @@ shinyServer(function(input, output, session) {
         PCA_table <- "Clustering/pca.txt"
         MAplot <- "DEG_result/MAplot.pdf"
         fs <- c(DEG, up,down,count,PCA,PCA_table,MAplot)
-        write.table(deg_result(), DEG, row.names = T, sep = "\t", quote = F)
-        write.table(deg_norm_count(), count, row.names = T, sep = "\t", quote = F)
-        write.table(data_degcount_down(), down, quote = F, row.names = T, sep = "\t")
-        write.table(data_degcount_up(), up, quote = F, row.names = T, sep = "\t")
-        write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), PCA_table, row.names = T, sep = "\t", quote = F)
+        write.table(deg_result(), DEG, row.names = T, col.names=NA, sep = "\t", quote = F)
+        write.table(deg_norm_count(), count, row.names = T, col.names=NA, sep = "\t", quote = F)
+        write.table(data_degcount_down(), down, quote = F, row.names = T, col.names=NA, sep = "\t")
+        write.table(data_degcount_up(), up, quote = F, row.names = T, col.names=NA, sep = "\t")
+        write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
         pdf(PCA, height = 3.5, width = 9)
         print(PCAplot(data = deg_norm_count()))
         dev.off()
@@ -2001,14 +2001,14 @@ shinyServer(function(input, output, session) {
           up <- up_c[[name]]
           down <- down_c[[name]]
           if(name != "combined"){
-            write.table(deg, DEG, quote = F, row.names = T, sep = "\t")
-            write.table(up, UP, quote = F, row.names = T, sep = "\t")
-            write.table(down, DOWN, quote = F, row.names = T, sep = "\t")
+            write.table(deg, DEG, quote = F, row.names = T, col.names=NA, sep = "\t")
+            write.table(up, UP, quote = F, row.names = T, col.names=NA, sep = "\t")
+            write.table(down, DOWN, quote = F, row.names = T, col.names=NA, sep = "\t")
             pdf(MA, height = 4, width = 7)
             print(ma_r[[name]])
             dev.off() 
           }
-          write.table(norm, norm_count, quote = F, row.names = T, sep = "\t")
+          write.table(norm, norm_count, quote = F, row.names = T, col.names=NA, sep = "\t")
           pdf(PCA, height = 3.5, width = 9)
           print(pca_r[[name]])
           dev.off()
@@ -2256,7 +2256,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(gsub("\\..+$", "", input$multi_file2), paste0(input$FDR_method6,".txt"), sep ="-")
       }},
-    content = function(file){write.table(multi_deg_result(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_deg_result(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_multi_norm_count = downloadHandler(
     filename = function() {
@@ -2265,7 +2265,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(gsub("\\..+$", "", input$multi_file2), "normalized.txt", sep ="-")
       }},
-    content = function(file){write.table(multi_deg_norm_count(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_deg_norm_count(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   download_multi_overview_dir <-reactive({
     if (input$multi_data_file_type == "Row1"){
@@ -2535,7 +2535,7 @@ shinyServer(function(input, output, session) {
       paste(paste(download_multi_overview_dir(), input$multi_selectfile1, sep = "_"), 
             "_pattern_extracted.txt", sep = "_")
     },
-    content = function(file) {write.table(multi_pattern_extract(), file, quote = F, row.names = T, sep = "\t")})
+    content = function(file) {write.table(multi_pattern_extract(), file, quote = F, row.names = T, col.names=NA, sep = "\t")})
   
   multi_GOIbox <- reactive({
     if(!is.null(input$multi_pattern1_count_rows_selected)){
@@ -2884,7 +2884,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_multi_overview_dir(), "kmeans_count_table.txt")
     },
-    content = function(file){write.table(multi_kmeans_cluster(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_kmeans_cluster(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_multi_kmeans_heatmap = downloadHandler(
     filename = function() {
@@ -3024,7 +3024,7 @@ shinyServer(function(input, output, session) {
       paste(paste(download_multi_overview_dir(),input$multi_selectfile2, sep = "_"), 
             "kmeans_count_table.txt", sep = "_")
     },
-    content = function(file){write.table(multi_kmeans_extract(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(multi_kmeans_extract(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   #Multi DEG enrichment------------
@@ -3540,9 +3540,9 @@ shinyServer(function(input, output, session) {
         PCA <- "Clustering/clustering.pdf"
         PCA_table <- "Clustering/pca.txt"
         fs <- c(DEG,count,PCA,PCA_table)
-        write.table(multi_deg_result(), DEG, row.names = T, sep = "\t", quote = F)
-        write.table(multi_deg_norm_count(), count, row.names = T, sep = "\t", quote = F)
-        write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), PCA_table, row.names = T, sep = "\t", quote = F)
+        write.table(multi_deg_result(), DEG, row.names = T, col.names=NA, sep = "\t", quote = F)
+        write.table(multi_deg_norm_count(), count, row.names = T, col.names=NA, sep = "\t", quote = F)
+        write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
         pdf(PCA, height = 3.5, width = 9)
         print(multi_pca_plot())
         dev.off()
@@ -3562,7 +3562,7 @@ shinyServer(function(input, output, session) {
           clusters <- multi_pattern2()$df
           clusters$cluster <- paste0("Group",clusters$cluster)
           write.table(clusters, DEG_pattern, quote = F, row.names = F, sep = "\t")
-          write.table(multi_pattern_extract(), DEG_pattern_count, quote = F, row.names = T, sep = "\t")
+          write.table(multi_pattern_extract(), DEG_pattern_count, quote = F, row.names = T, col.names=NA, sep = "\t")
           
           clusters <- multi_pattern2()$df
           clusterNumber <- length(unique(clusters$cluster))
@@ -3614,7 +3614,7 @@ shinyServer(function(input, output, session) {
           summary_kmeansbox1 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_boxplot.pdf")
           kmeans_heat<- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_heatmap.pdf")
           fs <- c(fs, kmeans_pattern,kmeans_pattern_count,summary_kmeansbox1,kmeans_heat)
-          write.table(multi_kmeans_cluster(), kmeans_pattern, row.names = T, sep = "\t", quote = F)
+          write.table(multi_kmeans_cluster(), kmeans_pattern, row.names = T, col.names=NA, sep = "\t", quote = F)
           clusters <- multi_kmeans_cluster()
           clusterNumber <- length(unique(clusters$Cluster))
           pdf_height <- pdf_h(clusterNumber)+2
@@ -3628,7 +3628,7 @@ shinyServer(function(input, output, session) {
           pdf(kmeans_heat, height = 10, width = 7)
           print(multi_kmeans())
           dev.off()
-          write.table(multi_kmeans_extract(), kmeans_pattern_count, row.names = T, sep = "\t", quote = F)
+          write.table(multi_kmeans_extract(), kmeans_pattern_count, row.names = T, col.names=NA, sep = "\t", quote = F)
           if(!is.null(input$multi_pattern2_count_rows_selected)){
             box2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/GOI_boxplot.pdf")
             fs <- c(fs,box2)
@@ -3775,7 +3775,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_multi_overview_dir(), "_PCA_table.txt")
     },
-    content = function(file){write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   output$multi_umap_n <- renderUI({
@@ -3947,7 +3947,7 @@ shinyServer(function(input, output, session) {
         paste(gsub("\\..+$", "", input$file5), paste0(gsub("\\..+$", "", input$file6), ".txt"), sep = "-")
       }
     },
-    content = function(file){write.table(d_row_count_matrix2(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(d_row_count_matrix2(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   gene_ID <- reactive({
@@ -4168,7 +4168,7 @@ shinyServer(function(input, output, session) {
   
   output$download_cond3_norm_count = downloadHandler(
     filename = function() {paste(download_cond3_dir(),"normalized_count.txt", sep = "-")},
-    content = function(file){write.table(deg_norm_count2(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(deg_norm_count2(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   output$download_3cond_DEG_table1 = downloadHandler(
@@ -4192,7 +4192,7 @@ shinyServer(function(input, output, session) {
     filename = function() {paste(download_cond3_dir(),"DEG_result_ALL.txt", sep = "-")},
     content = function(file){write.table(data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
                                                          result_FDR = deg_result2(), specific = 1,result_list=TRUE), 
-                                         file, row.names = T, sep = "\t", quote = F)}
+                                         file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   
@@ -4370,7 +4370,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_cond3_dir(), "PCA_table.txt")
     },
-    content = function(file){write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   #3conditions GOI------------------------------------------------------
   GOI_list2 <- reactive({
@@ -4792,12 +4792,12 @@ shinyServer(function(input, output, session) {
         fs <- c(DEG, result1,result2,result3,count,PCA,PCA_table,scatter)
         write.table(data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),
                                     result_FDR = deg_result2(), specific = 1,result_list=TRUE), 
-                    DEG, row.names = T, sep = "\t", quote = F)
-        write.table(deg_norm_count2(), count, row.names = T, sep = "\t", quote = F)
+                    DEG, row.names = T, col.names=NA, sep = "\t", quote = F)
+        write.table(deg_norm_count2(), count, row.names = T, col.names=NA, sep = "\t", quote = F)
         write.table(data_3degcount2_1(), result1, row.names = F, sep = "\t", quote = F)
         write.table(data_3degcount2_2(), result2, row.names = F, sep = "\t", quote = F)
         write.table(data_3degcount2_3(), result3, row.names = F, sep = "\t", quote = F)
-        write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), PCA_table, row.names = T, sep = "\t", quote = F)
+        write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
         pdf(PCA, height = 3.5, width = 9)
         print(PCAplot(data = deg_norm_count2()))
         dev.off()
@@ -5033,7 +5033,7 @@ shinyServer(function(input, output, session) {
       }else{
         paste(gsub("\\..+$", "", input$file8), paste0(gsub("\\..+$", "", input$file9),".txt"), sep ="-")
       }},
-    content = function(file){write.table(d_norm_count_matrix2(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(d_norm_count_matrix2(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   download_norm_dir <-reactive({
@@ -5086,7 +5086,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_norm_dir(), "PCA_table.txt")
     },
-    content = function(file){write.table(PCAdata(row_count = d_norm_count_matrix_cutofff(), deg_norm_count = d_norm_count_matrix_cutofff()), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(PCAdata(row_count = d_norm_count_matrix_cutofff(), deg_norm_count = d_norm_count_matrix_cutofff()), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   output$norm_umap_n <- renderUI({
@@ -5542,7 +5542,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_norm_dir(), "kmeans_count_table.txt")
     },
-    content = function(file){write.table(norm_kmeans_cluster(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(norm_kmeans_cluster(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_norm_kmeans_heatmap = downloadHandler(
     filename = function() {
@@ -5568,7 +5568,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       paste0(download_norm_dir(),"kmeans_selected_table.txt")
     },
-    content = function(file){write.table(norm_kmeans_pattern_extract(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(norm_kmeans_pattern_extract(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   
   #venn diagram ------------------
@@ -5872,13 +5872,13 @@ shinyServer(function(input, output, session) {
     filename = function(){
       paste(input$selectfile, "integrated_count_table.txt", sep="_")
     },
-    content = function(file){write.table(integrated_count(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(integrated_count(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_integrated_z_count_table = downloadHandler(
     filename = function(){
       paste(input$selectfile, "integrated_zscored_count_table.txt", sep="_")
     },
-    content = function(file){write.table(integrated_count_z(), file, row.names = T, sep = "\t", quote = F)}
+    content = function(file){write.table(integrated_count_z(), file, row.names = T, col.names=NA, sep = "\t", quote = F)}
   )
   output$download_integrated_heatmap = downloadHandler(
     filename = function(){

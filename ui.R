@@ -218,7 +218,12 @@ shinyUI(
                      ),
                      tabPanel("Result overview",
                               fluidRow(
-                                column(4, downloadButton("download_pair_PCA", "Download clustering analysis"))
+                                column(12, downloadButton("download_pair_PCA", "Download clustering analysis"),
+                                       textOutput("not_cond2"),
+                                       tags$head(tags$style("#not_cond2{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")))
                               ),
                               plotOutput("PCA"),
                               fluidRow(
@@ -443,7 +448,12 @@ shinyUI(
                      ),
                      tabPanel("Result overview",
                               fluidRow(
-                                column(4, downloadButton("download_3cond_PCA", "Download clustering analysis"))
+                                column(12, downloadButton("download_3cond_PCA", "Download clustering analysis"),
+                                       textOutput("not_cond3"),
+                                       tags$head(tags$style("#not_cond3{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")))
                               ),
                               plotOutput("PCA2"),
                               fluidRow(
@@ -1594,12 +1604,13 @@ shinyUI(
                           fluidRow(
                             column(12,
                                    h2("Log:"),
-                                   h4("v1.0.5 (2023.4.24)"),
+                                   h4("v1.0.5 (2023/4/24)"),
                                    strong("・Add 'download summary' buttons in the setting panel for 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'."),br(),
                                    strong("・Add new species (Xenopus laevis and Arabidopsis thaliana) for KEGG and GO analysis."),br(),
                                    strong("・Improve the 'start button' for motif analysis in Enrichment viewer."),br(),
                                    strong("・Improve the 'condition' color of the integrated heatmap in Venn diagram."),br(),
-                                   strong("・Fix the issue of column name shifting in the output table data.(2023.5.10)"),br()
+                                   strong("・Fix the issue of column name shifting in the output table data.(2023/5/10)"),br(),
+                                   strong("・Display a warning message when inappropriate data is uploaded in Pair-wise DEG and 3 conditions DEG.(2023/5/11)"),br()
                             )
                           )
                  )

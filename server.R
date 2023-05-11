@@ -82,12 +82,20 @@ shinyServer(function(input, output, session) {
     })
   })
   
-  
+  #-----------------
+  output$not_cond2 <- renderText({
+    count <- d_row_count_matrix()
+    if(!is.null(count)){
+      collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) != 2) print("Uploaded count data is in an inappropriate format. Please refer to the RNAseqChef manual for guidance and make the necessary corrections.")
+    }
+  })
   # pair-wise DEG ------------------------------------------------------------------------------
   dds <- reactive({
     count <- d_row_count_matrix()
     file_name <- gsub("\\..+$", "", input$file1)
     collist <- gsub("\\_.+$", "", colnames(count))
+    if(length(unique(collist)) == 2){
     if (input$DEG_method == "DESeq2") {
       withProgress(message = "DESeq2",{
         group <- data.frame(con = factor(collist))
@@ -110,6 +118,7 @@ shinyServer(function(input, output, session) {
       })
     }
     return(dds)
+    }
   })
   
   deg_result <- reactive({
@@ -119,6 +128,7 @@ shinyServer(function(input, output, session) {
       count <- d_row_count_matrix()
       file_name <- gsub("\\..+$", "", input$file1)
       collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 2){
       if (input$DEG_method == "DESeq2") {
         dds <- dds()
         contrast <- c("con", unique(collist))
@@ -189,6 +199,7 @@ shinyServer(function(input, output, session) {
         }
       }
       return(res)
+      }
     }
   })
   
@@ -196,12 +207,13 @@ shinyServer(function(input, output, session) {
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
+      count <- d_row_count_matrix()
+      collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 2){
       if(!is.null(norm_count_matrix())){
         return(norm_count_matrix())
       }else {
-        count <- d_row_count_matrix()
         file_name <- gsub("\\..+$", "", input$file1)
-        collist <- gsub("\\_.+$", "", colnames(count))
         group <- data.frame(con = factor(collist))
         if (input$DEG_method == "DESeq2") {
           dds <- dds()
@@ -242,6 +254,7 @@ shinyServer(function(input, output, session) {
           }
         }
         return(normalized_counts)
+      }
       }
     }
   })
@@ -523,7 +536,7 @@ shinyServer(function(input, output, session) {
   # pair-wise MA ------------------------------------------------------------------------------
   output$MA <- renderPlot({
     withProgress(message = "MA plot and heatmap",{
-      if(is.null(d_row_count_matrix())){
+      if(is.null(d_row_count_matrix()) || is.null(ma_heatmap_plot())){
         return(NULL)
       }else{
         plot(ma_heatmap_plot())
@@ -534,13 +547,14 @@ shinyServer(function(input, output, session) {
   ma_heatmap_plot <- reactive({
     data <- data_degcount()
     count <- deg_norm_count()
+    if(!is.null(count)){
     if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
        str_detect(rownames(data)[1], "^AT.G")){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         count <- count[, - which(colnames(count) == "SYMBOL")]
       }
     }
-    collist <- factor(gsub("\\_.+$", "", colnames(count)))
+      collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
       num <- length(collist[collist == unique(collist)[i]])
@@ -578,6 +592,7 @@ shinyServer(function(input, output, session) {
     }
     p <- plot_grid(m1, ht, rel_widths = c(2, 1))
     return(p)
+    }
   })
   
   output$download_pair_MA = downloadHandler(
@@ -978,7 +993,11 @@ shinyServer(function(input, output, session) {
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
+      count <- deg_norm_count()
+      collist <- factor(gsub("\\_.+$", "", colnames(count)))
+      if(length(unique(collist)) == 2){
       print(PCAplot(data = deg_norm_count()))
+      }
     }
   })
   
@@ -3979,6 +3998,7 @@ shinyServer(function(input, output, session) {
     withProgress(message = "EBSeq multiple comparison test takes 5 - 10 minutes",{
       count <- d_row_count_matrix2()
       collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 3){
       count <- data.matrix(count)
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -3996,6 +4016,7 @@ shinyServer(function(input, output, session) {
       MultiOut <- EBMultiTest(Data = count, NgVector = ngvector, Conditions = conditions, AllParti = patterns, sizeFactors = Sizes, maxround = 5)
       stopifnot(!is.null(MultiOut))
       return(MultiOut)
+      }
       incProgress(1)
     })
   })
@@ -4006,6 +4027,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 3){
       count <- data.matrix(count)
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -4040,6 +4062,7 @@ shinyServer(function(input, output, session) {
         }
       }
       return(res)
+      }
     }
   })
   deg_result2_pattern <- reactive({
@@ -4048,6 +4071,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 3){
       count <- data.matrix(count)
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -4071,6 +4095,7 @@ shinyServer(function(input, output, session) {
       MultiFC <- GetMultiFC(MultiOut)
       res <- MultiPP$Pattern
       return(as.data.frame(res))
+      }
     }
   })
   deg_result2_condmean <- reactive({
@@ -4079,6 +4104,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 3){
       count <- data.matrix(count)
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -4102,6 +4128,7 @@ shinyServer(function(input, output, session) {
       MultiFC <- GetMultiFC(MultiOut)
       res <- MultiFC$CondMeans[ord,]
       return(as.data.frame(res))
+      }
     }
   })
   
@@ -4110,8 +4137,9 @@ shinyServer(function(input, output, session) {
     if(is.null(count)){
       return(NULL)
     }else{
+      collist <- gsub("\\_.+$", "", colnames(count))
+      if(length(unique(collist)) == 3){
       if(is.null(norm_count_matrix2())){
-        collist <- gsub("\\_.+$", "", colnames(count))
         group <- data.frame(con = factor(collist))
         count <- data.matrix(count)
         vec <- c()
@@ -4138,6 +4166,7 @@ shinyServer(function(input, output, session) {
         }
       }
       return(normalized_counts)
+      }else return(NULL)
     }
   })
   
@@ -4197,7 +4226,13 @@ shinyServer(function(input, output, session) {
   
   
   #3conditions DEG vis------------------------
-  
+  output$not_cond3 <- renderText({
+    count <- d_row_count_matrix2()
+    if(!is.null(count)){
+    collist <- gsub("\\_.+$", "", colnames(count))
+    if(length(unique(collist)) != 3) print("Uploaded count data is in an inappropriate format. Please refer to the RNAseqChef manual for guidance and make the necessary corrections.")
+    }
+  })
   #3conditions DEG_1------------------------
   data_3degcount1_1 <- reactive({
     data3 <- data_3degcount1(data = deg_norm_count2(),result_Condm = deg_result2_condmean(),

@@ -4,6 +4,15 @@ popoverTempate <-
 shinyUI(
   fluidPage(
     tags$head(
+      tags$style(HTML("
+      .shiny-output-error-validation {
+        color: #ff0000;
+        font-weight: bold;
+      }
+    "))
+    ),
+    
+    tags$head(
         includeScript("navAppend.js")
       ),
     tags$head(includeHTML(("google-analytics.html"))),
@@ -1610,7 +1619,8 @@ shinyUI(
                                    strong("・Improve the 'start button' for motif analysis in Enrichment viewer."),br(),
                                    strong("・Improve the 'condition' color of the integrated heatmap in Venn diagram."),br(),
                                    strong("・Fix the issue of column name shifting in the output table data.(2023/5/10)"),br(),
-                                   strong("・Display a warning message when inappropriate data is uploaded in Pair-wise DEG and 3 conditions DEG.(2023/5/11)"),br()
+                                   strong("・Display a warning message when inappropriate data is uploaded in Pair-wise DEG and 3 conditions DEG.(2023/5/11)"),br(),
+                                   strong("・Display an error message when inappropriate data is uploaded in Pair-wise DEG, 3 conditions DEG, and Multi DEG.(2023/5/18)"),br()
                             )
                           )
                  )

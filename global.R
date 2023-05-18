@@ -71,9 +71,19 @@ read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE, row.names = 1)
-    if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = "")
-    if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = "")
+    if(tools::file_ext(tmp) == "xlsx") df <- try(read.xls(tmp, header=TRUE, row.names = 1))
+    if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = ""))
+    if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = ""))
+    if(class(df) == "try-error") {
+      if(tools::file_ext(tmp) == "xlsx") df <- try(read.xls(tmp, header=TRUE))
+      if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",",quote = ""))
+      if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t",quote = ""))
+      if(class(df) != "try-error") {
+        validate("Error: There are duplicated genes in the uploaded data. Please fix them.")
+      }else{
+        validate(paste0("Error: the uploaded data is in an unexpected format. The original error message is as follows:\n",print(df)))
+      }
+    }else{
     rownames(df) = gsub("\"", "", rownames(df))
     rownames(df) = gsub(":", ".", rownames(df))
     rownames(df) = gsub("\\\\", ".", rownames(df))
@@ -85,7 +95,9 @@ read_df <- function(tmp, Species=NULL){
     colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
     }
     }
+    df[is.na(df)] <- 0
     return(df)
+    }
   }
 }
 read_gene_list <- function(tmp){

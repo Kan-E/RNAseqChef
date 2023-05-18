@@ -52,6 +52,11 @@ You may now run RNAseqChef with just one command in R:<br>
 shiny::runGitHub("RNAseqChef", "Kan-E")
 ```
 
+# Citation
+When the user publishes the results from RNAseqChef analysis, please cite our original paper.
+- Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. _JBC_, 2023, _in press_.
+https://doi.org/10.1016/j.jbc.2023.104810
+
 # Reference
 Shiny framework
 - Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui

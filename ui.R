@@ -29,7 +29,7 @@ shinyUI(
           }"),
     navbarPage(
       footer=p(hr(),p("Need help? Create an issue on", a("Github", href = "https://github.com/Kan-E/RNAseqChef/issues"), 
-                      "or", a("contact us", href = "omicschef@kumamoto-u.ac.jp"),".",align="center",width=4)
+                      "or", a("contact us", href = "mailto:omicschef@kumamoto-u.ac.jp"),".",align="center",width=4)
                ),
       "",
       id='navBar',

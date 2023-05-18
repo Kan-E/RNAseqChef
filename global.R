@@ -539,7 +539,7 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
       data3 <- data3[,- which(colnames(data3) == "C2")]
       data3 <- data3[,- which(colnames(data3) == "C3")]
       data3 <- data3[,- which(colnames(data3) == "PPDE")]
-      Pattern <- rep(3, nrow(data3))
+      Pattern <- rep("cannot_be_classified", nrow(data3))
       Pattern[which(data3$MAP == "Pattern1")] = paste(collist[1], "=", collist[2], "=", collist[3])
       Pattern[which(data3$MAP == "Pattern2" & data3$FC_y > 0)] = paste(collist[1], "=", collist[2], ">", collist[3])
       Pattern[which(data3$MAP == "Pattern2" & data3$FC_y < 0)] = paste(collist[1], "=", collist[2], "<", collist[3])

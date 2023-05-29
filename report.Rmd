@@ -1,0 +1,391 @@
+---
+title: "Pair-wise DEG analysis with RNAseqChef v1.0.6"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+params:
+    raw_count: [some object]
+    input: [some object]
+    norm_count: [some object]
+    deg_norm_count: [some object]
+    data_degcount: [some object]
+    data_degcount2: [some object]
+    enrichment_enricher: [some object]
+    enrichment_1_gsea: [some object]
+    pair_enrich_table: [some object]
+    pair_gsea_table: [some object]
+output:
+  word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameters
+ - Uploaded file name:
+```{r echo = FALSE}
+if(params$input$data_file_type == "Row1" && !is.null(params$input$file3)) knitr::kable(params$input$file3$name,col.names = "raw_count_data")
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file1)) knitr::kable(params$input$file1$name,col.names = "raw_count_data")
+```
+
+```{r echo = FALSE}
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file2)) knitr::kable(params$input$file2$name,col.names = "meta_data")
+```
+  
+ 
+ - Experimental condition: 
+ **`r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[1]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[2]`**
+ - Method for DEG detection: 
+ **`r params$input$DEG_method`**
+  - Method for FDR control: 
+ **`r params$input$FDR_method`**
+ - Species: 
+ **`r params$input$Species`**
+ - Cut-off condition: 
+ FoldChange = **`r params$input$fc`**, FDR = **`r params$input$fdr`**, 
+ Basemean = **`r params$input$basemean`**
+ - tested raw count data
+```{r echo = FALSE}
+knitr::kable(head(params$raw_count))
+```
+
+ - Option: uploaded normalized count data: 
+```{r echo = FALSE}
+if(!is.null(params$input$norm_file1)){
+  knitr::kable(head(params$norm_count))
+}else print("no upload")
+```
+
+\newpage
+
+##  Result overview
+
+ - Clustering analysis (PCA, MDA, dendrogram (ward. D2)) (Clustering/clustering.pdf)
+
+```{r echo = FALSE,warning=FALSE,fig.dim = c(9, 3.5)}
+  PCAplot(params$deg_norm_count)
+```
+ 
+ - MA-plot and heatmap (DEG_result/MAplot.pdf)
+ 
+```{r echo = FALSE,warning=FALSE,message=FALSE,fig.dim = c(7, 4)}
+data <- params$data_degcount
+count <- params$deg_norm_count
+    if(!is.null(count)){
+    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
+       str_detect(rownames(data)[1], "^AT.G")){
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        count <- count[, - which(colnames(count) == "SYMBOL")]
+      }
+    }
+      collist <- factor(gsub("\\_.+$", "", colnames(count)))
+    vec <- c()
+    for (i in 1:length(unique(collist))) {
+      num <- length(collist[collist == unique(collist)[i]])
+      vec <- c(vec, num)
+    }
+    Cond_1 <- vec[1]
+    Cond_2 <- vec[2]
+    if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") ||
+       str_detect(rownames(count)[1], "^AT.G")){
+      if(params$input$Species != "not selected"){
+        genenames <- as.vector(data$SYMBOL)
+      }else{ genenames=NULL }
+    }else{
+      genenames <- as.vector(data$Row.names)
+    }
+    if(params$input$FDR_method == "edgeR") {
+      xlab <- "LogCPM"
+    }else{
+      xlab <- "Log2 mean expression"
+    }
+    m1 <- as.grob(ggmaplot(data, fdr = params$input$fdr, fc = params$input$fc, size = 0.1,
+                           palette = c("#B31B21", "#1465AC", "darkgray"),
+                           genenames = genenames,
+                           legend = "top", top = 20,
+                           font.label = c("bold.italic", 10),font.legend = "bold",
+                           font.main = c("bold", 15),xlab = xlab,
+                           ggtheme = ggplot2::theme_minimal(base_size = 15),
+                           select.top.method = "fc"))
+    data2 <- params$data_degcount2
+    if(is.null(data2)){
+      ht <- NULL
+    }else{
+      data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
+      ht <- as.grob(GOIheatmap(data.z,show_row_names = FALSE))
+    }
+    p <- plot_grid(m1, ht, rel_widths = c(2, 1))
+    p
+    }
+```
+
+ - table data
+    - DEG_result (DEG_result/DEG_result.txt)
+    - DEG_count_up (DEG_result/up.txt)
+    - DEG_count_down (DEG_result/down.txt)
+    - Normalized_count_data (DEG_result/normalized_count.txt)
+    - PCA_table (Clustering/pca.txt)
+
+\newpage
+
+##  GOI (Genes of interest) profiling
+
+ - Volcano plot and heatmap
+```{r echo = FALSE,warning=FALSE,message=FALSE,fig.dim = c(8.5, 5)}
+if(!is.null(params$input$xrange) && !is.null(params$input$yrange)){
+      data <- as.data.frame(params$data_degcount)
+      count <- params$deg_norm_count
+      if(!is.null(params$input$GOI)){
+        label_data <- params$input$GOI
+      }else label_data <- NULL
+      data$color <- "NS"
+      data$color[data$log2FoldChange < -log2(params$input$fc) & data$padj < params$input$fdr] <- "down"
+      data$color[data$log2FoldChange > log2(params$input$fc) & data$padj < params$input$fdr] <- "up"
+      data$padj[data$padj == 0] <- 10^(-300)
+      if(!is.null(label_data)) {
+        Color <- c("blue","green","darkgray","red")
+        for(name in label_data){
+          if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") ||
+             str_detect(rownames(count)[1], "^AT.G")){
+            if(params$input$Species != "not selected"){
+              data$color[data$Unique_ID == name] <- "GOI"
+            }else{
+              data$color[data$Row.names == name] <- "GOI"
+            }
+          }else{
+            data$color[data$Row.names == name] <- "GOI"
+          }
+        }
+        data$color <- factor(data$color, levels = c("down","GOI","NS", "up"))
+      }else{
+        Color <- c("blue","darkgray","red")
+        data$color <- factor(data$color, levels = c("down","NS", "up"))
+      }
+      
+      v <- ggplot(data, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = color),size = 0.4,alpha=.5)
+      v <- v  + geom_vline(xintercept = c(-log2(params$input$fc), log2(params$input$fc)), linetype = c(2, 2), color = c("black", "black")) +
+        geom_hline(yintercept = c(-log10(params$input$fdr)), linetype = 2, color = c("black"))
+      v <- v +theme_bw()+ scale_color_manual(values = Color)+
+        theme(legend.position = "top" , legend.title = element_blank(),
+              axis.text.x= ggplot2::element_text(size = 12),
+              axis.text.y= ggplot2::element_text(size = 12),
+              text = ggplot2::element_text(size = 12),
+              title = ggplot2::element_text(size = 12)) +
+        xlab("log2 fold change") + ylab("-log10(padj)") +
+        xlim(params$input$xrange)+
+        ylim(c(0, params$input$yrange))
+      if(!is.null(label_data)) {
+        if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") || 
+           str_detect(rownames(count)[1], "^AT.G")){
+          if(params$input$Species != "not selected"){
+            v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Unique_ID),label.padding=.1,alpha = 0.6,label.size = NA, 
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
+          }else{
+            v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+            v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),label.padding=.1,alpha = 0.6,label.size = NA,
+                                              box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
+          }
+        }else{
+          v <- v + geom_point(data=dplyr::filter(data, color == "GOI"),color="green", size=1)
+          v <- v + ggrepel::geom_label_repel(data = dplyr::filter(data, color == "GOI"), mapping = aes(label = Row.names),label.padding=.1,alpha = 0.6,label.size = NA,
+                                            box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), fontface = "bold.italic")
+        }
+      }
+      
+      data <- as.data.frame(params$data_degcount)
+      count <- params$deg_norm_count
+      if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") || 
+       str_detect(rownames(count)[1], "^AT.G")){
+      if(params$input$Species != "not selected"){
+        Unique_ID <- params$input$GOI
+        label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+        data2 <- merge(data, label_data, by="Unique_ID")
+        rownames(data2) <- data2$Unique_ID
+        data2 <- data2[, - which(colnames(data2) == "Row.names")]
+      }else{
+        Row.names <- params$input$GOI
+        label_data <- as.data.frame(Row.names, row.names = Row.names)
+        data2 <- merge(data, label_data, by="Row.names")
+        rownames(data2) <- data2$Row.names}
+    }else{
+      Row.names <- params$input$GOI
+      label_data <- as.data.frame(Row.names, row.names = Row.names)
+      data2 <- merge(data, label_data, by="Row.names")
+      rownames(data2) <- data2$Row.names
+    }
+    if(is.null(data2)){
+      ht <- NULL
+    }else{
+      data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
+      ht <- as.grob(GOIheatmap(data.z))
+    }
+      plot_grid(v, ht, nrow = 1)
+    }else return(NULL)
+```
+
+ - Boxplot
+ 
+```{r echo = FALSE,warning=FALSE,message=FALSE,fig.dim = c(8.5, 5)}
+if(!is.null(params$input$xrange) && !is.null(params$input$yrange)){
+      data <- as.data.frame(params$data_degcount)
+      count <- params$deg_norm_count
+      if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
+       str_detect(rownames(data)[1], "^AT.G")){
+      if(length(grep("SYMBOL", colnames(data))) != 0){
+        count <- count[, - which(colnames(count) == "SYMBOL")]
+      }
+    }
+    collist <- factor(gsub("\\_.+$", "", colnames(count)))
+    vec <- c()
+    for (i in 1:length(unique(collist))) {
+      num <- length(collist[collist == unique(collist)[i]])
+      vec <- c(vec, num)
+    }
+    Cond_1 <- vec[1]
+    Cond_2 <- vec[2]
+    if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") || 
+       str_detect(rownames(count)[1], "^AT.G")){
+      if(params$input$Species != "not selected"){
+        Unique_ID <- params$input$GOI
+        label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+        data2 <- merge(data, label_data, by="Unique_ID")
+        rownames(data2) <- data2$Unique_ID
+        data2 <- data2[, - which(colnames(data2) == "Row.names")]
+      }else{
+        Row.names <- params$input$GOI
+        label_data <- as.data.frame(Row.names, row.names = Row.names)
+        data2 <- merge(data, label_data, by="Row.names")
+        rownames(data2) <- data2$Row.names}
+    }else{
+      Row.names <- params$input$GOI
+      label_data <- as.data.frame(Row.names, row.names = Row.names)
+      data2 <- merge(data, label_data, by="Row.names")
+      rownames(data2) <- data2$Row.names
+    }
+    if(is.null(data2)){
+      p <- NULL
+    }else{
+      data3 <- data2[,8:(7 + Cond_1 + Cond_2)]
+      p <- GOIboxplot(data = data3) + scale_fill_manual(values=c("gray", "#ff8082"))
+    }
+    rowlist <- rownames(data2)
+    knitr::opts_chunk$set(fig.width=pdf_w(rowlist), fig.height=pdf_h(rowlist)) 
+    p
+    }else return(NULL)
+```
+
+\newpage
+
+## Enrichment analysis
+
+ - Gene set: 
+ **`r params$input$Gene_set`**
+ 
+ Enrichment_analysis/Enrichment_analysis_`r params$input$Gene_set`.pdf
+```{r echo = FALSE,warning=FALSE,message=FALSE,fig.dim = c(12, 10)}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+      count <- params$deg_norm_count
+      df <- params$enrichment_enricher
+      data3 <- params$data_degcount2
+      if (is.null(df[["Up"]]) && is.null(df[["Down"]]))  {
+        p1 <- NULL
+      } else{
+        data <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
+        colnames(data) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+        for(name in names(df)){
+          if(!is.null(df[[name]])) {
+            group1 <- as.data.frame(df[[name]])
+            group1$Group <- paste(name, "\n(",length(dplyr::filter(data3, group == name)$ENTREZID),")",sep = "")
+            if (length(group1$pvalue) > 5){
+              group1 <- group1[sort(group1$pvalue, decreasing = F, index=T)$ix,]
+              group1 <- group1[1:5,]
+            }
+          }else group1 <- NULL
+          data <- rbind(data, group1)
+        }
+        if(length(data$Description) != 0){
+          data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
+          data$GeneRatio <- parse_ratio(data$GeneRatio)
+          if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
+            p1 <- NULL
+          } else{
+            data$Description <- gsub("_", " ", data$Description)
+            data <- dplyr::mutate(data, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
+            data$x <- gsub(":","", data$x)
+            data <- dplyr::arrange(data, x)
+            idx <- order(data[["x"]], decreasing = FALSE)
+            data$Description <- factor(data$Description,
+                                       levels=rev(unique(data$Description[idx])))
+            p1 <- as.grob(ggplot(data, aes_string(x = "Group",y= "Description",color="qvalue",size="GeneRatio"))+
+                            geom_point() +
+                            scale_color_continuous(low="red", high="blue",
+                                                   guide=guide_colorbar(reverse=TRUE)) +
+                            scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) + 
+                            scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
+          }}else p1 <- NULL
+      }
+      em3 <- params$enrichment_1_gsea
+      if (length(as.data.frame(em3)$ID) == 0) {
+        p4 <- NULL
+      } else{
+        if (length(as.data.frame(em3)$ID) >= 5){
+          p4 <- gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
+        }else{
+          p4 <- gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
+        }
+      }
+      p <- plot_grid(p1, p4, nrow = 1)
+      
+      
+      upgene <- data3[data3$log2FoldChange > log(params$input$fc, 2),]
+      downgene <- data3[data3$log2FoldChange < log(1/params$input$fc, 2),]
+      d <- list()
+      for(name in names(df)){
+        if(length(as.data.frame(df[[name]])$ID) == 0){
+          cnet1 <- NULL
+        } else {
+          cnet1 <- setReadable(df[[name]], org(Species = params$input$Species), 'ENTREZID')
+        }
+        if (length(as.data.frame(cnet1)$ID) == 0) {
+          p2 <- NULL
+        } else{
+          if(name == "Up") genes <- upgene
+          if(name == "Down") genes <- downgene
+          geneList <- genes$log2FoldChange
+          names(geneList) = as.character(genes$ENTREZID)
+          p2 <- try(as.grob(cnetplot(cnet1, foldChange=geneList,
+                                     cex_label_gene = 0.7, cex_label_category = 0.75,
+                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+          if(length(class(p2)) == 1){
+            if(class(p2) == "try-error") p2 <- NULL
+          }
+        }
+        d[[name]] <- p2
+      }
+      d <- plot_grid(d[["Up"]], d[["Down"]], nrow = 1)
+      plot_grid(p, d, nrow =2)
+    }else return(NULL)
+
+      
+
+
+```
+
+Enrichment result table (Enrichment_analysis/GSEA_`r params$input$Gene_set`.txt)
+
+```{r echo = FALSE}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+table <- params$pair_enrich_table[,-3:-8]
+knitr::kable(table)
+}
+```
+
+GSEA result table (Enrichment_analysis/Enrichment_analysis_`r params$input$Gene_set`.txt)
+
+```{r echo = FALSE}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+table <- params$pair_gsea_table[,-2:-4]
+table <- table[,-3]
+knitr::kable(table[,-5:-7])
+}
+```

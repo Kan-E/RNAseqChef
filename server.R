@@ -655,7 +655,7 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Preparing GOI list (about 10 sec)",{
       updateSelectizeInput(session, "GOI", choices = c(GOI_list()), 
                            selected = character(0),
-                           options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+                           options = list(delimiter = " ", create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
     })
   })
   
@@ -1105,6 +1105,21 @@ shinyServer(function(input, output, session) {
           write.table(pair_enrich_table(), enrich_table, row.names = F, sep = "\t", quote = F)
           write.table(pair_gsea_table(), enrich_gseatable, row.names = F, sep = "\t", quote = F)
         }
+        report <- paste0(format(Sys.time(), "%Y%m%d_"),"pairwise_report",".docx")
+        fs <- c(fs,report)
+        rmarkdown::render("report.Rmd", output_format = "word_document", output_file = report,
+                          params = list(raw_count = d_row_count_matrix(),
+                                        norm_count = norm_count_matrix(),
+                                        input = input,
+                                        deg_norm_count = deg_norm_count(),
+                                        data_degcount = data_degcount(),
+                                        data_degcount2 = data_degcount2(),
+                                        enrichment_enricher = enrichment_enricher(),
+                                        enrichment_1_gsea = enrichment_1_gsea(),
+                                        pair_enrich_table = pair_enrich_table(),
+                                        pair_gsea_table = pair_gsea_table()), 
+                          envir = new.env(parent = globalenv()),intermediates_dir = tempdir(),encoding="utf-8"
+        )
         zip(zipfile=fname, files=fs)
       })
     },
@@ -1376,9 +1391,11 @@ shinyServer(function(input, output, session) {
   
   
   pair_enrich_table <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrichment_1_1()), H_t2g = Hallmark_set(), Gene_set = input$Gene_set))
     }else return(as.data.frame(enrichment_1_1()))
+    }
   })
   
   output$pair_enrichment_result <- DT::renderDataTable({
@@ -1386,6 +1403,7 @@ shinyServer(function(input, output, session) {
   })
   
   pair_gsea_table <- reactive({
+    if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data <- as.data.frame(enrichment_1_gsea())
     if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
       H_t2g <- Hallmark_set()
@@ -1416,6 +1434,7 @@ shinyServer(function(input, output, session) {
         }
       }
     }else return(data)
+    }
   })
   
   
@@ -4461,7 +4480,7 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Preparing GOI list (about 10 sec)",{
       updateSelectizeInput(session, "GOI2", choices = c(GOI_list2()), 
                            selected = character(0),
-                           options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+                           options = list(delimiter = " ", create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
     })
   })
   
@@ -5258,7 +5277,7 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Preparing GOI list (about 10 sec)",{
       updateSelectizeInput(session, "GOI3", choices = c(GOI_list3()), 
                            selected = character(0),
-                           options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+                           options = list(delimiter = " ", create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
     })
   })
   
@@ -6674,7 +6693,7 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Preparing GOI list (about 10 sec)",{
       updateSelectizeInput(session, "degGOI", choices = c(GOI_DEG()), 
                            selected = character(0),
-                           options = list(create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
+                           options = list(delimiter = " ", create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
     })
   })
   

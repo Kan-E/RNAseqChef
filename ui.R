@@ -192,7 +192,7 @@ shinyUI(
           body {
             padding: 0 !important;
           }"
-                                                              )),)
+                                                              )))
                                     )
                    ),
                    conditionalPanel(condition="input.data_file_type=='Row11'",
@@ -1620,7 +1620,8 @@ shinyUI(
                                    strong("・Improve the 'condition' color of the integrated heatmap in Venn diagram."),br(),
                                    strong("・Fix the issue of column name shifting in the output table data.(2023/5/10)"),br(),
                                    strong("・Display a warning message when inappropriate data is uploaded in Pair-wise DEG and 3 conditions DEG.(2023/5/11)"),br(),
-                                   strong("・Display an error message when inappropriate data is uploaded in Pair-wise DEG, 3 conditions DEG, and Multi DEG.(2023/5/18)"),br()
+                                   strong("・Display an error message when inappropriate data is uploaded in Pair-wise DEG, 3 conditions DEG, and Multi DEG.(2023/5/18)"),br(),
+                                   strong("・Fix 'GOI reset' button in the 'Pair-wise DEG', '3 conditions DEG', 'Normalized data count analysis',and 'Volcano navi'.(2023/6/5)"),br()
                             )
                           )
                  )

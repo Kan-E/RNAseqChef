@@ -56,6 +56,7 @@ library(org.Ss.eg.db)
 library(org.At.tair.db)
 library(colorspace)
 options(repos = BiocManager::repositories())
+file.copy("pair_report.Rmd",file.path(tempdir(),"pair_report.Rmd"), overwrite = TRUE)
 
 msigdbr_species <- msigdbr_species()$species_name
 gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interaction Database)",

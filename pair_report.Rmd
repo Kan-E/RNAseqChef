@@ -1,0 +1,138 @@
+---
+title: "Pair-wise DEG analysis with RNAseqChef v1.0.6"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+params:
+    raw_count: [some object]
+    input: [some object]
+    norm_count: [some object]
+    deg_norm_count: [some object]
+    data_degcount: [some object]
+    data_degcount2: [some object]
+    enrichment_enricher: [some object]
+    enrichment_1_gsea: [some object]
+    pair_enrich_table: [some object]
+    pair_gsea_table: [some object]
+output:
+  word_document
+fontsize: 10pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameters
+ - Uploaded file name:
+```{r echo = FALSE}
+if(params$input$data_file_type == "Row1" && !is.null(params$input$file3)) knitr::kable(params$input$file3$name,col.names = "raw_count_data")
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file1)) knitr::kable(params$input$file1$name,col.names = "raw_count_data")
+```
+
+```{r echo = FALSE}
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file2)) knitr::kable(params$input$file2$name,col.names = "meta_data")
+```
+  
+ 
+ - Experimental condition: 
+ **`r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[1]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[2]`**
+ - Method for DEG detection: 
+ **`r params$input$DEG_method`**
+  - Method for FDR control: 
+ **`r params$input$FDR_method`**
+ - Species: 
+ **`r params$input$Species`**
+ - Cut-off condition: 
+ FoldChange = **`r params$input$fc`**, FDR = **`r params$input$fdr`**, 
+ Basemean = **`r params$input$basemean`**
+ - tested raw count data
+```{r echo = FALSE}
+knitr::kable(head(params$raw_count))
+```
+
+ - Option: uploaded normalized count data: 
+```{r echo = FALSE}
+if(!is.null(params$input$norm_file1)){
+  knitr::kable(head(params$norm_count))
+}else print("no upload")
+```
+
+\newpage
+
+##  Result overview
+
+ - Clustering analysis (PCA, MDA, dendrogram (ward. D2)) (Clustering/clustering.pdf)
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./Clustering/clustering.pdf"))
+```
+
+ - MA-plot and heatmap (DEG_result/MAplot.pdf)
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./DEG_result/MAplot.pdf"))
+```
+
+ - table data
+    - DEG_result (DEG_result/DEG_result.txt)
+    - DEG_count_up (DEG_result/up.txt)
+    - DEG_count_down (DEG_result/down.txt)
+    - Normalized_count_data (DEG_result/normalized_count.txt)
+    - PCA_table (Clustering/pca.txt)
+
+\newpage
+
+##  GOI (Genes of interest) profiling
+
+ - Volcano plot (GOI_profiling/volcano_plot.pdf) and heatmap (GOI_profiling/heatmap.pdf)
+
+```{r, out.height=255.68181, out.width=255.68181, include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$xrange) && !is.null(params$input$yrange)){
+try(magick::image_read_pdf("./GOI_profiling/volcano_plot.pdf"))
+    }else print("Not performed")
+```
+```{r, out.height=255.68181, out.width=178.977267, include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$xrange) && !is.null(params$input$yrange)){
+try(magick::image_read_pdf("./GOI_profiling/heatmap.pdf"))
+    }else print("Not performed")
+```
+
+ - Boxplot (GOI_profiling/boxplot.pdf)
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$xrange) && !is.null(params$input$yrange)){
+try(magick::image_read_pdf("./GOI_profiling/boxplot.pdf"))    
+    }else print("Not performed")
+```
+
+\newpage
+
+## Enrichment analysis
+
+ - Gene set: 
+ **`r params$input$Gene_set`**
+ 
+ - Plot (Enrichment_analysis/Enrichment_analysis_`r params$input$Gene_set`.pdf)
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+try(magick::image_read_pdf(paste0("Enrichment_analysis/Enrichment_analysis_",params$input$Gene_set,".pdf")))      
+    }else print("Not performed")
+```
+
+Enrichment result table (Enrichment_analysis/GSEA_`r params$input$Gene_set`.txt)
+
+```{r echo = FALSE}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+table <- params$pair_enrich_table[,-3:-8]
+knitr::kable(table)
+}
+```
+
+GSEA result table (Enrichment_analysis/Enrichment_analysis_`r params$input$Gene_set`.txt)
+
+```{r echo = FALSE}
+if(!is.null(params$input$Gene_set) && params$input$Species != "not selected"){
+table <- params$pair_gsea_table[,-2:-4]
+table <- table[,-3]
+knitr::kable(table[,-5:-7])
+}
+```

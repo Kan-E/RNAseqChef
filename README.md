@@ -39,7 +39,7 @@ pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn",
 "TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
 "BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools", "org.Bt.eg.db",
 "org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db","org.Ss.eg.db",
-"AnnotationHub","org.At.tair.db","colorspace","magick")
+"AnnotationHub","org.At.tair.db","colorspace","magick","pdftools")
 options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)

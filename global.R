@@ -55,6 +55,8 @@ library(org.Sc.sgd.db)
 library(org.Ss.eg.db)
 library(org.At.tair.db)
 library(colorspace)
+library(pdftools)
+library(magick)
 options(repos = BiocManager::repositories())
 file.copy("pair_report.Rmd",file.path(tempdir(),"pair_report.Rmd"), overwrite = TRUE)
 

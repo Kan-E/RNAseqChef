@@ -1107,7 +1107,7 @@ shinyServer(function(input, output, session) {
         }
         report <- paste0(format(Sys.time(), "%Y%m%d_"),"pairwise_report",".docx")
         fs <- c(fs,report)
-        rmarkdown::render("report.Rmd", output_format = "word_document", output_file = report,
+        rmarkdown::render("pair_report.Rmd", output_format = "word_document", output_file = report,
                           params = list(raw_count = d_row_count_matrix(),
                                         norm_count = norm_count_matrix(),
                                         input = input,
@@ -2776,7 +2776,7 @@ shinyServer(function(input, output, session) {
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
                       row_km= input$multi_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
-                      show_row_names = F,column_names_side = "top")
+                      show_row_names = F,column_names_side = "top",use_raster = TRUE)
         ht <- draw(ht)
         return(ht)
       })
@@ -5453,7 +5453,7 @@ shinyServer(function(input, output, session) {
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
                       row_km= input$norm_kmeans_number, cluster_row_slices = F, row_km_repeats = 100,
-                      show_row_names = F,column_names_side = "top")
+                      show_row_names = F,column_names_side = "top",use_raster = TRUE)
         ht <- draw(ht)
         return(ht)
       })

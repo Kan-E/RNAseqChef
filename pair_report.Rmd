@@ -136,3 +136,9 @@ table <- table[,-3]
 knitr::kable(table[,-5:-7])
 }
 ```
+
+\newpage
+
+##Citation
+
+ - Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press. https://doi.org/10.1016/j.jbc.2023.104810

@@ -1117,7 +1117,8 @@ shinyServer(function(input, output, session) {
                                         enrichment_enricher = enrichment_enricher(),
                                         enrichment_1_gsea = enrichment_1_gsea(),
                                         pair_enrich_table = pair_enrich_table(),
-                                        pair_gsea_table = pair_gsea_table()), 
+                                        pair_gsea_table = pair_gsea_table(),
+                                        metadata = metadata()), 
                           envir = new.env(parent = globalenv()),intermediates_dir = tempdir(),encoding="utf-8"
         )
         zip(zipfile=fname, files=fs)
@@ -2051,6 +2052,16 @@ shinyServer(function(input, output, session) {
           print(pca_r[[name]])
           dev.off()
         }
+        report <- paste0(format(Sys.time(), "%Y%m%d_"),"pairwise_report",".docx")
+        fs <- c(fs,report)
+        rmarkdown::render("pair_batch_report.Rmd", output_format = "word_document", output_file = report,
+                          params = list(batch_files = batch_files(),
+                                        deg_norm_count_batch = deg_norm_count_batch(),
+                                        input = input,
+                                        norm_count_matrix = norm_count_matrix()), 
+                          envir = new.env(parent = globalenv()),intermediates_dir = tempdir(),encoding="utf-8"
+        )
+        
         zip(zipfile=fname, files=fs)
       })
     },
@@ -3211,6 +3222,9 @@ shinyServer(function(input, output, session) {
   })
   
   multi_GSEA_table <- reactive({
+    if(is.null(dds) || length(input$selectEnrich_pair) != 2){
+      return(NULL)
+    }else{
     if((input$Species6 == "Xenopus laevis" || input$Species6 == "Arabidopsis thaliana") && 
        (input$Gene_set6 != "KEGG" && 
         input$Gene_set6 != "GO biological process" && 
@@ -3248,7 +3262,7 @@ shinyServer(function(input, output, session) {
           }
         }
       }else return(data)
-    }
+    }}
   })
   
   output$multi_GSEA_result <- DT::renderDataTable({
@@ -3591,7 +3605,9 @@ shinyServer(function(input, output, session) {
           print(multi_umap_plot())
           dev.off()
         }
-        if(!is.null(multi_boxplot_reactive) && length(input$selectFC) == 2){
+        print("finish pca")
+        if(length(input$selectFC) == 2){
+          if(!is.null(multi_boxplot_reactive())){
           dir.create(paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/"),showWarnings = FALSE)
           DEG_pattern <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/DEG_pattern.txt")
           DEG_pattern_count <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/DEG_pattern_norm_count_",input$multi_selectfile1,".txt")
@@ -3623,7 +3639,7 @@ shinyServer(function(input, output, session) {
             print(GOIboxplot(data = data))
             dev.off()
           }
-          if(!is.null(input$Gene_set7) && !is.null(input$multi_whichGroup1_2)){
+          if(!is.null(input$Gene_set7) && !is.null(input$multi_whichGroup1_1)){
             enrich1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/dotplot_",input$Gene_set7,".pdf")
             enrichtxt <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/enrichment_",input$Gene_set7,".txt")
             if(!is.null(input$multi_whichGroup1_1)){
@@ -3644,8 +3660,10 @@ shinyServer(function(input, output, session) {
             }
           }
         }
-        
-        if(!is.null(multi_kmeans_box()) && length(input$selectFC2) == 2){
+        }
+        print("finish divisive clustering")
+        if(length(input$selectFC2) == 2){
+          if(!is.null(multi_kmeans_box())){
           dir.create(paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/"),showWarnings = FALSE)
           kmeans_pattern <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_pattern.txt")
           kmeans_pattern_count <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/kmeans_pattern_norm_count_",input$multi_selectfile2,".txt")
@@ -3678,7 +3696,7 @@ shinyServer(function(input, output, session) {
             print(GOIboxplot(data = data))
             dev.off()
           }
-          if(!is.null(input$Gene_set8) && !is.null(input$multi_whichGroup2_2)){
+          if(!is.null(input$Gene_set8) && !is.null(input$multi_whichGroup2_1)){
             enrich2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/dotplot_",input$Gene_set8,".pdf")
             enrichtxt2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/enrichment_",input$Gene_set8,".txt")
             if(!is.null(input$multi_whichGroup2_1)){
@@ -3699,7 +3717,11 @@ shinyServer(function(input, output, session) {
             }
           }
         }
-        if(!is.null(dds) && length(input$selectEnrich_pair) == 2 && input$Species6 != "not selected"){
+        }
+        print("finish kmeans clustering")
+        if(!is.null(input$selectEnrich_pair)){
+        if(length(input$selectEnrich_pair) == 2 && input$Species6 != "not selected"){
+          if(!is.null(multi_enrich1_H())){
           dir.create("GSEA/",showWarnings = FALSE)
           multiEnrich_table <- paste0("GSEA/GSEA_",input$Gene_set6,".txt")
           multiEnrich <- paste0("GSEA/GSEA_",input$Gene_set6,".pdf")
@@ -3709,7 +3731,25 @@ shinyServer(function(input, output, session) {
           pdf(multiEnrich, height = 5, width = 7)
           print(p1)
           dev.off()
-        }
+          }}}
+        print("GSEA")
+        report <- paste0(format(Sys.time(), "%Y%m%d_"),"MultiDEG_report",".docx")
+        fs <- c(fs,report)
+        rmarkdown::render("multi_report.Rmd", output_format = "word_document", output_file = report,
+                          params = list(raw_count = multi_d_row_count_matrix(),
+                                        multi_norm_count_matrix = multi_norm_count_matrix(),
+                                        input = input,
+                                        multi_metadata = multi_metadata(),
+                                        multi_umap_plot = multi_umap_plot(),
+                                        multi_boxplot_reactive = multi_boxplot_reactive(),
+                                        multi_enrich_div_table = multi_enrich_div_table(),
+                                        multi_kmeans_box = multi_kmeans_box(),
+                                        multi_enrich_k_table = multi_enrich_k_table(),
+                                        multi_GSEA_table = multi_GSEA_table(),
+                                        multi_pattern1 = multi_pattern1(),
+                                        multi_deg_count1 = multi_deg_count1()), 
+                          envir = new.env(parent = globalenv()),intermediates_dir = tempdir(),encoding="utf-8"
+        )
         zip(zipfile=fname, files=fs)
       })
     },
@@ -4904,6 +4944,19 @@ shinyServer(function(input, output, session) {
           write.table(cond3_enrich_table2(), enrich_table2, row.names = F, sep = "\t", quote = F)
           write.table(cond3_enrich_table3(), enrich_table3, row.names = F, sep = "\t", quote = F)
         }
+        report <- paste0(format(Sys.time(), "%Y%m%d_"),"3conditions_report",".docx")
+        fs <- c(fs,report)
+        rmarkdown::render("3conditions_report.Rmd", output_format = "word_document", output_file = report,
+                          params = list(raw_count = d_row_count_matrix2(),
+                                        input = input,
+                                        metadata2 = metadata2(),
+                                        norm_count_matrix2 = norm_count_matrix2(),
+                                        deg_norm_count2 = deg_norm_count2(),
+                                        cond3_enrich_table1 = cond3_enrich_table1(),
+                                        cond3_enrich_table2 = cond3_enrich_table2(),
+                                        cond3_enrich_table3 = cond3_enrich_table3()), 
+                          envir = new.env(parent = globalenv()),intermediates_dir = tempdir(),encoding="utf-8"
+        )
         zip(zipfile=fname, files=fs)
       })
     },

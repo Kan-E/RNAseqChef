@@ -1,5 +1,5 @@
 ---
-title: "Pair-wise DEG analysis with RNAseqChef v1.0.6"
+title: "Pair-wise DEG with RNAseqChef v1.0.6"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -12,6 +12,7 @@ params:
     enrichment_1_gsea: [some object]
     pair_enrich_table: [some object]
     pair_gsea_table: [some object]
+    metadata: [some object]
 output:
   word_document
 fontsize: 10pt
@@ -23,13 +24,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Parameters
  - Uploaded file name:
-```{r echo = FALSE}
-if(params$input$data_file_type == "Row1" && !is.null(params$input$file3)) knitr::kable(params$input$file3$name,col.names = "raw_count_data")
-if(params$input$data_file_type == "Row2" && !is.null(params$input$file1)) knitr::kable(params$input$file1$name,col.names = "raw_count_data")
+ 
+```{r echo = FALSE, results='asis'}
+if(params$input$data_file_type == "Row1" && !is.null(params$input$file3)) {
+  try(cat(paste0("raw_count_data: **", params$input$file3$name,"**\n\n")))
+}
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file1)) {
+  try(cat(paste0("raw_count_data: **", params$input$file1$name,"**\n\n")))
+}
 ```
 
-```{r echo = FALSE}
-if(params$input$data_file_type == "Row2" && !is.null(params$input$file2)) knitr::kable(params$input$file2$name,col.names = "meta_data")
+```{r echo = FALSE, results='asis'}
+if(params$input$data_file_type == "Row2" && !is.null(params$input$file2)) {
+  try(cat(paste0("metadata: **",params$input$file2$name,"**\n\n")))
+  try(knitr::kable(params$metadata))
+  cat("\n\n")
+}
 ```
   
  
@@ -139,6 +149,6 @@ knitr::kable(table[,-5:-7])
 
 \newpage
 
-##Citation
+## Citation
 
  - Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press. https://doi.org/10.1016/j.jbc.2023.104810

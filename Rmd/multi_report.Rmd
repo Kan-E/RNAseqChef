@@ -1,0 +1,275 @@
+---
+title: "Multi DEG with RNAseqChef v1.0.6"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+params:
+    raw_count: [some object]
+    input: [some object]
+    multi_norm_count_matrix: [some object]
+    multi_metadata: [some object]
+    multi_umap_plot: [some object]
+    multi_boxplot_reactive: [some object]
+    multi_enrich_div_table: [some object]
+    multi_kmeans_box: [some object]
+    multi_enrich_k_table: [some object]
+    multi_GSEA_table: [some object]
+    multi_pattern1: [some object]
+    multi_deg_count1: [some object]
+output:
+  word_document
+fontsize: 10pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameters
+ - Uploaded file name:
+ 
+```{r echo = FALSE, results='asis'}
+if(params$input$multi_data_file_type == "Row1" && !is.null(params$input$multi_file1)) {
+  try(cat(paste0("raw_count_data: **", params$input$multi_file1$name,"**\n\n")))
+}
+if(params$input$multi_data_file_type == "Row2" && !is.null(params$input$multi_file2)) {
+  try(cat(paste0("raw_count_data: **", params$input$multi_file2$name,"**\n\n")))
+}
+```
+
+```{r echo = FALSE, results='asis'}
+if(params$input$multi_data_file_type == "Row2" && !is.null(params$input$multi_file3)) {
+  try(cat(paste0("metadata: **",params$input$multi_file3$name,"**\n\n")))
+  try(knitr::kable(params$multi_metadata))
+  cat("\n\n")
+}
+```
+  
+ 
+ - Experimental condition: 
+```{r echo = FALSE, results='asis'}
+label <- unique(gsub("\\_.+$", "", colnames(params$raw_count)))
+for(i in 1:length(label)){
+  cat(paste0("**",label[i],"**"))
+  if(length(label) != i) cat(" **vs** ")
+}
+```
+
+ - Method for DEG detection: 
+ **DESeq2**
+  - Method for FDR control: 
+ **`r params$input$FDR_method6`**
+ - Species: 
+ **`r params$input$Species6`**
+ - Cut-off condition: 
+ FoldChange = **`r params$input$fc6`**, FDR = **`r params$input$fdr6`**, 
+ Basemean = **`r params$input$basemean6`**
+ - tested raw count data
+```{r echo = FALSE}
+knitr::kable(head(params$raw_count))
+```
+
+ - Option: uploaded normalized count data: 
+```{r echo = FALSE}
+if(!is.null(params$input$multi_norm_file1)){
+  knitr::kable(head(params$multi_norm_count_matrix))
+}else print("no upload")
+```
+
+\newpage
+
+##  Result overview
+
+ - Clustering analysis (PCA, MDA, dendrogram (ward. D2)) (Clustering/clustering.pdf)
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./Clustering/clustering.pdf"))
+```
+
+ - UMAP (Clustering/umap.pdf)
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(length(params$multi_umap_plot) != 1){
+try(magick::image_read_pdf("./Clustering/umap.pdf"))
+}else print("Not performed")
+```
+
+ - table data
+    - DEG_result (DEG_result/DEG_result.txt)
+    - Normalized_count_data (DEG_result/normalized_count.txt)
+    - PCA_table (Clustering/pca.txt)
+
+\newpage
+
+## Divisive clustering
+
+ - Pair for fold change cut-off: 
+**`r paste0(as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]))`**
+ - The DEG number after the filtration: **`r length(params$multi_pattern1$gene)`**
+ - Tested gene number:
+```{r echo = FALSE, results='asis'}
+num <- length(params$multi_pattern1$gene)
+if(!is.null(num)){
+  if(!is.null(params$input$topP)){
+    if(num < params$input$topP) cat(paste0("**",num, "**\n\n")) else cat(paste0("**",params$input$topP, "**\n\n"))
+  }
+}else print("Not performed")
+```  
+
+
+Summary boxplot: `r paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/Divisive_boxplot.pdf")`
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_boxplot_reactive) && length(params$input$selectFC) == 2){
+try(magick::image_read_pdf(paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/Divisive_boxplot.pdf")))
+}else print("Not performed")
+```
+
+selected_boxplot: `r paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/GOI_boxplot.pdf")`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_boxplot_reactive) && length(params$input$selectFC) == 2 && !is.null(params$input$multi_pattern1_count_rows_selected)){
+try(magick::image_read_pdf(paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/GOI_boxplot.pdf")))
+}else print("Not performed")
+```
+
+ - Enrichment analysis 
+ 
+ Gene_set: **`r params$input$Gene_set7`**
+ 
+ dotplot: `r paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/dotplot_",params$input$Gene_set7,".pdf")` 
+ 
+ selected_clusters for dotplot: **`r params$input$multi_whichGroup1_1`**
+ 
+ cnet plot `r paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/cnet_",params$input$Gene_set7,".pdf")`
+ 
+ selected_clusters for cnetplot: **`r params$input$multi_whichGroup1_2`**
+ 
+ enrichment table: `r paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]), "/dotplot_",params$input$Gene_set7,".txt")`
+
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_boxplot_reactive) && length(params$input$selectFC) == 2 && !is.null(params$input$Gene_set7) && !is.null(params$input$multi_whichGroup1_1)){
+try(magick::image_read_pdf(paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/dotplot_",params$input$Gene_set7,".pdf")))
+}else print("Not performed")
+```
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_boxplot_reactive) && length(params$input$selectFC) == 2 && !is.null(params$input$Gene_set7) && !is.null(params$input$multi_whichGroup1_1) && params$input$multi_whichGroup1_2 != "not selected"){
+try(magick::image_read_pdf(paste0("Divisive clustering_",as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]),"/cnet_",params$input$Gene_set7,".pdf")))
+}else print("Not performed")
+```
+```{r echo = FALSE}
+if(!is.null(params$multi_boxplot_reactive) && length(params$input$selectFC) == 2 && !is.null(params$input$Gene_set7) && !is.null(params$input$multi_whichGroup1_1)){
+table <- params$multi_enrich_div_table[,-3:-8]
+table$Group <- try(gsub("\n","",table$Group))
+knitr::kable(table)
+}
+```
+
+\newpage
+
+## k-means clustering
+
+ - Pair for fold change cut-off: 
+**`r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]))`**
+ - The DEG number after the filtration: **`r length(rownames(params$multi_deg_count1))`**
+ - Tested gene number: 
+```{r echo = FALSE, results='asis'}
+num <- length(rownames(params$multi_deg_count1))
+if(!is.null(num)){
+  if(!is.null(params$input$topP2)){
+    if(num < params$input$topP2) cat(paste0("**",num, "**\n\n")) else cat(paste0("**",params$input$topP2, "**\n\n"))
+  }
+}else print("Not performed")
+```  
+
+ - k-means number: **`r params$input$multi_kmeans_number`**
+
+ Summary boxplot: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_boxplot.pdf")`
+ 
+ Heatmap: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_heatmap.pdf")`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2){
+try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_boxplot.pdf")))
+}else print("Not performed")
+```
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2){
+try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_heatmap.pdf")))
+}else print("Not performed")
+```
+
+kmeans pattern file: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_pattern.txt")`
+
+kmeans pattern count: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/kmeans_pattern_norm_count_",params$input$multi_selectfile2,".txt")`
+
+selected_boxplot: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/GOI_boxplot.pdf")`
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$multi_pattern2_count_rows_selected)){
+try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/GOI_boxplot.pdf")))
+}else print("Not performed")
+```
+
+ - Enrichment analysis 
+
+ Gene_set: **`r params$input$Gene_set8`**
+ 
+ dotplot: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/dotplot_",params$input$Gene_set8,".pdf")` 
+ 
+ selected_clusters for dotplot: **`r params$input$multi_whichGroup2_1`**
+ 
+ cnet plot `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/cnet_",params$input$Gene_set8,".pdf")`
+ 
+ selected_clusters for cnetplot: **`r params$input$multi_whichGroup2_2`** 
+ 
+ enrichment table: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/enrichment_",params$input$Gene_set8,".txt")`
+ 
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$Gene_set8) && !is.null(params$input$multi_whichGroup2_1)){
+try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/dotplot_",params$input$Gene_set8,".pdf")))
+}else print("Not performed")
+```
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$Gene_set8) && !is.null(params$input$multi_whichGroup2_1) && params$input$multi_whichGroup2_2 != "not selected"){
+try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/cnet_",params$input$Gene_set8,".pdf")))
+}else print("Not performed")
+```
+```{r echo = FALSE}
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$Gene_set8) && !is.null(params$input$multi_whichGroup2_1)){
+table <- params$multi_enrich_k_table[,-3:-8]
+table$Group <- try(gsub("\n","",table$Group))
+knitr::kable(table)
+}
+```
+
+\newpage
+
+## GSEA
+
+ - Pair for GSEA: **`r params$input$selectEnrich_pair`**
+ - Gene set: **`r params$input$Gene_set6`**
+ 
+ GSEA plot: `r paste0("GSEA/GSEA_",params$input$Gene_set6,".pdf")`
+ 
+ GSEA table: `r paste0("GSEA/GSEA_",params$input$Gene_set6,".txt")`
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$multi_GSEA_table) && length(params$input$selectEnrich_pair) == 2 && params$input$Species6 != "not selected"){
+try(magick::image_read_pdf(paste0("GSEA/GSEA_",params$input$Gene_set6,".pdf")))
+}else print("Not performed")
+```
+```{r echo = FALSE}
+if(!is.null(params$multi_GSEA_table) && length(params$input$selectEnrich_pair) == 2 && params$input$Species6 != "not selected"){
+table <- try(params$multi_GSEA_table[,-2:-4])
+table <- try(table[,-3])
+try(knitr::kable(table[,-5:-7]))
+}
+```
+
+
+
+\newpage
+
+## Citation
+
+ - Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press. https://doi.org/10.1016/j.jbc.2023.104810

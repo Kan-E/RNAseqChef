@@ -1,0 +1,92 @@
+---
+title: "Pair-wise DEG (batch-mode) with RNAseqChef v1.0.6"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+params:
+    batch_files: [some object]
+    input: [some object]
+    deg_norm_count_batch: [some object]
+    norm_count_matrix: [some object]
+output:
+  word_document
+fontsize: 10pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameters
+ - Uploaded file name:
+ 
+```{r echo = FALSE, results='asis'}
+      uploaded_files = names(params$batch_files)
+      try(knitr::kable(as.data.frame(uploaded_files)))
+      cat("\n\n")
+```
+  
+ 
+ - Experimental condition: 
+ 
+```{r echo = FALSE, results='asis'}
+files = params$deg_norm_count_batch
+for(name in names(files)){
+  if(name != "combined"){
+  norm <- files[[name]]
+  print(paste0(name,": ",unique(gsub("\\_.+$", "", colnames(norm)))[1] ," vs ", unique(gsub("\\_.+$", "", colnames(norm)))[2]))
+  cat("\n\n")
+  }
+}
+```
+
+ - Method for DEG detection: 
+ **`r params$input$DEG_method`**
+  - Method for FDR control: 
+ **`r params$input$FDR_method`**
+ - Species: 
+ **`r params$input$Species`**
+ - Cut-off condition: 
+ FoldChange = **`r params$input$fc`**, FDR = **`r params$input$fdr`**, 
+ Basemean = **`r params$input$basemean`**
+
+ - Option: uploaded normalized count data: 
+```{r echo = FALSE}
+if(!is.null(params$norm_count_matrix)){
+      uploaded_files = names(params$norm_count_matrix)
+      try(knitr::kable(as.data.frame(uploaded_files)))
+}else print("no upload")
+```
+
+\newpage
+
+##  Result overview
+
+ - Clustering analysis (PCA, MDA, dendrogram (ward. D2))
+
+```{r, out.width="0.3\\linewidth", include=TRUE,fig.align="center", echo=FALSE, results='asis'}
+files = params$deg_norm_count_batch
+for(name in names(files)){
+  print(paste0("clustering/" ,paste0(name, ".pdf")))
+  cat("![](",paste0("clustering/" ,paste0(name, ".pdf")),")")
+  cat("\n\n")
+}
+```
+
+ - MA-plot and heatmap
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE,fig.align="center", echo=FALSE, results='asis'}
+files = params$deg_norm_count_batch
+for(name in names(files)){
+  if(name != "combined"){
+  print(paste0("MAplot/" ,paste0(name, ".pdf")))
+  cat("![](",paste0("MAplot/" ,paste0(name, ".pdf")),")")
+  cat("\n\n")
+  }
+}
+```
+
+\newpage
+
+
+## Citation
+
+ - Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press. https://doi.org/10.1016/j.jbc.2023.104810

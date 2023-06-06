@@ -1,0 +1,170 @@
+---
+title: "3 conditions DEG with RNAseqChef v1.0.6"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+params:
+    raw_count: [some object]
+    input: [some object]
+    norm_count_matrix2: [some object]
+    deg_norm_count2: [some object]
+    metadata2: [some object]
+    cond3_enrich_table1: [some object]
+    cond3_enrich_table2: [some object]
+    cond3_enrich_table3: [some object]
+output:
+  word_document
+fontsize: 10pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameters
+ - Uploaded file name:
+ 
+```{r echo = FALSE, results='asis'}
+if(params$input$data_file_type2 == "Row3" && !is.null(params$input$file4)) {
+  try(cat(paste0("raw_count_data: **", params$input$file4$name,"**\n\n")))
+}
+if(params$input$data_file_type2 == "Row4" && !is.null(params$input$file5)) {
+  try(cat(paste0("raw_count_data: **", params$input$file5$name,"**\n\n")))
+}
+```
+
+```{r echo = FALSE, results='asis'}
+if(params$input$data_file_type2 == "Row4" && !is.null(params$input$file6)) {
+  try(cat(paste0("metadata: **",params$input$file6$name,"**\n\n")))
+  knitr::kable(params$metadata2)
+  cat("\n\n")
+}
+```
+  
+ 
+ - Experimental condition: 
+ **`r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[1]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[2]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[3]`**
+ - Method for DEG detection: 
+ **EBSeq**
+  - Method for FDR control: 
+ **BH**
+ - Species: 
+ **`r params$input$Species2`**
+ - Cut-off condition: 
+ FoldChange = **`r params$input$fc2`**, FDR = **`r params$input$fdr2`**, 
+ Basemean = **`r params$input$basemean2`**
+ - tested raw count data
+```{r echo = FALSE}
+knitr::kable(head(params$raw_count))
+```
+
+ - Option: uploaded normalized count data: 
+```{r echo = FALSE}
+if(!is.null(params$input$norm_file2)){
+  knitr::kable(head(params$norm_count_matrix2))
+}else print("no upload")
+```
+
+\newpage
+
+##  Result overview
+
+ - Clustering analysis (PCA, MDA, dendrogram (ward. D2)) (Clustering/clustering.pdf)
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./Clustering/clustering.pdf"))
+```
+
+ - Scatter plot (DEG_result/scatter_plot.pdf)
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./DEG_result/scatter_plot.pdf")[1])
+```
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./DEG_result/scatter_plot.pdf")[2])
+```
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+try(magick::image_read_pdf("./DEG_result/scatter_plot.pdf")[3])
+```
+
+ - table data
+    - DEG_result (DEG_result/DEG_result.txt)
+    - DEG_signature 1 (DEG_result/DEG_signature1.txt)
+    - DEG_signature 2 (DEG_result/DEG_signature2.txt)
+    - DEG_signature 3 (DEG_result/DEG_signature3.txt)
+    - Normalized_count_data (DEG_result/normalized_count.txt)
+    - PCA_table (Clustering/pca.txt)
+
+\newpage
+
+##  GOI (Genes of interest) profiling
+
+ - Scatter plot (GOI_profiling/scatter_plot.pdf) and heatmap (GOI_profiling/heatmap.pdf)
+
+```{r, out.height=255.68181, out.width=255.68181, include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
+try(magick::image_read_pdf("./GOI_profiling/scatter_plot.pdf"))
+    }else print("Not performed")
+```
+```{r, out.height=255.68181, out.width=178.977267, include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
+try(magick::image_read_pdf("./GOI_profiling/heatmap.pdf"))
+    }else print("Not performed")
+```
+
+ - Boxplot (GOI_profiling/boxplot.pdf)
+ 
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
+try(magick::image_read_pdf("./GOI_profiling/boxplot.pdf"))    
+    }else print("Not performed")
+```
+
+\newpage
+
+## Enrichment analysis
+
+ - Gene set: 
+ **`r params$input$Gene_set2`**
+ 
+ - Plot (Enrichment_analysis/Enrichment_analysis_`r params$input$Gene_set2`.pdf)
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(params$input$Species2 != "not selected" && !is.null(params$input$Gene_set2)){
+try(magick::image_read_pdf(paste0("Enrichment_analysis/Enrichment_analysis_",params$input$Gene_set2,".pdf")))      
+    }else print("Not performed")
+```
+
+Enrichment result table 1 (Enrichment_analysis/GSEA_`r params$input$Gene_set`_1.txt)
+
+```{r echo = FALSE}
+if(params$input$Species2 != "not selected" && !is.null(params$input$Gene_set2)){
+table <- params$cond3_enrich_table1[,-3:-8]
+table$Group <- try(gsub("\n","",table$Group))
+knitr::kable(table)
+}
+```
+
+Enrichment result table 2 (Enrichment_analysis/GSEA_`r params$input$Gene_set`_2.txt)
+
+```{r echo = FALSE}
+if(params$input$Species2 != "not selected" && !is.null(params$input$Gene_set2)){
+table <- params$cond3_enrich_table2[,-3:-8]
+table$Group <- try(gsub("\n","",table$Group))
+knitr::kable(table)
+}
+```
+
+Enrichment result table 3 (Enrichment_analysis/GSEA_`r params$input$Gene_set`_3.txt)
+
+```{r echo = FALSE}
+if(params$input$Species2 != "not selected" && !is.null(params$input$Gene_set2)){
+table <- params$cond3_enrich_table3[,-3:-8]
+table$Group <- try(gsub("\n","",table$Group))
+knitr::kable(table)
+}
+```
+
+
+\newpage
+
+## Citation
+
+ - Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press. https://doi.org/10.1016/j.jbc.2023.104810

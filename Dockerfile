@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y \
     libbz2-dev \
     liblzma-dev \
     libgsl-dev \
-    r-cran-gsl
-
+    r-cran-gsl \
+    wget \
+    git
 RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('shiny', update = F)" && \
     R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz',repos = NULL, type = 'source')" && \
@@ -68,7 +69,9 @@ RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('org.Ss.eg.db', update = F)" && \
     R -e "BiocManager::install('AnnotationHub', update = F)" && \
     R -e "BiocManager::install('org.At.tair.db', update = F)" && \
-    R -e "BiocManager::install('colorspace', update = F)"
+    R -e "BiocManager::install('colorspace', update = F)" && \
+    R -e "BiocManager::install('magick', update = F)" && \
+    R -e "BiocManager::install('pdftools', update = F)"
 RUN sudo rm -rf /srv/shiny-server/sample-apps /srv/shiny-server/index.html /srv/shiny-server/01_hello /srv/shiny-server/02_text /srv/shiny-server/03_reactivity /srv/shiny-server/04_mpg /srv/shiny-server/05_sliders /srv/shiny-server/06_tabsets /srv/shiny-server/07_widgets /srv/shiny-server/08_html /srv/shiny-server/09_upload /srv/shiny-server/10_download /srv/shiny-server/11_timer
 RUN mkdir -p /srv/shiny-server/RNAseqChef
 COPY ui.R /srv/shiny-server/RNAseqChef/

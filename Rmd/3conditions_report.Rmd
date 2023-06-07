@@ -44,8 +44,6 @@ if(params$input$data_file_type2 == "Row4" && !is.null(params$input$file6)) {
  **`r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[1]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[2]` vs `r unique(gsub("\\_.+$", "", colnames(params$raw_count)))[3]`**
  - Method for DEG detection: 
  **EBSeq**
-  - Method for FDR control: 
- **BH**
  - Species: 
  **`r params$input$Species2`**
  - Cut-off condition: 

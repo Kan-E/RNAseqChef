@@ -44,7 +44,7 @@ shinyUI(
                  column(12,
                         br(),
                         h4("Current version (v1.0.6, 2023/6/7)"),
-                        "See the details from 'More -> Change log')",
+                        "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press.", 
                         a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),),

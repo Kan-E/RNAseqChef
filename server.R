@@ -3941,7 +3941,7 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
         load(tmp)
         return(rawcount)
@@ -3961,7 +3961,7 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
       load(tmp)
       if(!is.null(metadata)) return(metadata) else return(NULL)
@@ -3972,7 +3972,7 @@ shinyServer(function(input, output, session) {
     tmp <- input$norm_file2$datapath
     if (input$data_file_type2 == "RowRecode_cond3" && !is.null(tmp)){
       recode <- input$file_recode_cond3$datapath
-      if(is.null(recode) && input$goButton2 > 0 )  recode = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(is.null(recode) && input$goButton2 > 0 )  recode = "data/recode.Rdata"
       if(!is.null(recode)){
         load(recode)
         return(norm_count_matrix) 
@@ -4024,7 +4024,7 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
         load(tmp)
        return(d_rawcount) 
@@ -4091,7 +4091,7 @@ shinyServer(function(input, output, session) {
   MultiOut <- reactive({
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(tmp) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(is.null(tmp) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
         load(tmp)
         return(dds) 

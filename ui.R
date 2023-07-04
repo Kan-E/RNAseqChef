@@ -43,7 +43,8 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.0.6, 2023/6/7)"),
+                        h4("Current version (v1.0.7, 2023/7/5)"),
+                        "Add new functions to the '3 conditions DEG' and 'Normalized count analysis'.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press.", 
@@ -345,7 +346,8 @@ shinyUI(
                  sidebarPanel(
                    radioButtons('data_file_type2','Input:',
                                 c('Raw_count_matrix'="Row3",
-                                  'Option: Raw_count_matrix + Metadata'="Row4"
+                                  'Option: Raw_count_matrix + Metadata'="Row4",
+                                  'Option: Recode.Rdata'="RowRecode_cond3"
                                 ),selected = "Row3"),
                    # Conditional panels appear based on input.data_file_type selection
                    conditionalPanel(condition="input.data_file_type2=='Row3'",
@@ -382,6 +384,23 @@ shinyUI(
                                               content=paste("The first column is", strong("the sample name"), "used in the raw count data.<br>", 
                                                             "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
                                                             img(src="input_format2.png", width = 400,height = 400)),
+                                              placement = "right",options = list(container = "body")),
+                   ),
+                   conditionalPanel(condition="input.data_file_type2=='RowRecode_cond3'",
+                                    fileInput("file_recode_cond3",
+                                              strong(
+                                                span("Select a Recode.Rdata"),
+                                                span(icon("info-circle"), id = "icon_recode", 
+                                                     options = list(template = popoverTempate))
+                                              ),
+                                              accept = c("Rdata"),
+                                              multiple = FALSE,
+                                              width = "80%"),
+                                    bsPopover("icon_recode", "Recode.Rdata:", 
+                                              content=paste("Using this mode, you can save time to EBSeq analysis.<br>",
+                                                            "The recode.Rdata file from the previous analysis using '3 conditions DEG' is needed.<br>", 
+                                                            "You can obtain a recode.Rdata file by clicking 'Download summary' buttom after the analysis with 3 conditions DEG"
+                                                            ), 
                                               placement = "right",options = list(container = "body")),
                    ),
                    fluidRow(
@@ -1120,6 +1139,7 @@ shinyUI(
                              width = "80%"),
                    h4("Filter option 2:"),
                    fluidRow(
+                     column(4, numericInput("fc3", "Fold Change", min   = 1, max   = NA, value = 2)),
                      column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
                      )
                    ),
@@ -1211,23 +1231,54 @@ shinyUI(
                                 column(4, downloadButton("download_norm_GOIheat", "Download heatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("GOI3"), htmlOutput("GOIreset_norm")),
+                                column(4, 
+                                       htmlOutput("selectFC_normGOI"),
+                                       textOutput("filtered_regionGOI"),
+                                       tags$head(tags$style("#filtered_regionGOI{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }")),
+                                       radioButtons('GOI3_type','Genes:',
+                                                    c('Select all genes'="ALL",
+                                                      'Custom'="custom"
+                                                    ),selected = "custom"),
+                                       htmlOutput("GOI3"), htmlOutput("GOIreset_norm")),
                                 column(8, plotOutput("norm_GOIheatmap"))
+                              ),
+                              fluidRow(
+                                column(4, htmlOutput("statistics")),
+                                column(4, htmlOutput("PlotType")),
+                                column(4, downloadButton("download_norm_GOIbox", "Download boxplot"))
                               ),
                               div(
                                 plotOutput("norm_GOIboxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
-                              fluidRow(
-                                column(4, downloadButton("download_norm_GOIbox", "Download boxplot"))
-                              )
+                              column(4, downloadButton("download_statisics", "Download table")),
+                              dataTableOutput("statistical_table")
                      ),
                      tabPanel("k-means clustering",
                               fluidRow(
-                                column(4, htmlOutput("norm_kmeans_num"),
+                                column(4, htmlOutput("selectFC_norm"),
+                                       textOutput("filtered_region"),
+                                       tags$head(tags$style("#filtered_region{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }")),
+                                       htmlOutput("norm_kmeans_num"),
                                        htmlOutput("kmeans_cv"),
-                                       downloadButton("download_norm_kmeans_heatmap", "Download heatmap")),
-                                column(8, plotOutput("norm_kmeans_heatmap"))
+                                       actionButton("kmeans_start", "Start"),
+                                       tags$head(tags$style("#kmeans_start{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"),
+                                                 tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                 ))),
+                                column(8, downloadButton("download_norm_kmeans_heatmap", "Download heatmap"),
+                                       plotOutput("norm_kmeans_heatmap"))
                               ),
                               bsCollapse(id="norm_kmeans_collapse_panel",open="norm_kmeans_count",multiple = TRUE,
                               bsCollapsePanel(title="k-means clustering result:",
@@ -1630,7 +1681,11 @@ shinyUI(
                                    strong("・Display an error message when inappropriate data is uploaded in Pair-wise DEG, 3 conditions DEG, and Multi DEG.(2023/5/18)"),br(),
                                    h4("v1.0.6 (2023/6/7)"),
                                    strong("・Add new function: generating report (.docx) when 'download summary' button is pressed in the setting panel of 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'.(2023/6/7)"),br(),
-                                   strong("・Fix 'GOI reset' button in the 'Pair-wise DEG', '3 conditions DEG', 'Normalized data count analysis',and 'Volcano navi'.(2023/6/7)"),br()
+                                   strong("・Fix 'GOI reset' button in the 'Pair-wise DEG', '3 conditions DEG', 'Normalized data count analysis',and 'Volcano navi'.(2023/6/7)"),br(),
+                                   h4("v1.0.7 (2023/7/5)"),
+                                   strong("・Add the function to export and import a Recode.Rdata file in the '3 conditions DEG'. 
+                                          Recode.Rdata can be obtained by clicking the 'Download summary' button and be imported using 'Option: Recode.Rdata' mode. You can skip the time-consuming EBSeq analysis."),br(),
+                                   strong("・Add the functions for log2FoldChange cut-off and statistical analysis in the 'Normalized count analysis'."),br(),
                             )
                           )
                  )

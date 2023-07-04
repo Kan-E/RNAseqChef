@@ -1187,19 +1187,130 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
       return(H_t2g)
   }else return(NULL)
 }
-GOIboxplot <- function(data){
+GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot"){
   collist <- gsub("\\_.+$", "", colnames(data))
   collist <- unique(collist)
+  rowlist <- rownames(data)
   data$Row.names <- rownames(data)
   data <- data %>% gather(key=sample, value=value,-Row.names)
   data$sample <- gsub("\\_.+$", "", data$sample)
   data$Row.names <- as.factor(data$Row.names)
   data$sample <- factor(data$sample,levels=collist,ordered=TRUE)
   data$value <- as.numeric(data$value)
+  if(!is.null(statistical_test) && statistical_test != "not_selected"){
+    res <- data.frame(matrix(rep(NA, 11), nrow=1))[numeric(0), ]
+    colnames(res) <- c("Gene", "group1", "group2", "term", "null.value","Std.Error","coefficients","t.value","p.adj","xmin", "xmax")
+    if (statistical_test == "TukeyHSD"){
+      stat.test <- data %>% 
+        group_by(Row.names) %>% 
+        tukey_hsd(value ~ sample) %>% 
+        add_significance("p.adj") %>% 
+        add_xy_position(scales = "free", step.increase = 0.2)
+    }
+    if(statistical_test == "Welch's t-test"){
+      stat.test <- data %>% 
+        group_by(Row.names) %>% 
+        t_test(value ~ sample) %>% 
+        add_significance() %>% 
+        add_xy_position(scales = "free", step.increase = 0.2)
+      print(stat.test)
+    }
+    if(statistical_test == "Wilcoxon test"){
+      if(length(collist) >= 3){
+        stat.test <- data %>% 
+          group_by(Row.names) %>% 
+          pairwise_wilcox_test(value ~ sample) %>% 
+          add_significance() %>% 
+          add_xy_position(scales = "free", step.increase = 0.2)
+      }
+      if(length(collist) == 2){
+      stat.test <- data %>% 
+        group_by(Row.names) %>% 
+        wilcox_test(value ~ sample) %>% 
+        add_significance() %>% 
+        add_xy_position(scales = "free", step.increase = 0.2)
+      }
+      print(stat.test)
+    }
+    if(statistical_test == "Dunnet's test"){
+      for (name2 in rowlist){
+        data2 <- dplyr::filter(data, Row.names == name2)
+        dun <- stats::aov(value~sample, data2)
+        dunnette <- multcomp::glht(model = dun, linfct=multcomp::mcp(sample="Dunnett"))
+        dunnette2 <- try(summary(dunnette))
+        p.adj <- c()
+        coefficients <- c()
+        Std.Error <- c()
+        t.value <- c()
+        group1 <- c()
+        group2 <- c()
+        term <- c()
+        null.value <- c()
+        xmin <- c()
+        xmax <- c()
+        if(length(class(dunnette2)) == 1){
+        if(class(dunnette2) == "try-error"){
+          for (i in 1:(length(collist)-1)){
+            p.adj <- c(p.adj, NA)
+            coefficients <- c(coefficients, NA)
+            Std.Error <- c(Std.Error, NA)
+            t.value <- c(t.value, NA)
+            group1 <- c(group1, c(collist[1]))
+            group2 <- c(group2, c(collist[i+1]))
+            term <- c(term, c("sample"))
+            null.value <- c(null.value, NA)
+            xmin <- c(xmin, c(1))
+            xmax <- c(xmax, c(i+1))
+          }
+        }}else{
+        for (i in 1:(length(collist)-1)){
+          p.adj <- c(p.adj, dunnette2[["test"]][["pvalues"]][i])
+          coefficients <- c(coefficients, dunnette2[["test"]][["coefficients"]][i])
+          Std.Error <- c(Std.Error, dunnette2[["test"]][["sigma"]][i])
+          t.value <- c(t.value, dunnette2[["test"]][["tstat"]][i])
+          group1 <- c(group1, c(collist[1]))
+          group2 <- c(group2, c(collist[i+1]))
+          term <- c(term, c("sample"))
+          null.value <- c(null.value, 0)
+          xmin <- c(xmin, c(1))
+          xmax <- c(xmax, c(i+1))
+        }
+        }
+        res2 <- data.frame(Row.names = name2, group1 = group1, group2 = group2, term = term,
+                           null.value = null.value, Std.Error = Std.Error, coefficients = coefficients,
+                           t.value = t.value, p.adj = p.adj, xmin = xmin, xmax = xmax)
+        res <- rbind(res, res2)
+      }
+      res <- res %>% arrange(Row.names) %>% group_by(Row.names)
+      stat.test2 <- data %>% 
+        group_by(Row.names) %>% 
+        get_y_position(value ~ sample, scales = "free", step.increase = 0.15, fun = "mean_se") %>% 
+        dplyr::filter(group1 == collist[1])
+      stat.test3 <- cbind(stat.test2,res[,-1:-3])
+      stat.test3$Row.names <- as.factor(stat.test3$Row.names)
+      stat.test <- stat.test3 %>% add_significance("p.adj")
+    }
+  }
+  if(length(rowlist) > 200){
+    p <- NULL
+  }else{
+    if (plottype == "Boxplot"){
   p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
                          fill = "sample", scales = "free",
                          add = "jitter",
                          xlab = FALSE, ylab = "Normalized_count", ylim = c(0, NA))
+    }
+    if (plottype == "Barplot"){
+      p <- ggbarplot(data,x = "sample", y = "value", scales = "free",
+                     facet.by = "Row.names", fill = "sample",add = c("mean_se", "jitter"),
+                     add.params = list(size=0.5), xlab = FALSE)
+    }
+    if (plottype == "Errorplot"){
+      p <- ggerrorplot(data,x = "sample", y = "value",
+                       scales = "free", add = "jitter", facet.by = "Row.names",
+                       add.params = list(size=0.5), xlab = FALSE, error.plot = "errorbar") + 
+        stat_summary(geom = "point", shape = 95,size = 5,col = "black", fun = "mean")
+    }
   p <- (facet(p, facet.by = "Row.names",
               panel.labs.background = list(fill = "transparent", color = "transparent"),
               scales = "free", short.panel.labs = T, panel.labs.font = list(size=15, face = "italic"))+ 
@@ -1208,7 +1319,14 @@ GOIboxplot <- function(data){
                 title = element_text(size = 10),text = element_text(size = 12),
                 axis.title.y = element_text(size=15),legend.text = element_text(size=15),
                 legend.title = element_blank()))
-  return(p)
+  }
+  if(!is.null(statistical_test) && statistical_test != "not_selected"){
+    if(length(rowlist) <= 200) p <- p + stat_pvalue_manual(stat.test,hide.ns = T, size = 5)
+    df <- list()
+    df[["plot"]] <- p
+    df[["statistical_test"]] <- stat.test
+    return(df)
+  }else return(p)
 }
 enrich_viewer_forMulti1 <- function(df, Species, org){
   if(is.null(df) || Species == "not selected"){
@@ -1676,11 +1794,26 @@ Motifplot <- function(df2, showCategory=5,padj){
   }
 }
 
-GOIheatmap <- function(data.z, show_row_names = TRUE){
+GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL){
+  if(length(rownames(data.z)) <= 50) {
+    if(!is.null(type)) {if(type == "ALL") show_row_names = FALSE else show_row_names = TRUE}
+  }else{
+    show_row_names = FALSE
+  }
   ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                 clustering_method_columns = 'ward.D2',
                 show_row_names = show_row_names, show_row_dend = F,column_names_side = "top",
                 row_names_gp = gpar(fontface = "italic"))
+  if(!is.null(type)) {
+  if(type == "ALL" && !is.null(GOI)) {
+    indexes <- which(rownames(data.z) %in% GOI)
+    labels <- rownames(data.z)[indexes]
+    ht <- ht + rowAnnotation(
+      link = anno_mark(at = indexes, labels = labels,which="row"),
+      width = unit(1, "cm") + max_text_width(labels)
+    )
+  }
+  }
   return(ht)
 }
 

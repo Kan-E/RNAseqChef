@@ -3933,25 +3933,51 @@ shinyServer(function(input, output, session) {
       tmp <- input$file4$datapath
       if(is.null(input$file4) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt"
       return(read_df(tmp = tmp))
-    }else{
+    }
+    if (input$data_file_type2 == "Row4"){
       tmp <- input$file5$datapath
       if(is.null(input$file5) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv"
       return(read_df(tmp = tmp))
+    }
+    if (input$data_file_type2 == "RowRecode_cond3"){
+      tmp <- input$file_recode_cond3$datapath
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(!is.null(tmp)){
+        load(tmp)
+        return(rawcount)
+      }
     }
   })
   metadata2 <- reactive({
     if (input$data_file_type2 == "Row3"){
       return(NULL)
-    }else{
+    }
+    if (input$data_file_type2 == "Row4"){
       tmp <- input$file6$datapath
       if(is.null(input$file6) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example6.csv"
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
     }
+    if (input$data_file_type2 == "RowRecode_cond3"){
+      tmp <- input$file_recode_cond3$datapath
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(!is.null(tmp)){
+      load(tmp)
+      if(!is.null(metadata)) return(metadata) else return(NULL)
+      }
+    }
   })
   norm_count_matrix2 <- reactive({
     tmp <- input$norm_file2$datapath
+    if (input$data_file_type2 == "RowRecode_cond3" && !is.null(tmp)){
+      recode <- input$file_recode_cond3$datapath
+      if(is.null(recode) && input$goButton2 > 0 )  recode = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(!is.null(recode)){
+        load(recode)
+        return(norm_count_matrix) 
+      }
+    }
     df <- read_df(tmp = tmp)
     if(!is.null(df)){
       df <- anno_rep(df)
@@ -3972,7 +3998,8 @@ shinyServer(function(input, output, session) {
       }else{
         return(anno_rep(row))
       }
-    }else{
+    }
+    if (input$data_file_type2 == "Row4"){
       meta <- anno_rep_meta(metadata2())
       if (is.null(row) || is.null(meta)){
         return(NULL)
@@ -3993,6 +4020,14 @@ shinyServer(function(input, output, session) {
           }
         }
         return(data3)
+      }
+    }
+    if (input$data_file_type2 == "RowRecode_cond3"){
+      tmp <- input$file_recode_cond3$datapath
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(!is.null(tmp)){
+        load(tmp)
+       return(d_rawcount) 
       }
     }
   })
@@ -4054,6 +4089,14 @@ shinyServer(function(input, output, session) {
   
   # 3 conditions DEG ------------------------------------------------------------------------------
   MultiOut <- reactive({
+    if (input$data_file_type2 == "RowRecode_cond3"){
+      tmp <- input$file_recode_cond3$datapath
+      if(is.null(tmp) && input$goButton2 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/recode.Rdata"
+      if(!is.null(tmp)){
+        load(tmp)
+        return(dds) 
+      }
+    }else{
     withProgress(message = "EBSeq multiple comparison test takes 5 - 10 minutes",{
       count <- d_row_count_matrix2()
       collist <- gsub("\\_.+$", "", colnames(count))
@@ -4078,6 +4121,7 @@ shinyServer(function(input, output, session) {
       }
       incProgress(1)
     })
+    }
   })
   
   deg_result2 <- reactive({
@@ -4944,6 +4988,14 @@ shinyServer(function(input, output, session) {
           write.table(cond3_enrich_table2(), enrich_table2, row.names = F, sep = "\t", quote = F)
           write.table(cond3_enrich_table3(), enrich_table3, row.names = F, sep = "\t", quote = F)
         }
+        recode <- "Recode.Rdata"
+        rawcount <- row_count_matrix2()
+        metadata <- metadata2()
+        d_rawcount <- d_row_count_matrix2()
+        norm_count_matrix = norm_count_matrix2()
+        dds <- MultiOut()
+        fs <- c(fs,recode)
+        save(rawcount,metadata,d_rawcount,dds,norm_count_matrix,file=recode)
         report <- paste0(format(Sys.time(), "%Y%m%d_"),"3conditions_report",".docx")
         fs <- c(fs,report)
         rmarkdown::render("3conditions_report.Rmd", output_format = "word_document", output_file = report,
@@ -5260,6 +5312,23 @@ shinyServer(function(input, output, session) {
   )
   
   #norm GOI------------------------------------------------------
+  output$filtered_regionGOI <- renderText({
+    if(is.null(GOI_list3())){
+      return(NULL)
+    }else{ 
+      print(paste0("The number of genes after the filtration: ", length(GOI_list3())))
+    }
+  })
+  output$selectFC_normGOI <- renderUI({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC_normGOI", "Select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
+                     selected = "", multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  
   d_norm_count_cutoff_uniqueID <- reactive({
     count <- d_norm_count_matrix_cutofff()
     if(input$Species3 != "not selected"){
@@ -5275,9 +5344,8 @@ shinyServer(function(input, output, session) {
     }
     return(count)
   })
-  
   GOI_list3 <- reactive({
-    count <- d_norm_count_cutoff_uniqueID()
+    count <- preGOI_list3()
     if(is.null(count)){
       return(NULL)
     }else{
@@ -5313,6 +5381,24 @@ shinyServer(function(input, output, session) {
       return(GOI)
     }
   })
+  preGOI_list3 <- reactive({
+    data <- d_norm_count_cutoff_uniqueID()
+    if(length(input$selectFC_normGOI) == 2){
+      if(dim(data)[1] != 0){
+        cond1 <- input$selectFC_normGOI[1]
+        cond2 <- input$selectFC_normGOI[2]
+        cond1_num <- data %>% dplyr::select(.,starts_with(cond1)) %>% colnames() %>% length()
+        cond2_num <- data %>% dplyr::select(.,starts_with(cond2)) %>% colnames() %>% length()
+        cond1_ave <- data %>% dplyr::select(starts_with(cond1)) %>% rowSums(na.rm=TRUE)/cond1_num
+        cond2_ave <- data %>% dplyr::select(starts_with(cond2)) %>% rowSums(na.rm=TRUE)/cond2_num
+        Log2FoldChange <- log((cond1_ave + 0.01)/(cond2_ave + 0.01),2)
+        data$Log2FoldChange <- Log2FoldChange
+        data2 <- data %>% dplyr::filter(abs(Log2FoldChange) > log2(input$fc3))
+        data2 <- data2[, - which(colnames(data2) == "Log2FoldChange")]
+      }else data2 <- NULL
+      return(data2)
+    }
+  })
   
   output$GOI3 <- renderUI({
     if(is.null(d_norm_count_matrix_cutofff())){
@@ -5333,20 +5419,27 @@ shinyServer(function(input, output, session) {
                            options = list(delimiter = " ", create=TRUE, 'plugins' = list('remove_button'), persist = FALSE))
     })
   })
-  
+  GOI3_INPUT <- reactive({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+    if(input$GOI3_type == "ALL") return(GOI_list3())
+    if(input$GOI3_type == "custom") return(input$GOI3)
+    }
+  })
   norm_GOIcount <- reactive({
     count <- d_norm_count_cutoff_uniqueID()
     if(str_detect(rownames(count)[1], "ENS") || str_detect(rownames(count)[1], "FBgn") || 
        str_detect(rownames(count)[1], "^AT.G")){
       if(input$Species3 != "not selected"){
-        Unique_ID <- input$GOI3
+        Unique_ID <- GOI3_INPUT()
         label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
         data <- merge(count, label_data, by="Unique_ID")
         rownames(data) <- data$Unique_ID
         data <- data[, - which(colnames(data) == "SYMBOL")]
         data <- data[, - which(colnames(data) == "Unique_ID")]
       }else{
-        Row.names <- input$GOI3
+        Row.names <- GOI3_INPUT()
         count$Row.names <- rownames(count)
         label_data <- as.data.frame(Row.names, row.names = Row.names)
         data <- merge(count, label_data, by="Row.names")
@@ -5354,7 +5447,7 @@ shinyServer(function(input, output, session) {
         data <- data[, - which(colnames(data) == "Row.names")]
       }
     }else{
-      Row.names <- input$GOI3
+      Row.names <- GOI3_INPUT()
       count$Row.names <- rownames(count)
       label_data <- as.data.frame(Row.names, row.names = Row.names)
       data <- merge(count, label_data, by="Row.names")
@@ -5371,7 +5464,7 @@ shinyServer(function(input, output, session) {
     }else{
       data.z <- genescale(data, axis=1, method="Z")
       data.z <- na.omit(data.z)
-      ht <- GOIheatmap(data.z)
+      ht <- GOIheatmap(data.z, type = input$GOI3_type, GOI = input$GOI3)
     }
     return(ht)
   })
@@ -5380,7 +5473,7 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      if(!is.null(input$GOI3)){
+      if(!is.null(GOI3_INPUT())){
         withProgress(message = "heatmap",{
           suppressWarnings(print(norm_GOIheat()))
           incProgress(1)
@@ -5388,15 +5481,39 @@ shinyServer(function(input, output, session) {
       }
     }
   })
-  
-  norm_GOIbox <- reactive({
+  output$statistics <- renderUI({
+    if(!is.null(d_norm_count_matrix_cutofff()) && !is.null(GOI3_INPUT())){
     data <- norm_GOIcount()
-    if(is.null(data)){
+    if(!is.null(data)){
+    collist <- gsub("\\_.+$", "", colnames(data))
+    collist <- unique(collist)
+    if(length(collist) == 2){
+      selectInput("statistics","statistics",choices = c("not_selected","Welch's t-test","Wilcoxon test"),selected="not_selected",multiple = F)
+    }else{
+      selectInput("statistics","statistics",choices = c("not_selected","TukeyHSD","Dunnet's test","Wilcoxon test"),selected="not_selected", multiple = F)
+    }
+    }}
+  })
+  output$PlotType <- renderUI({
+    selectInput('PlotType', 'PlotType', c("Boxplot", "Barplot", "Errorplot"))
+  })
+  
+  statistical_analysis_goi <- reactive({
+    data <- norm_GOIcount()
+    if(is.null(data) || is.null(input$statistics)){
       p <- NULL
     }else{
-      p <- GOIboxplot(data = data)
+      p <- GOIboxplot(data = data,statistical_test =input$statistics,plottype=input$PlotType)
     }
     return(p)
+  })
+  
+  norm_GOIbox <- reactive({
+    if(!is.null(statistical_analysis_goi())){
+    if(input$statistics == "not_selected"){
+      return(statistical_analysis_goi())
+    }else return(statistical_analysis_goi()[["plot"]])
+    }
   })
   
   
@@ -5404,7 +5521,10 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      if(!is.null(input$GOI3)){
+      if(!is.null(GOI3_INPUT())){
+        if(length(rownames(norm_GOIcount())) >200){
+          validate("Unable to display more than 200 genes. Please adjust the threshold to narrow down the number of genes to less than 200, or utilize the 'Custom' mode.")
+        }
         withProgress(message = "Boxplot",{
           suppressWarnings(print(norm_GOIbox()))
           incProgress(1)
@@ -5412,6 +5532,50 @@ shinyServer(function(input, output, session) {
       }
     }
   })
+  
+  norm_GOIbox_statistic <- reactive({
+    if(!is.null(statistical_analysis_goi())){
+    if(input$statistics != "not_selected"){
+    data <- as.data.frame(statistical_analysis_goi()[["statistical_test"]])
+    colnames(data)[1] <- "gene"
+    if(input$statistics == "TukeyHSD" || input$statistics == "Dunnet's test"){
+    data <- data[, - which(colnames(data) == "term")]
+    }else{
+      data <- data[, - which(colnames(data) == ".y.")]
+      data <- data[, - which(colnames(data) == "n1")]
+      data <- data[, - which(colnames(data) == "n2")]
+    }
+    data <- data[, - which(colnames(data) == "y.position")]
+    data <- data[, - which(colnames(data) == "groups")]
+    data <- data[, - which(colnames(data) == "xmin")]
+    data <- data[, - which(colnames(data) == "xmax")]
+    return(data)
+    }else return(NULL)}
+  })
+  
+  output$statistical_table <- DT::renderDataTable({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      if(!is.null(GOI3_INPUT())){
+        if(length(rownames(norm_GOIcount())) >200){
+          validate("Cannot display more than 200 genes.")
+        }
+    norm_GOIbox_statistic()
+      }}
+  })
+  
+  output$download_statisics = downloadHandler(
+    filename = function(){
+      paste0(download_norm_dir(), "GOIboxplot_",input$statistics,".txt")
+    },
+    content = function(file) {
+      withProgress(message = "Preparing download",{
+        write.table(norm_GOIbox_statistic(),file, row.names = F, col.names=TRUE, sep = "\t", quote = F)
+        incProgress(1)
+      })
+    }
+  )
   
   output$download_norm_GOIbox = downloadHandler(
     filename = function(){
@@ -5456,6 +5620,55 @@ shinyServer(function(input, output, session) {
     }
   )
   #norm kmeans------------------------------------------------------
+  updateCounter_kmeans <- reactiveValues(i = 0)
+  
+  observe({
+    input$kmeans_start
+    isolate({
+      updateCounter_kmeans$i <- updateCounter_kmeans$i + 1
+    })
+  })
+  
+  
+  #Restart
+  defaultvalues_kmeans <- observeEvent(norm_kmeans(), {
+    isolate(updateCounter_kmeans$i == 0)
+    updateCounter_kmeans <<- reactiveValues(i = 0)
+  }) 
+  output$selectFC_norm <- renderUI({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC_norm", "Select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
+                     selected = "", multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  output$filtered_region <- renderText({
+    if(is.null(d_norm_count_matrix_cutofff_fc())){
+      return(NULL)
+    }else{ 
+      print(paste0("The number of genes after the filtration: ", length(rownames(d_norm_count_matrix_cutofff_fc()))))
+    }
+  })
+  d_norm_count_matrix_cutofff_fc <- reactive({
+    data <- d_norm_count_matrix_cutofff()
+    if(length(input$selectFC_norm) == 2){
+    if(dim(data)[1] != 0){
+      cond1 <- input$selectFC_norm[1]
+      cond2 <- input$selectFC_norm[2]
+      cond1_num <- data %>% dplyr::select(.,starts_with(cond1)) %>% colnames() %>% length()
+      cond2_num <- data %>% dplyr::select(.,starts_with(cond2)) %>% colnames() %>% length()
+      cond1_ave <- data %>% dplyr::select(starts_with(cond1)) %>% rowSums(na.rm=TRUE)/cond1_num
+      cond2_ave <- data %>% dplyr::select(starts_with(cond2)) %>% rowSums(na.rm=TRUE)/cond2_num
+      Log2FoldChange <- log((cond1_ave + 0.01)/(cond2_ave + 0.01),2)
+      data$Log2FoldChange <- Log2FoldChange
+      data2 <- data %>% dplyr::filter(abs(Log2FoldChange) > log2(input$fc3))
+      data2 <- data2[, - which(colnames(data2) == "Log2FoldChange")]
+    }else data2 <- NULL
+    return(data2)
+    }
+  })
   output$norm_kmeans_num <- renderUI({
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
@@ -5476,7 +5689,7 @@ shinyServer(function(input, output, session) {
   
   
   norm_count_matrix_cutoff2 <- reactive({
-    data <- d_norm_count_matrix_cutofff()
+    data <- d_norm_count_matrix_cutofff_fc()
     if(is.null(data) || is.null(input$kmeans_cv)){
       return(NULL)
     }else{
@@ -5498,7 +5711,7 @@ shinyServer(function(input, output, session) {
   
   norm_kmeans <- reactive({
     data.z <- norm_data_z()
-    if(is.null(data.z)){
+    if(is.null(data.z) || input$kmeans_start == 0 || updateCounter_kmeans$i == 0){
       return(NULL)
     }else{
       withProgress(message = "k-means clustering",{

@@ -17,7 +17,16 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libssl-dev \
     libcurl4-gnutls-dev \
-    r-cran-devtools
+    r-cran-devtools \
+    wget \
+    git \
+    libpoppler-dev \
+    libpoppler-cpp-dev \
+    libmagick++-dev \
+    chrpath \
+    libxft-dev \
+    libfontconfig1 \
+    libfontconfig1-dev
 RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('devtools', update = F)" && \
     R -e  "devtools::install_github('YuLab-SMU/clusterProfiler.dplyr')" && \
@@ -79,7 +88,9 @@ RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('AnnotationHub', update = F)" && \
     R -e "BiocManager::install('tidyverse', update = F)" && \
     R -e "BiocManager::install('org.At.tair.db', update = F)" && \
-    R -e "BiocManager::install('colorspace', update = F)"
+    R -e "BiocManager::install('colorspace', update = F)" && \
+    R -e "install.packages('pdftools', repos = 'https://ropensci.r-universe.dev')" && \
+    R -e "BiocManager::install('magick')"
 RUN rm -rf /srv/shiny-server/hello
 RUN mkdir -p /srv/shiny-server/RNAseqChef
 COPY ui.R /srv/shiny-server/RNAseqChef/
@@ -88,6 +99,8 @@ COPY server.R /srv/shiny-server/RNAseqChef/
 COPY global.R /srv/shiny-server/RNAseqChef/
 COPY google-analytics.html /srv/shiny-server/RNAseqChef/
 COPY www /srv/shiny-server/RNAseqChef/www/
+COPY data/Recode.Rdata /srv/shiny-server/RNAseqChef/data/
+COPY Rmd /srv/shiny-server/RNAseqChef/Rmd/
 COPY navAppend.js /srv/shiny-server/RNAseqChef/
 COPY shiny-server.conf /etc/shiny-server/
 RUN chown -R shiny:shiny /srv/shiny-server

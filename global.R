@@ -70,7 +70,7 @@ gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interact
                    "Transcription factor targets", "miRNA target")
 species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus tropicalis",
                   "Drosophila melanogaster", "Caenorhabditis elegans", "Anolis carolinensis","Bos taurus","Canis lupus familiaris",
-                  "Danio rerio","Equus caballus","Felis catus","Gallus gallus","Macaca mulatta","Monodelphis domestica","Ornithorhynchus anatinus",
+                  "Danio rerio","Equus caballus","Felis catus","Gallus gallus","Heterocephalus glaber","Macaca mulatta","Monodelphis domestica","Ornithorhynchus anatinus",
                   "Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa","Xenopus laevis","Arabidopsis thaliana")
 read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
@@ -155,7 +155,7 @@ anno_rep_meta <- function(meta){
   return(meta)
 }
 
-gene_list_convert_for_enrichment <- function(data, Species){
+gene_list_convert_for_enrichment <- function(data, Ortholog,org,Species){
     if(is.null(data) || Species == "not selected"){
       return(NULL)
     }else{
@@ -164,23 +164,33 @@ gene_list_convert_for_enrichment <- function(data, Species){
       my.symbols <- df$GeneID
       if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn") ||
          str_detect(df$GeneID[1], "^AT.G")){
+        if(sum(is.element(no_orgDb, Species)) == 1){
+          gene_IDs <- Ortholog
+        }else{
         if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
-        gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
+        gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                         keytype = key,
                                         columns = c(key,"SYMBOL", "ENTREZID"))
+        }
         colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
       }else{
-        gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+        if(sum(is.element(no_orgDb, Species)) == 1){
+          gene_IDs <- Ortholog
+          gene_IDs <- gene_IDs[,-1]
+        }else{
+        gene_IDs <- AnnotationDbi::select(org, keys = my.symbols,
                                           keytype = "SYMBOL",
                                           columns = c("ENTREZID", "SYMBOL"))
+        }
         colnames(gene_IDs) <- c("GeneID","ENTREZID")
       }
       gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
       data <- merge(df, gene_IDs, by="GeneID")
+      print(data)
       return(data)
     }
 }
-dorothea <- function(species, confidence = "recommend",type){
+dorothea <- function(species, confidence = "recommend",type,Biomart_archive){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
     spe <- "Mus musculus"
@@ -204,7 +214,7 @@ dorothea <- function(species, confidence = "recommend",type){
   net3 <- data.frame(gs_name = net2$tf, entrez_gene = net2$ENTREZID, target = net2$target, confidence = net2$confidence)
   net3 <- dplyr::arrange(net3, gs_name)
   if(species != "Mus musculus" && species != "Homo sapiens"){
-    withProgress(message = paste0("Gene ID conversion from human to ", species, "for the regulon gene set. It takes a few minutes."),{
+    withProgress(message = paste0("Gene ID conversion from human to ", species, " for the regulon gene set. It takes a few minutes."),{
     genes <- net3$entrez_gene
     switch (species,
             "Rattus norvegicus" = set <- "rnorvegicus_gene_ensembl",
@@ -222,13 +232,14 @@ dorothea <- function(species, confidence = "recommend",type){
             "Monodelphis domestica" = set <- "mdomestica_gene_ensembl",
             "Ornithorhynchus anatinus" = set <- "oanatinus_gene_ensembl",
             "Pan troglodytes" = set <- "ptroglodytes_gene_ensembl",
+            "Heterocephalus glaber" = set <- "hgfemale_gene_ensembl",
             "Saccharomyces cerevisiae" = set <-"scerevisiae_gene_ensembl", 
             "Sus scrofa" = set <- "sscrofa_gene_ensembl")
-    convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
-    human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
-    genes2 = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
+    convert = useMart("ensembl", dataset = set, host=Biomart_archive)
+    human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host=Biomart_archive)
+    genes2 = getLDS(attributes = c("entrezgene_id","ensembl_gene_id"), filters = "entrezgene_id",
                    values = genes ,mart = human,
-                 attributesL = c("entrezgene_id"),
+                 attributesL = c("entrezgene_id","ensembl_gene_id"),
                    martL = convert, uniqueRows=T)
     colnames(genes2) <- c("entrez_gene", "converted_entrez_gene")
     genes2 <- genes2 %>% distinct(converted_entrez_gene, .keep_all = T)
@@ -239,56 +250,70 @@ dorothea <- function(species, confidence = "recommend",type){
   }
   return(net3)
 }
-org <- function(Species){
+ensembl_archive <- c("https://dec2021.archive.ensembl.org",
+                     "https://apr2022.archive.ensembl.org","https://jul2022.archive.ensembl.org",
+                     "https://oct2022.archive.ensembl.org","https://feb2023.archive.ensembl.org",
+                     "https://www.ensembl.org")
+no_orgDb <- c("Xenopus tropicalis","Anolis carolinensis","Equus caballus",
+              "Felis catus","Monodelphis domestica","Ornithorhynchus anatinus",
+              "Heterocephalus glaber")
+orgDb_list <- c("Homo sapiens", "Mus musculus", "Rattus norvegicus", 
+                "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
+                "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa")
+no_org_ID <- function(Species,Ortholog,Biomart_archive){
   if(Species != "not selected"){
-    if(Species == "Xenopus tropicalis"){
-      withProgress(message = "preparing a gene annotation",{
-      library(AnnotationHub)
-      hub <- AnnotationHub()
-      z <- hub[["AH101434"]]
-      org <- z
+    if(!is.null(Ortholog)){
+    if(sum(is.element(no_orgDb, Species)) == 1){
+      withProgress(message = "preparing a gene annotation. It takes a few minutes.",{
+        db <- try(useMart("ensembl", host=Biomart_archive))
+        if(length(class(db)) == 1){
+          if(class(db) == "try-error") validate("biomart has encountered an unexpected server error.
+                                                \nPlease try the other archives.")
+        }
+        if(Species == "Xenopus tropicalis") ensembl <- "xtropicalis_gene_ensembl"
+        if(Species == "Anolis carolinensis") ensembl <- "acarolinensis_gene_ensembl"
+        if(Species == "Equus caballus") ensembl <- "ecaballus_gene_ensembl"
+        if(Species == "Felis catus") ensembl <- "fcatus_gene_ensembl"
+        if(Species == "Monodelphis domestica") ensembl <- "mdomestica_gene_ensembl"
+        if(Species == "Ornithorhynchus anatinus") ensembl <- "oanatinus_gene_ensembl"
+        if(Species == "Heterocephalus glaber") ensembl <- "hgfemale_gene_ensembl"
+        use <- useDataset(ensembl, mart = db)
+        genes <- getBM(attributes = c("ensembl_gene_id"), mart = use)
+        if(Ortholog == "Mus musculus") ortho <- "mmusculus_gene_ensembl"
+        if(Ortholog == "Homo sapiens") ortho <- "hsapiens_gene_ensembl"
+        if(Ortholog == "Rattus norvegicus") ortho <- "rnorvegicus_gene_ensembl"
+        if(Ortholog == "Drosophila melanogaster") ortho <- "dmelanogaster_gene_ensembl"
+        if(Ortholog == "Caenorhabditis elegans") ortho <- "celegans_gene_ensembl"
+        if(Ortholog == "Bos taurus") ortho <- "btaurus_gene_ensembl"
+        if(Ortholog == "Canis lupus familiaris") ortho <- "clfamiliaris_gene_ensembl"
+        if(Ortholog == "Danio rerio") ortho <- "drerio_gene_ensembl"
+        if(Ortholog == "Gallus gallus") ortho <- "ggallus_gene_ensembl"
+        if(Ortholog == "Macaca mulatta") ortho <- "mmulatta_gene_ensembl"
+        if(Ortholog == "Pan troglodytes") ortho <- "ptroglodytes_gene_ensembl"
+        if(Ortholog == "Saccharomyces cerevisiae") ortho <- "scerevisiae_gene_ensembl"
+        if(Ortholog == "Sus scrofa") ortho <- "sscrofa_gene_ensembl"
+        ortho_mart = useMart("ensembl", dataset = ortho, host=Biomart_archive)
+        if(length(class(ortho_mart)) == 1){
+          if(class(ortho_mart) == "try-error") validate("biomart has encountered an unexpected server error.
+                                                \nPlease try the other archives.")
+        }
+        genes2 = getLDS(attributes = c("ensembl_gene_id"),
+                        values = genes ,mart = use,
+                        attributesL = c("external_gene_name","entrezgene_id"),
+                        martL = ortho_mart, uniqueRows=T)
+        colnames(genes) <- c("ENSEMBL")
+        colnames(genes2) <- c("ENSEMBL","SYMBOL","ENTREZID")
+        gene3<-merge(genes,genes2,by="ENSEMBL",all=T)
+        org <- gene3 %>% distinct(ENSEMBL, .keep_all = T)
       })
     }
-    if(Species == "Anolis carolinensis"){
-      withProgress(message = "preparing a gene annotation",{
-        library(AnnotationHub)
-        hub <- AnnotationHub()
-        z <- hub[["AH101856"]]
-        org <- z
-      })
+    return(org)
     }
-    if(Species == "Equus caballus"){
-      withProgress(message = "preparing a gene annotation",{
-        library(AnnotationHub)
-        hub <- AnnotationHub()
-        z <- hub[["AH101134"]]
-        org <- z
-      })
-    }
-    if(Species == "Felis catus"){
-      withProgress(message = "preparing a gene annotation",{
-        library(AnnotationHub)
-        hub <- AnnotationHub()
-        z <- hub[["AH100961"]]
-        org <- z
-      })
-    }
-    if(Species == "Monodelphis domestica"){
-      withProgress(message = "preparing a gene annotation",{
-        library(AnnotationHub)
-        hub <- AnnotationHub()
-        z <- hub[["AH100991"]]
-        org <- z
-      })
-    }
-    if(Species == "Ornithorhynchus anatinus"){
-      withProgress(message = "preparing a gene annotation",{
-        library(AnnotationHub)
-        hub <- AnnotationHub()
-        z <- hub[["AH101284"]]
-        org <- z
-      })
-    }
+  }
+}
+org <- function(Species, Ortholog=NULL){
+  if(Species != "not selected"){
+    if(sum(is.element(no_orgDb, Species)) == 0){
     switch (Species,
             "Mus musculus" = org <- org.Mm.eg.db,
             "Homo sapiens" = org <- org.Hs.eg.db,
@@ -305,6 +330,24 @@ org <- function(Species){
             "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
             "Sus scrofa" = org <- org.Ss.eg.db,
             "Arabidopsis thaliana" = org <- org.At.tair.db)
+    }else{
+    switch (Ortholog,
+            "Mus musculus" = org <- org.Mm.eg.db,
+            "Homo sapiens" = org <- org.Hs.eg.db,
+            "Rattus norvegicus" = org <- org.Rn.eg.db,
+            "Xenopus laevis" = org <- org.Xl.eg.db,
+            "Drosophila melanogaster" = org <- org.Dm.eg.db,
+            "Caenorhabditis elegans" = org <- org.Ce.eg.db,
+            "Bos taurus" = org <- org.Bt.eg.db,
+            "Canis lupus familiaris" = org <- org.Cf.eg.db,
+            "Danio rerio" = org <- org.Dr.eg.db,
+            "Gallus gallus" = org <- org.Gg.eg.db,
+            "Macaca mulatta" = org <- org.Mmu.eg.db,
+            "Pan troglodytes" = org <- org.Pt.eg.db,
+            "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
+            "Sus scrofa" = org <- org.Ss.eg.db,
+            "Arabidopsis thaliana" = org <- org.At.tair.db)
+    }
     return(org)
   }
 }
@@ -329,6 +372,7 @@ org_code <- function(Species){
             "Monodelphis domestica" = org_code <- "mdo",
             "Ornithorhynchus anatinus" = org_code <- "oaa",
             "Pan troglodytes" = org_code <- "ptr",
+            "Heterocephalus glaber" = org_code <- "hgl",
             "Saccharomyces cerevisiae" = org_code <- "sce",
             "Sus scrofa" = org_code <- "ssc",
             "Arabidopsis thaliana" = org_code <- "ath")
@@ -594,7 +638,7 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
   }
 }
 
-data_3degcount2 <- function(data3, Species, org){
+data_3degcount2 <- function(data3, Species, Ortholog,org){
   if(is.null(data3)){
     return(NULL)
   }else{
@@ -606,21 +650,30 @@ data_3degcount2 <- function(data3, Species, org){
       if(str_detect(data4$Row.names[1], "ENS") || str_detect(data4$Row.names[1], "FBgn") || 
          str_detect(data4$Row.names[1], "^AT.G")){
         if(Species != "not selected"){
+          if(sum(is.element(no_orgDb, Species)) == 1){
+            gene_IDs <- Ortholog
+          }else{
           my.symbols <- data4$Row.names
           if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
           gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                           keytype = key,
                                           columns = c(key,"SYMBOL", "ENTREZID"))
+          }
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data4 <- merge(data4, gene_IDs, by="Row.names")
         }
       }else{
         if(Species != "not selected"){
+          if(sum(is.element(no_orgDb, Species)) == 1){
+            gene_IDs <- Ortholog
+            gene_IDs <- gene_IDs[,-1]
+          }else{
           my.symbols <- data4$Row.names
           gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                           keytype = "SYMBOL",
                                           columns = c("SYMBOL", "ENTREZID"))
+          }
           colnames(gene_IDs) <- c("Row.names", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data4 <- merge(data4, gene_IDs, by="Row.names")
@@ -1051,28 +1104,29 @@ enrich_for_table <- function(data, H_t2g, Gene_set){
     }
   }
 }
-GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
+GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene_list,Biomart_archive){
   if(Species != "not selected" || is.null(Gene_set) || is.null(org)){
       switch (Species,
               "Mus musculus" = species <- "Mus musculus",
               "Homo sapiens" = species <- "Homo sapiens",
               "Rattus norvegicus" = species <- "Rattus norvegicus",
-              "Xenopus tropicalis" = species <- "Xenopus tropicalis",
+              "Xenopus tropicalis" = species <- Ortholog,
               "Drosophila melanogaster" = species <- "Drosophila melanogaster",
               "Caenorhabditis elegans" = species <- "Caenorhabditis elegans",
-              "Anolis carolinensis" = species <- "Anolis carolinensis",
+              "Anolis carolinensis" = species <- Ortholog,
               "Bos taurus" = species <- "Bos taurus",
               "Canis lupus familiaris" = species <- "Canis lupus familiaris",
               "Danio rerio" = species <- "Danio rerio",
-              "Equus caballus" = species <- "Equus caballus",
-              "Felis catus" = species <- "Felis catus",
+              "Equus caballus" = species <- Ortholog,
+              "Felis catus" = species <- Ortholog,
               "Gallus gallus" = species <- "Gallus gallus",
               "Macaca mulatta" = species <- "Macaca mulatta",
-              "Monodelphis domestica" = species <- "Monodelphis domestica",
-              "Ornithorhynchus anatinus" = species <- "Ornithorhynchus anatinus",
+              "Monodelphis domestica" = species <- Ortholog,
+              "Ornithorhynchus anatinus" = species <- Ortholog,
               "Pan troglodytes" = species <- "Pan troglodytes",
               "Saccharomyces cerevisiae" = species <- "Saccharomyces cerevisiae",
-              "Sus scrofa" = species <- "Sus scrofa")
+              "Sus scrofa" = species <- "Sus scrofa",
+              "Heterocephalus glaber" = species <- Ortholog)
       if(Gene_set == "MSigDB Hallmark"){
         H_t2g <- msigdbr(species = species, category = "H") %>%
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
@@ -1092,12 +1146,12 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
       }
       if(Gene_set == "DoRothEA regulon (activator)"){
-        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (activator)")) %>%
+        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (activator)",Biomart_archive=Biomart_archive)) %>%
           dplyr::select(gs_name, entrez_gene, confidence)
         H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
       }
       if(Gene_set == "DoRothEA regulon (repressor)"){
-        H_t2g <- as_tibble(dorothea(species = Species,  type = "DoRothEA regulon (repressor)")) %>%
+        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (repressor)",Biomart_archive=Biomart_archive)) %>%
           dplyr::select(gs_name, entrez_gene, confidence)
         H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
       }
@@ -1184,6 +1238,7 @@ GeneList_for_enrichment <- function(Species, Gene_set, org, Custom_gene_list){
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_jak", replacement = "_JAK")
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_stat", replacement = "_STAT")
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="_nfkb", replacement = "_NFkB")
+      print(head(H_t2g))
       return(H_t2g)
   }else return(NULL)
 }
@@ -1213,7 +1268,6 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot"){
         t_test(value ~ sample) %>% 
         add_significance() %>% 
         add_xy_position(scales = "free", step.increase = 0.2)
-      print(stat.test)
     }
     if(statistical_test == "Wilcoxon test"){
       if(length(collist) >= 3){
@@ -1230,7 +1284,6 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot"){
         add_significance() %>% 
         add_xy_position(scales = "free", step.increase = 0.2)
       }
-      print(stat.test)
     }
     if(statistical_test == "Dunnet's test"){
       for (name2 in rowlist){
@@ -1328,22 +1381,32 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot"){
     return(df)
   }else return(p)
 }
-enrich_viewer_forMulti1 <- function(df, Species, org){
+enrich_viewer_forMulti1 <- function(df, Species, Ortholog, org){
   if(is.null(df) || Species == "not selected"){
     return(NULL)
   }else{
     my.symbols <- df$GeneID
     if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn") ||
        str_detect(df$GeneID[1], "^AT.G")){
+      if(sum(is.element(no_orgDb, Species)) == 1){
+        print(Ortholog)
+        gene_IDs <- Ortholog
+      }else{
       if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
       gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = key,
                                       columns = c(key,"SYMBOL", "ENTREZID"))
+      }
       colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
     }else{
+      if(sum(is.element(no_orgDb, Species)) == 1){
+        gene_IDs <- Ortholog
+        gene_IDs <- gene_IDs[,-1]
+      }else{
       gene_IDs <- AnnotationDbi::select(org, keys = my.symbols,
                                         keytype = "SYMBOL",
                                         columns = c("ENTREZID", "SYMBOL"))
+      }
       colnames(gene_IDs) <- c("GeneID","ENTREZID")
     }
     gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
@@ -1351,9 +1414,9 @@ enrich_viewer_forMulti1 <- function(df, Species, org){
     return(data)
   }
 }
-enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g){
+enrich_viewer_forMulti2 <- function(df, Species,Ortholog, Gene_set, org, org_code, H_t2g){
   if(!is.null(Gene_set)){
-    data3 <- enrich_viewer_forMulti1(df = df, Species = Species, org = org)
+    data3 <- enrich_viewer_forMulti1(df = df, Species = Species, org = org,Ortholog=Ortholog)
     if(is.null(data3)){
       return(NULL)
     }else{
@@ -1384,11 +1447,11 @@ enrich_viewer_forMulti2 <- function(df, Species, Gene_set, org, org_code, H_t2g)
       }
   } 
 }
-enrich_viewer_forMulti2_xenopus <- function(df, Species, Gene_set, org, org_code){
+enrich_viewer_forMulti2_xenopus <- function(df, Species,Ortholog, Gene_set, org, org_code){
   if(!is.null(Gene_set)){
   if(Gene_set == "KEGG" || Gene_set == "GO biological process" ||
      Gene_set == "GO cellular component" || Gene_set == "GO molecular function"){
-    data3 <- enrich_viewer_forMulti1(df = df, Species = Species, org = org)
+    data3 <- enrich_viewer_forMulti1(df = df, Species = Species,Ortholog = Ortholog, org = org)
     if(is.null(data3)){
       return(NULL)
     }else{
@@ -1452,6 +1515,7 @@ enrich_gene_list <- function(data, Gene_set, H_t2g, org,org_code=NULL){
         for (name in unique(data$Group)) {
           sum <- length(data$ENTREZID[data$Group == name])
           em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
+          print(em)
           if (length(as.data.frame(em)$ID) != 0) {
             if(length(colnames(as.data.frame(em))) == 9){
               cnet1 <- setReadable(em, org, 'ENTREZID')
@@ -1622,7 +1686,7 @@ getTargetSeq <- function(Species, upstream, downstream){
   return(x)
 }
 
-MotifAnalysis <- function(data, Species, x){
+MotifAnalysis <- function(data, Species, org,x){
   withProgress(message = "Motif analysis takes about 2 min per group",{
     library(TFBSTools)
     if(Species == "Mus musculus"){
@@ -1651,20 +1715,33 @@ MotifAnalysis <- function(data, Species, x){
     group.name <- paste(name, "\n(", length(my.symbols),")",sep = "")
     if(str_detect(my.symbols[1], "ENS") || str_detect(my.symbols[1], "FBgn") ||
        str_detect(my.symbols[1], "^AT.G")){
+      if(sum(is.element(no_orgDb, Species)) == 1){
+        gene_IDs <- org(Species)
+        gene_IDs <- gene_IDs[,-2]
+      }else{
       if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
-      gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
+      gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = key,
                                       columns = c("ENTREZID",key))
-      colnames(gene_IDs) <- c("gene_id","ENSEMBL")
+      }
+      colnames(gene_IDs) <- c("ENSEMBL","gene_id")
     }else{
-      gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
+      if(sum(is.element(no_orgDb, Species)) == 1){
+        gene_IDs <- org(Species)
+        gene_IDs <- gene_IDs[,-1]
+      }else{
+      gene_IDs <- AnnotationDbi::select(org, keys = my.symbols,
                                         keytype = "SYMBOL",
                                         columns = c("SYMBOL","ENTREZID"))
+      }
       colnames(gene_IDs) <- c("SYMBOL","gene_id")
     }
+    print(head(gene_IDs))
+    print(head(x))
     y <- subset(x, gene_id %in% gene_IDs$gene_id)
     if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
     seq <- getSeq(genome, y)
+    print(seq)
     se <- calcBinnedMotifEnrR(seqs = seq,
                               pwmL = pwms,
                               background = "genome",
@@ -1701,15 +1778,25 @@ MotifRegion <- function(data, target_motif, Species, x){
   my.symbols <- data$GeneID
   if(str_detect(my.symbols[1], "ENS") || str_detect(my.symbols[1], "FBgn") ||
      str_detect(my.symbols[1], "^AT.G")){
+    if(sum(is.element(no_orgDb, Species)) == 1){
+      gene_IDs <- org(Species)
+      gene_IDs <- data.frame(gene_id = gene_IDs$ENTREZID, ENSEMBL = gene_IDs$ENSEMBL)
+    }else{
     if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
     gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
                                     keytype = key,
                                     columns = c("ENTREZID",key))
+    }
     colnames(gene_IDs) <- c("gene_id","ENSEMBL")
   }else{
+    if(sum(is.element(no_orgDb, Species)) == 1){
+      gene_IDs <- org(Species)
+      gene_IDs <- gene_IDs[,-1]
+    }else{
     gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
                                       keytype = "SYMBOL",
                                       columns = c("SYMBOL","ENTREZID"))
+    }
     colnames(gene_IDs) <- c("SYMBOL","gene_id")
   }
   y <- subset(x, gene_id %in% gene_IDs$gene_id)
@@ -1817,3 +1904,30 @@ GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL){
   return(ht)
 }
 
+ensembl2symbol <- function(data,Species,Ortholog,detect,org, merge=TRUE, rowname = TRUE){
+  if(str_detect(detect, "ENS") || str_detect(detect, "FBgn") ||
+     str_detect(detect, "^AT.G")){
+    data <- as.data.frame(data)
+    if(sum(is.element(no_orgDb, Species)) == 1){
+      gene_IDs <- Ortholog[,-3]
+    }else{
+      my.symbols <- gsub("\\..*","", rownames(data))
+      if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+      gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+                                      keytype = key,
+                                      columns = c(key,"SYMBOL"))
+    }
+    colnames(gene_IDs) <- c("Row.names","SYMBOL")
+    data$Row.names <- gsub("\\..*","", rownames(data))
+    gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
+    if(merge == TRUE){
+      data2 <- merge(data, gene_IDs, by="Row.names")
+      rownames(data2) <- data2$Row.names
+      data <- data2[,-1]
+    }else {
+      if(rowname == TRUE) rownames(gene_IDs) <- gene_IDs$Row.names
+      data <- gene_IDs
+    }
+  }else return(data)
+  return(data) 
+}

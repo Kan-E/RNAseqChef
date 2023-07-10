@@ -7,13 +7,13 @@ shinyServer(function(input, output, session) {
     return(org(Species = input$Species,Ortholog = input$Ortholog))
   })
   ortholog1 <- reactive({
-    return(no_org_ID(count = d_row_count_matrix(),Species = input$Species,Ortholog = input$Ortholog,Biomart_archive=input$Biomart_archive))
+    return(no_org_ID(count = row_count_matrix(),Species = input$Species,Ortholog = input$Ortholog,Biomart_archive=input$Biomart_archive))
   })
   org_code1 <- reactive({
     return(org_code(Species = input$Species))
   })
   gene_type1 <- reactive({
-    return(gene_type(my.symbols=rownames(d_row_count_matrix()),org=org1(),Species=input$Species))
+    return(gene_type(my.symbols=rownames(row_count_matrix()),org=org1(),Species=input$Species))
   })
   
   row_count_matrix <- reactive({
@@ -2005,10 +2005,10 @@ shinyServer(function(input, output, session) {
     return(org(Species = input$Species6,Ortholog = input$Ortholog6))
   })
   ortholog6 <- reactive({
-    return(no_org_ID(count = multi_d_row_count_matrix(),Species = input$Species6,Ortholog = input$Ortholog6,Biomart_archive=input$Biomart_archive6))
+    return(no_org_ID(count = multi_row_count_matrix(),Species = input$Species6,Ortholog = input$Ortholog6,Biomart_archive=input$Biomart_archive6))
   })
   gene_type6 <- reactive({
-    return(gene_type(my.symbols=rownames(multi_d_row_count_matrix()),org=org6(),Species=input$Species6))
+    return(gene_type(my.symbols=rownames(multi_row_count_matrix()),org=org6(),Species=input$Species6))
   })
   org_code6 <- reactive({
     return(org_code(Species = input$Species6))
@@ -3827,10 +3827,10 @@ shinyServer(function(input, output, session) {
     return(org(Species = input$Species2,Ortholog = input$Ortholog2))
   })
   ortholog2 <- reactive({
-    return(no_org_ID(count = d_row_count_matrix2(),Species = input$Species2,Ortholog = input$Ortholog2,Biomart_archive=input$Biomart_archive2))
+    return(no_org_ID(count = row_count_matrix2(),Species = input$Species2,Ortholog = input$Ortholog2,Biomart_archive=input$Biomart_archive2))
   })
   gene_type2 <- reactive({
-    return(gene_type(my.symbols=rownames(d_row_count_matrix2()),org=org2(),Species=input$Species2))
+    return(gene_type(my.symbols=rownames(row_count_matrix2()),org=org2(),Species=input$Species2))
   })
   org_code2 <- reactive({
     return(org_code(Species = input$Species2))
@@ -4916,10 +4916,10 @@ shinyServer(function(input, output, session) {
     return(org(Species = input$Species3,Ortholog = input$Ortholog3))
   })
   ortholog3 <- reactive({
-    return(no_org_ID(count = d_norm_count_matrix(),Species = input$Species3,Ortholog = input$Ortholog3,Biomart_archive=input$Biomart_archive3))
+    return(no_org_ID(count = norm_count_input(),Species = input$Species3,Ortholog = input$Ortholog3,Biomart_archive=input$Biomart_archive3))
   })
   gene_type3 <- reactive({
-    return(gene_type(my.symbols=rownames(d_norm_count_matrix()),org=org3(),Species=input$Species3))
+    return(gene_type(my.symbols=rownames(norm_count_input()),org=org3(),Species=input$Species3))
   })
   org_code3 <- reactive({
     return(org_code(Species = input$Species3))

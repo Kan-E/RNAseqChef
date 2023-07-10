@@ -295,7 +295,7 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
           SYMBOL <- merge(genes_ensembl,gene_list,by="external_gene_name")
         }
         if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
-        if(dim(ENSEMBL)[1] == 0 && dim(SYMBOL)[1] == 0) validate("Cannot identify gene IDs. Please check dataset 'Species' and use 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
+        if(dim(ENSEMBL)[1] == 0 && dim(SYMBOL)[1] == 0) validate("Cannot identify gene IDs. Please check the 'Species' and use the 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
         if(type == "ENSEMBL"){
           attribute <- c("ensembl_gene_id")
           colname <- c("ENSEMBL","SYMBOL","ENTREZID")
@@ -1936,7 +1936,7 @@ gene_type <- function(my.symbols,org,Species){
                                        columns = c("SYMBOL", "ENTREZID")))
     if(class(ENSEMBL) == "try-error" && class(SYMBOL) != "try-error") {type <- "SYMBOL"
     }else if(class(ENSEMBL) != "try-error" && class(SYMBOL) == "try-error") {type <- "ENSEMBL"
-    }else if(class(ENSEMBL) == "try-error" && class(SYMBOL) == "try-error") {validate("Cannot identify gene IDs. Please check dataset 'Species' and use 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
+    }else if(class(ENSEMBL) == "try-error" && class(SYMBOL) == "try-error") {validate("Cannot identify gene IDs. Please check the 'Species' and use the 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
     }else{
       if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
     }

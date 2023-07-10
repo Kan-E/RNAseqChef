@@ -239,9 +239,9 @@ dorothea <- function(species, confidence = "recommend",type){
             "Sus scrofa" = set <- "sscrofa_gene_ensembl")
     convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
     human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
-    genes2 = getLDS(attributes = c("entrezgene_id","ensembl_gene_id"), filters = "entrezgene_id",
+    genes2 = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
                    values = genes ,mart = human,
-                 attributesL = c("entrezgene_id","ensembl_gene_id"),
+                 attributesL = c("entrezgene_id"),
                    martL = convert, uniqueRows=T)
     colnames(genes2) <- c("entrez_gene", "converted_entrez_gene")
     genes2 <- genes2 %>% distinct(converted_entrez_gene, .keep_all = T)

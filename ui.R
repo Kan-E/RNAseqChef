@@ -159,7 +159,17 @@ shinyUI(
                    input.Species != 'Macaca mulatta' && input.Species != 'Pan troglodytes' &&
                    input.Species != 'Saccharomyces cerevisiae' && input.Species != 'Sus scrofa' &&
                    input.Species != 'Xenopus laevis' && input.Species != 'Arabidopsis thaliana'"),
-                                      column(6, selectInput("Ortholog", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                      column(6, selectInput("Ortholog", 
+                                                            strong(
+                                                              span("Ortholog"),
+                                                              span(icon("info-circle"), id = "Ortholog_pair", 
+                                                                   options = list(template = popoverTempate))
+                                                            ),
+                                                            orgDb_list, selected = "Mus musculus"),
+                                             bsPopover("Ortholog_pair", "Ortholog for the pathway analysis of non-model organisms", 
+                                                       content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                                                       placement = "right",options = list(container = "body"))
+                                             ),
                                       column(12, selectInput("Biomart_archive", "Biomart host", ensembl_archive))
                      )
                    ),
@@ -426,7 +436,15 @@ shinyUI(
                    input.Species2 != 'Macaca mulatta' && input.Species2 != 'Pan troglodytes' &&
                    input.Species2 != 'Saccharomyces cerevisiae' && input.Species2 != 'Sus scrofa' &&
                    input.Species2 != 'Xenopus laevis' && input.Species2 != 'Arabidopsis thaliana'"),
-                                      column(6, selectInput("Ortholog2", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                      column(6, selectInput("Ortholog2", strong(
+                                        span("Ortholog"),
+                                        span(icon("info-circle"), id = "Ortholog_cond3", 
+                                             options = list(template = popoverTempate))
+                                      ), orgDb_list, selected = "Mus musculus"),
+                                      bsPopover("Ortholog_cond3", "Ortholog for the pathway analysis of non-model organisms", 
+                                                content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                                                placement = "right",options = list(container = "body"))
+                                      ),
                                       column(12, selectInput("Biomart_archive2", "Biomart host", ensembl_archive)))
                      ),
                    h4("Cut-off conditions:"),
@@ -681,7 +699,14 @@ shinyUI(
                    input.Species6 != 'Macaca mulatta' && input.Species6 != 'Pan troglodytes' &&
                    input.Species6 != 'Saccharomyces cerevisiae' && input.Species6 != 'Sus scrofa' &&
                    input.Species6 != 'Xenopus laevis' && input.Species6 != 'Arabidopsis thaliana'"),
-                                             column(6, selectInput("Ortholog6", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                             column(6, selectInput("Ortholog6", strong(
+                                               span("Ortholog"),
+                                               span(icon("info-circle"), id = "Ortholog_multi", 
+                                                    options = list(template = popoverTempate))
+                                             ), orgDb_list, selected = "Mus musculus"),
+                                             bsPopover("Ortholog_multi", "Ortholog for the pathway analysis of non-model organisms", 
+                                                       content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                                                       placement = "right",options = list(container = "body"))),
                                              column(12, selectInput("Biomart_archive6", "Biomart host", ensembl_archive)))
                             ),
                    fluidRow(
@@ -1022,7 +1047,14 @@ shinyUI(
                    input.Species7 != 'Macaca mulatta' && input.Species7 != 'Pan troglodytes' &&
                    input.Species7 != 'Saccharomyces cerevisiae' && input.Species7 != 'Sus scrofa' &&
                    input.Species7 != 'Xenopus laevis' && input.Species7 != 'Arabidopsis thaliana'"),
-                     column(6, selectInput("Ortholog7", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(6, selectInput("Ortholog7", strong(
+                       span("Ortholog"),
+                       span(icon("info-circle"), id = "Ortholog_venn", 
+                            options = list(template = popoverTempate))
+                     ), orgDb_list, selected = "Mus musculus"),
+                     bsPopover("Ortholog_venn", "Ortholog for the pathway analysis of non-model organisms", 
+                               content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                               placement = "right",options = list(container = "body"))),
                      column(12, selectInput("Biomart_archive7", "Biomart host", ensembl_archive)))
                    ),
                    fluidRow(
@@ -1188,7 +1220,14 @@ shinyUI(
                    input.Species3 != 'Macaca mulatta' && input.Species3 != 'Pan troglodytes' &&
                    input.Species3 != 'Saccharomyces cerevisiae' && input.Species3 != 'Sus scrofa' &&
                    input.Species3 != 'Xenopus laevis' && input.Species3 != 'Arabidopsis thaliana'"),
-                     column(6, selectInput("Ortholog3", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(6, selectInput("Ortholog3", strong(
+                       span("Ortholog"),
+                       span(icon("info-circle"), id = "Ortholog_norm", 
+                            options = list(template = popoverTempate))
+                     ), orgDb_list, selected = "Mus musculus"),
+                     bsPopover("Ortholog_norm", "Ortholog for the pathway analysis of non-model organisms", 
+                               content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                               placement = "right",options = list(container = "body"))),
                      column(12, selectInput("Biomart_archive3", "Biomart host", ensembl_archive)))
                      ),
                    h4("Filter option 1:"),
@@ -1404,7 +1443,14 @@ shinyUI(
                    input.Species4 != 'Macaca mulatta' && input.Species4 != 'Pan troglodytes' &&
                    input.Species4 != 'Saccharomyces cerevisiae' && input.Species4 != 'Sus scrofa' &&
                    input.Species4 != 'Xenopus laevis' && input.Species4 != 'Arabidopsis thaliana'"),
-                     column(6, selectInput("Ortholog4", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(6, selectInput("Ortholog4", strong(
+                       span("Ortholog"),
+                       span(icon("info-circle"), id = "Ortholog_enrich", 
+                            options = list(template = popoverTempate))
+                     ), orgDb_list, selected = "Mus musculus"),
+                     bsPopover("Ortholog_enrich", "Ortholog for the pathway analysis of non-model organisms", 
+                               content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                               placement = "right",options = list(container = "body"))),
                      column(12, selectInput("Biomart_archive4", "Biomart host", ensembl_archive)))
                      ),
                    sliderInput("enrich_showCategory", "Most significant pathways",
@@ -1555,7 +1601,14 @@ shinyUI(
                    input.Species5 != 'Macaca mulatta' && input.Species5 != 'Pan troglodytes' &&
                    input.Species5 != 'Saccharomyces cerevisiae' && input.Species5 != 'Sus scrofa' &&
                    input.Species5 != 'Xenopus laevis' && input.Species5 != 'Arabidopsis thaliana'"),
-                                                 column(6, selectInput("Ortholog5", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                                 column(6, selectInput("Ortholog5", strong(
+                                                   span("Ortholog"),
+                                                   span(icon("info-circle"), id = "Ortholog_volcano", 
+                                                        options = list(template = popoverTempate))
+                                                 ), orgDb_list, selected = "Mus musculus"),
+                                                 bsPopover("Ortholog_volcano", "Ortholog for the pathway analysis of non-model organisms", 
+                                                           content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                                                           placement = "right",options = list(container = "body"))),
                                 column(12, selectInput("Biomart_archive5", "Biomart host", ensembl_archive)))
                               ),
                               fluidRow(

@@ -82,7 +82,7 @@ COPY server.R /srv/shiny-server/RNAseqChef/
 COPY global.R /srv/shiny-server/RNAseqChef/
 COPY google-analytics.html /srv/shiny-server/RNAseqChef/
 COPY www /srv/shiny-server/RNAseqChef/www/
-COPY data/Recode.Rdata /srv/shiny-server/RNAseqChef/data/
+COPY data /srv/shiny-server/RNAseqChef/data/
 COPY Rmd /srv/shiny-server/RNAseqChef/Rmd/
 COPY navAppend.js /srv/shiny-server/RNAseqChef/
 COPY shiny-server.conf /etc/shiny-server/

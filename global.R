@@ -68,10 +68,13 @@ gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interact
                    "GO cellular component","GO molecular function", "Human phenotype ontology", 
                    "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
                    "Transcription factor targets", "miRNA target")
-species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Xenopus tropicalis",
-                  "Drosophila melanogaster", "Caenorhabditis elegans", "Anolis carolinensis","Bos taurus","Canis lupus familiaris",
-                  "Danio rerio","Equus caballus","Felis catus","Gallus gallus","Heterocephalus glaber","Macaca mulatta","Monodelphis domestica","Ornithorhynchus anatinus",
-                  "Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa","Xenopus laevis","Arabidopsis thaliana")
+biomart_data <- read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")
+no_orgDb<-c(biomart_data$Scientific_common_name)
+species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", 
+                  "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
+                  "Danio rerio","Gallus gallus","Macaca mulatta",
+                  "Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa","Xenopus laevis","Arabidopsis thaliana",no_orgDb)
+species_list_nonmodel <- no_orgDb
 read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
     return(NULL)
@@ -155,15 +158,14 @@ anno_rep_meta <- function(meta){
   return(meta)
 }
 
-gene_list_convert_for_enrichment <- function(data, Ortholog,org,Species){
+gene_list_convert_for_enrichment <- function(gene_type,data, Ortholog,org,Species){
     if(is.null(data) || Species == "not selected"){
       return(NULL)
     }else{
       df <- data.frame(GeneID = data[,1], Group = data[,2])
       df$GeneID <- gsub("\\..*","", df$GeneID)
       my.symbols <- df$GeneID
-      if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn") ||
-         str_detect(df$GeneID[1], "^AT.G")){
+      if(gene_type != "SYMBOL"){
         if(sum(is.element(no_orgDb, Species)) == 1){
           gene_IDs <- Ortholog
         }else{
@@ -190,7 +192,7 @@ gene_list_convert_for_enrichment <- function(data, Ortholog,org,Species){
       return(data)
     }
 }
-dorothea <- function(species, confidence = "recommend",type,Biomart_archive){
+dorothea <- function(species, confidence = "recommend",type){
   if(species == "Mus musculus"){
     net <- dorothea::dorothea_mm
     spe <- "Mus musculus"
@@ -235,8 +237,8 @@ dorothea <- function(species, confidence = "recommend",type,Biomart_archive){
             "Heterocephalus glaber" = set <- "hgfemale_gene_ensembl",
             "Saccharomyces cerevisiae" = set <-"scerevisiae_gene_ensembl", 
             "Sus scrofa" = set <- "sscrofa_gene_ensembl")
-    convert = useMart("ensembl", dataset = set, host=Biomart_archive)
-    human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host=Biomart_archive)
+    convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
+    human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
     genes2 = getLDS(attributes = c("entrezgene_id","ensembl_gene_id"), filters = "entrezgene_id",
                    values = genes ,mart = human,
                  attributesL = c("entrezgene_id","ensembl_gene_id"),
@@ -254,31 +256,20 @@ ensembl_archive <- c("https://dec2021.archive.ensembl.org",
                      "https://apr2022.archive.ensembl.org","https://jul2022.archive.ensembl.org",
                      "https://oct2022.archive.ensembl.org","https://feb2023.archive.ensembl.org",
                      "https://www.ensembl.org")
-no_orgDb <- c("Xenopus tropicalis","Anolis carolinensis","Equus caballus",
-              "Felis catus","Monodelphis domestica","Ornithorhynchus anatinus",
-              "Heterocephalus glaber")
+
+  c(read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")$Scientific_common_name)
 orgDb_list <- c("Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                 "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
                 "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa")
-no_org_ID <- function(Species,Ortholog,Biomart_archive){
+no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive){
   if(Species != "not selected"){
     if(!is.null(Ortholog)){
     if(sum(is.element(no_orgDb, Species)) == 1){
       withProgress(message = "preparing a gene annotation. It takes a few minutes.",{
-        db <- try(useMart("ensembl", host=Biomart_archive))
-        if(length(class(db)) == 1){
-          if(class(db) == "try-error") validate("biomart has encountered an unexpected server error.
-                                                \nPlease try the other archives.")
-        }
-        if(Species == "Xenopus tropicalis") ensembl <- "xtropicalis_gene_ensembl"
-        if(Species == "Anolis carolinensis") ensembl <- "acarolinensis_gene_ensembl"
-        if(Species == "Equus caballus") ensembl <- "ecaballus_gene_ensembl"
-        if(Species == "Felis catus") ensembl <- "fcatus_gene_ensembl"
-        if(Species == "Monodelphis domestica") ensembl <- "mdomestica_gene_ensembl"
-        if(Species == "Ornithorhynchus anatinus") ensembl <- "oanatinus_gene_ensembl"
-        if(Species == "Heterocephalus glaber") ensembl <- "hgfemale_gene_ensembl"
+        db <- useMart("ensembl", host=Biomart_archive)
+        ensembl <- dplyr::filter(biomart_data, Scientific_common_name == Species)$dataset
         use <- useDataset(ensembl, mart = db)
-        genes <- getBM(attributes = c("ensembl_gene_id"), mart = use)
+        genes_ensembl <- getBM(attributes = c("ensembl_gene_id","external_gene_name"), mart = use)
         if(Ortholog == "Mus musculus") ortho <- "mmusculus_gene_ensembl"
         if(Ortholog == "Homo sapiens") ortho <- "hsapiens_gene_ensembl"
         if(Ortholog == "Rattus norvegicus") ortho <- "rnorvegicus_gene_ensembl"
@@ -292,19 +283,43 @@ no_org_ID <- function(Species,Ortholog,Biomart_archive){
         if(Ortholog == "Pan troglodytes") ortho <- "ptroglodytes_gene_ensembl"
         if(Ortholog == "Saccharomyces cerevisiae") ortho <- "scerevisiae_gene_ensembl"
         if(Ortholog == "Sus scrofa") ortho <- "sscrofa_gene_ensembl"
-        ortho_mart = useMart("ensembl", dataset = ortho, host=Biomart_archive)
-        if(length(class(ortho_mart)) == 1){
-          if(class(ortho_mart) == "try-error") validate("biomart has encountered an unexpected server error.
-                                                \nPlease try the other archives.")
+        if(is.null(gene_list)){
+        count$ensembl_gene_id <- rownames(count)
+        count$external_gene_name <- rownames(count)
+        ENSEMBL <- merge(genes_ensembl,count,by="ensembl_gene_id")
+        SYMBOL <- merge(genes_ensembl,count,by="external_gene_name")
+        }else{
+          gene_list$ensembl_gene_id <- gene_list[,1]
+          gene_list$external_gene_name <- gene_list[,1]
+          ENSEMBL <- merge(genes_ensembl,gene_list,by="ensembl_gene_id")
+          SYMBOL <- merge(genes_ensembl,gene_list,by="external_gene_name")
         }
-        genes2 = getLDS(attributes = c("ensembl_gene_id"),
+        if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
+        if(dim(ENSEMBL)[1] == 0 && dim(SYMBOL)[1] == 0) validate("Cannot identify gene IDs. Please check dataset 'Species' and use 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
+        if(type == "ENSEMBL"){
+          attribute <- c("ensembl_gene_id")
+          colname <- c("ENSEMBL","SYMBOL","ENTREZID")
+          colname1<- c("ENSEMBL")
+          genes <- getBM(attributes = c("ensembl_gene_id"), mart = use)
+        }else{
+          attribute <- c("ensembl_gene_id","external_gene_name")
+          colname <- c("Original_symbol","SYMBOL","ENTREZID")
+          colname1<- c("Original_symbol")
+          genes <- getBM(attributes = c("external_gene_name"), mart = use)
+        }
+        ortho_mart = useMart("ensembl", dataset = ortho, host=Biomart_archive)
+        genes2 = try(getLDS(attributes = c("ensembl_gene_id"),
                         values = genes ,mart = use,
                         attributesL = c("external_gene_name","entrezgene_id"),
-                        martL = ortho_mart, uniqueRows=T)
-        colnames(genes) <- c("ENSEMBL")
-        colnames(genes2) <- c("ENSEMBL","SYMBOL","ENTREZID")
-        gene3<-merge(genes,genes2,by="ENSEMBL",all=T)
-        org <- gene3 %>% distinct(ENSEMBL, .keep_all = T)
+                        martL = ortho_mart, uniqueRows=T))
+        if(length(class(genes2)) == 1){
+          if(class(genes2) == "try-error") validate("biomart has encountered an unexpected server error.
+                                                \nPlease try the other 'biomart host'.")
+        }
+        colnames(genes) <- colname1
+        colnames(genes2) <- colname
+        gene3<-merge(genes,genes2,by=colname1,all=T)
+        if(type == "ENSEMBL") org <- gene3 %>% distinct(ENSEMBL, .keep_all = T) else org <- gene3 %>% distinct(Original_symbol, .keep_all = T)
       })
     }
     return(org)
@@ -335,7 +350,6 @@ org <- function(Species, Ortholog=NULL){
             "Mus musculus" = org <- org.Mm.eg.db,
             "Homo sapiens" = org <- org.Hs.eg.db,
             "Rattus norvegicus" = org <- org.Rn.eg.db,
-            "Xenopus laevis" = org <- org.Xl.eg.db,
             "Drosophila melanogaster" = org <- org.Dm.eg.db,
             "Caenorhabditis elegans" = org <- org.Ce.eg.db,
             "Bos taurus" = org <- org.Bt.eg.db,
@@ -528,7 +542,7 @@ pdfSize_for_GOI <- paste(strong("Heatmap:"),"height = 10, width = 7 <br>",
                          "Gene number = 82 ~ 200,","height = 22.5, width = 22.5 <br>",
                          "Gene number > 200,", "height = 30, width = 30 <br>")
 
-data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, basemean,result_list=NULL){
+data_3degcount1 <- function(gene_type,data,result_Condm, result_FDR, specific, fc, fdr, basemean,result_list=NULL){
   if(is.null(data)){
     return(NULL)
   }else{
@@ -542,8 +556,7 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
     Cond_2 <- vec[2]
     Cond_3 <- vec[3]
     collist <- unique(collist)
-    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
-       str_detect(rownames(data)[1], "^AT.G")){
+    if(gene_type != "SYMBOL"){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
@@ -638,7 +651,7 @@ data_3degcount1 <- function(data,result_Condm, result_FDR, specific, fc, fdr, ba
   }
 }
 
-data_3degcount2 <- function(data3, Species, Ortholog,org){
+data_3degcount2 <- function(gene_type,data3, Species, Ortholog,org){
   if(is.null(data3)){
     return(NULL)
   }else{
@@ -647,8 +660,7 @@ data_3degcount2 <- function(data3, Species, Ortholog,org){
       return(data4)
     } else {
       data4 <- dplyr::filter(data3, sig != "NS")
-      if(str_detect(data4$Row.names[1], "ENS") || str_detect(data4$Row.names[1], "FBgn") || 
-         str_detect(data4$Row.names[1], "^AT.G")){
+      if(gene_type != "SYMBOL"){
         if(Species != "not selected"){
           if(sum(is.element(no_orgDb, Species)) == 1){
             gene_IDs <- Ortholog
@@ -683,7 +695,7 @@ data_3degcount2 <- function(data3, Species, Ortholog,org){
     }
   }
 }
-cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific, 
+cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, specific, 
                                fc, fdr, basemean, y_axis=NULL, x_axis=NULL,
                                GOI=NULL, heatmap = TRUE, Species){
   if(is.null(data)){
@@ -699,8 +711,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     Cond_2 <- vec[2]
     Cond_3 <- vec[3]
     collist <- unique(collist)
-    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
-       str_detect(rownames(data)[1], "^AT.G")){
+    if(gene_type != "SYMBOL"){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
@@ -755,8 +766,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
       new.levels <- c("NS")
       col = "darkgray"}
     data3$sig <- factor(data3$sig, labels = new.levels)
-    if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn") ||
-       str_detect(data3$Row.names[1], "^AT.G")){
+    if(gene_type != "SYMBOL"){
       if(Species != "not selected"){
         data3 <- merge(data3, data, by="Row.names")
       }
@@ -793,8 +803,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     }
     if (heatmap==TRUE) {
       if(!is.null(labs_data)) {
-        if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn") ||
-           str_detect(data3$Row.names[1], "^AT.G")){
+        if(gene_type != "SYMBOL"){
           if(Species != "not selected"){
             p <- p + ggrepel::geom_text_repel(data = labs_data2, mapping = aes(label = Unique_ID),
                                               box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), 
@@ -819,8 +828,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     }
     if(!is.null(GOI)) {
       for(name in GOI){
-        if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn") ||
-           str_detect(data3$Row.names[1], "^AT.G")){
+        if(gene_type != "SYMBOL"){
           if(Species != "not selected"){
             data3$color[data3$Unique_ID == name] <- "GOI"
           }else{
@@ -830,8 +838,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
           data3$color[data3$Row.names == name] <- "GOI"
         }
       }
-      if(str_detect(data3$Row.names[1], "ENS") || str_detect(data3$Row.names[1], "FBgn") ||
-         str_detect(data3$Row.names[1], "^AT.G")){
+      if(gene_type != "SYMBOL"){
         if(Species != "not selected"){
           p <- p + geom_point(data=dplyr::filter(data3, color == "GOI"),color="green", size=1)
           p <- p + ggrepel::geom_label_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Unique_ID),alpha = 0.6,label.size = NA, 
@@ -867,7 +874,7 @@ cond3_scatter_plot <- function(data, data4, result_Condm, result_FDR, specific,
     return(p)
   }
 }
-cond3_scatter_range <- function(data, data4, result_Condm, result_FDR, specific, 
+cond3_scatter_range <- function(gene_type,data, data4, result_Condm, result_FDR, specific, 
                                 fc, fdr, basemean){
   if(is.null(data)){
     return(NULL)
@@ -882,8 +889,7 @@ cond3_scatter_range <- function(data, data4, result_Condm, result_FDR, specific,
     Cond_2 <- vec[2]
     Cond_3 <- vec[3]
     collist <- unique(collist)
-    if(str_detect(rownames(data)[1], "ENS") || str_detect(rownames(data)[1], "FBgn") ||
-       str_detect(rownames(data)[1], "^AT.G")){
+    if(gene_type != "SYMBOL"){
       if(length(grep("SYMBOL", colnames(data))) != 0){
         data <- data[, - which(colnames(data) == "SYMBOL")]
       }
@@ -1106,27 +1112,7 @@ enrich_for_table <- function(data, H_t2g, Gene_set){
 }
 GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene_list,Biomart_archive){
   if(Species != "not selected" || is.null(Gene_set) || is.null(org)){
-      switch (Species,
-              "Mus musculus" = species <- "Mus musculus",
-              "Homo sapiens" = species <- "Homo sapiens",
-              "Rattus norvegicus" = species <- "Rattus norvegicus",
-              "Xenopus tropicalis" = species <- Ortholog,
-              "Drosophila melanogaster" = species <- "Drosophila melanogaster",
-              "Caenorhabditis elegans" = species <- "Caenorhabditis elegans",
-              "Anolis carolinensis" = species <- Ortholog,
-              "Bos taurus" = species <- "Bos taurus",
-              "Canis lupus familiaris" = species <- "Canis lupus familiaris",
-              "Danio rerio" = species <- "Danio rerio",
-              "Equus caballus" = species <- Ortholog,
-              "Felis catus" = species <- Ortholog,
-              "Gallus gallus" = species <- "Gallus gallus",
-              "Macaca mulatta" = species <- "Macaca mulatta",
-              "Monodelphis domestica" = species <- Ortholog,
-              "Ornithorhynchus anatinus" = species <- Ortholog,
-              "Pan troglodytes" = species <- "Pan troglodytes",
-              "Saccharomyces cerevisiae" = species <- "Saccharomyces cerevisiae",
-              "Sus scrofa" = species <- "Sus scrofa",
-              "Heterocephalus glaber" = species <- Ortholog)
+    if(Species %in% orgDb_list == TRUE) species <- Species else species <- Ortholog
       if(Gene_set == "MSigDB Hallmark"){
         H_t2g <- msigdbr(species = species, category = "H") %>%
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
@@ -1146,12 +1132,12 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
       }
       if(Gene_set == "DoRothEA regulon (activator)"){
-        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (activator)",Biomart_archive=Biomart_archive)) %>%
+        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (activator)")) %>%
           dplyr::select(gs_name, entrez_gene, confidence)
         H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
       }
       if(Gene_set == "DoRothEA regulon (repressor)"){
-        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (repressor)",Biomart_archive=Biomart_archive)) %>%
+        H_t2g <- as_tibble(dorothea(species = species, type = "DoRothEA regulon (repressor)")) %>%
           dplyr::select(gs_name, entrez_gene, confidence)
         H_t2g$entrez_gene <- as.integer(H_t2g$entrez_gene)
       }
@@ -1381,13 +1367,12 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot"){
     return(df)
   }else return(p)
 }
-enrich_viewer_forMulti1 <- function(df, Species, Ortholog, org){
+enrich_viewer_forMulti1 <- function(gene_type,df, Species, Ortholog, org){
   if(is.null(df) || Species == "not selected"){
     return(NULL)
   }else{
     my.symbols <- df$GeneID
-    if(str_detect(df$GeneID[1], "ENS") || str_detect(df$GeneID[1], "FBgn") ||
-       str_detect(df$GeneID[1], "^AT.G")){
+    if(gene_type != "SYMBOL"){
       if(sum(is.element(no_orgDb, Species)) == 1){
         print(Ortholog)
         gene_IDs <- Ortholog
@@ -1414,9 +1399,9 @@ enrich_viewer_forMulti1 <- function(df, Species, Ortholog, org){
     return(data)
   }
 }
-enrich_viewer_forMulti2 <- function(df, Species,Ortholog, Gene_set, org, org_code, H_t2g){
+enrich_viewer_forMulti2 <- function(gene_type,df, Species,Ortholog, Gene_set, org, org_code, H_t2g){
   if(!is.null(Gene_set)){
-    data3 <- enrich_viewer_forMulti1(df = df, Species = Species, org = org,Ortholog=Ortholog)
+    data3 <- enrich_viewer_forMulti1(gene_type=gene_type,df = df, Species = Species, org = org,Ortholog=Ortholog)
     if(is.null(data3)){
       return(NULL)
     }else{
@@ -1904,19 +1889,25 @@ GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL){
   return(ht)
 }
 
-ensembl2symbol <- function(data,Species,Ortholog,detect,org, merge=TRUE, rowname = TRUE){
-  if(str_detect(detect, "ENS") || str_detect(detect, "FBgn") ||
-     str_detect(detect, "^AT.G")){
-    data <- as.data.frame(data)
-    if(sum(is.element(no_orgDb, Species)) == 1){
-      gene_IDs <- Ortholog[,-3]
-    }else{
+ensembl2symbol <- function(data,Species,Ortholog,gene_type,org, merge=TRUE, rowname = TRUE){
+  if(Species != "not selected"){
+  if(gene_type != "SYMBOL"){
+  data <- as.data.frame(data)
+  if(sum(is.element(no_orgDb, Species)) == 1){
+    gene_IDs <- try(Ortholog[,-3])
+    if(length(class(gene_IDs)) == 1){
+      if(class(gene_IDs) == "try-error") validate("biomart has encountered an unexpected server error.
+                                                \nPlease try the other 'biomart host'.")
+    }
+  }else{
+    if(gene_type == "ENSEMBL"){
       my.symbols <- gsub("\\..*","", rownames(data))
       if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
       gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = key,
                                       columns = c(key,"SYMBOL"))
     }
+  }
     colnames(gene_IDs) <- c("Row.names","SYMBOL")
     data$Row.names <- gsub("\\..*","", rownames(data))
     gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -1928,6 +1919,29 @@ ensembl2symbol <- function(data,Species,Ortholog,detect,org, merge=TRUE, rowname
       if(rowname == TRUE) rownames(gene_IDs) <- gene_IDs$Row.names
       data <- gene_IDs
     }
-  }else return(data)
-  return(data) 
+    return(data) 
+  }
+  }
+  return(data)
+  }
+
+gene_type <- function(my.symbols,org,Species){
+  if(Species != "not selected"){
+    if(sum(is.element(no_orgDb, Species)) != 1){
+    ENSEMBL<-try(AnnotationDbi::select(org,keys = my.symbols,
+                                       keytype = "ENSEMBL",
+                                       columns = c("ENSEMBL", "ENTREZID")))
+    SYMBOL <-try(AnnotationDbi::select(org,keys = my.symbols,
+                                       keytype = "SYMBOL",
+                                       columns = c("SYMBOL", "ENTREZID")))
+    if(class(ENSEMBL) == "try-error" && class(SYMBOL) != "try-error") {type <- "SYMBOL"
+    }else if(class(ENSEMBL) != "try-error" && class(SYMBOL) == "try-error") {type <- "ENSEMBL"
+    }else if(class(ENSEMBL) == "try-error" && class(SYMBOL) == "try-error") {validate("Cannot identify gene IDs. Please check dataset 'Species' and use 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
+    }else{
+      if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
+    }
+    }else type <- "non-model organism"
+  }else type <- "not selected"
+  return(type)
 }
+

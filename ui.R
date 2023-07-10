@@ -43,12 +43,13 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.0.7, 2023/7/6)"),
+                        h4("Current version (v1.0.7, 2023/7/10)"),
+                        "Add new functions for non-model organisms.",br(),
                         "Add new functions to the '3 conditions DEG' and 'Normalized count analysis'.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press.", 
-                        a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),),
+                        a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810")),
                  column(12,br(),
                         column(6,br(),
                                h4(strong("Pair-wise DEG")),
@@ -150,17 +151,18 @@ shinyUI(
                    conditionalPanel(condition="input.DEG_method=='edgeR'"),
                    fluidRow(
                      column(6, selectInput("Species", "Species", species_list, selected = "not selected")),
-                     column(6, conditionalPanel(condition=c("input.Species == 'Xenopus tropicalis' || 
-                   input.Species == 'Anolis carolinensis' || input.Species == 'Equus caballus' ||
-                   input.Species == 'Felis catus' || input.Species == 'Monodelphis domestica' || 
-                   input.Species == 'Ornithorhynchus anatinus' || input.Species == 'Heterocephalus glaber'"),
-                                                selectInput("Ortholog", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                     column(12, conditionalPanel(condition=c("input.Species == 'Xenopus tropicalis' || 
-                   input.Species == 'Anolis carolinensis' || input.Species == 'Equus caballus' ||
-                   input.Species == 'Felis catus' || input.Species == 'Monodelphis domestica' || 
-                   input.Species == 'Ornithorhynchus anatinus' || input.Species == 'Heterocephalus glaber'"),
-                                                selectInput("Biomart_archive", "Biomart host", ensembl_archive)))
-                     ),
+                     conditionalPanel(condition=c("input.Species != 'not selected' && input.Species != 'Homo sapiens' &&
+                   input.Species != 'Mus musculus' && input.Species != 'Rattus norvegicus' &&
+                   input.Species != 'Drosophila melanogaster' && input.Species != 'Caenorhabditis elegans' &&
+                   input.Species != 'Bos taurus' && input.Species != 'Canis lupus familiaris' &&
+                   input.Species != 'Danio rerio' && input.Species != 'Gallus gallus' &&
+                   input.Species != 'Macaca mulatta' && input.Species != 'Pan troglodytes' &&
+                   input.Species != 'Saccharomyces cerevisiae' && input.Species != 'Sus scrofa' &&
+                   input.Species != 'Xenopus laevis' && input.Species != 'Arabidopsis thaliana'"),
+                                      column(6, selectInput("Ortholog", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                      column(12, selectInput("Biomart_archive", "Biomart host", ensembl_archive))
+                     )
+                   ),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -416,16 +418,16 @@ shinyUI(
                    ),
                    fluidRow(
                      column(6, selectInput("Species2", "Species", species_list, selected = "not selected")),
-                     column(6, conditionalPanel(condition=c("input.Species2 == 'Xenopus tropicalis' || 
-                   input.Species2 == 'Anolis carolinensis' || input.Species2 == 'Equus caballus' ||
-                   input.Species2 == 'Felis catus' || input.Species2 == 'Monodelphis domestica' || 
-                   input.Species2 == 'Ornithorhynchus anatinus' || input.Species2 == 'Heterocephalus glaber'"),
-                                                selectInput("Ortholog2", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                     column(12, conditionalPanel(condition=c("input.Species2 == 'Xenopus tropicalis' || 
-                   input.Species2 == 'Anolis carolinensis' || input.Species2 == 'Equus caballus' ||
-                   input.Species2 == 'Felis catus' || input.Species2 == 'Monodelphis domestica' || 
-                   input.Species2 == 'Ornithorhynchus anatinus' || input.Species2 == 'Heterocephalus glaber'"),
-                                                selectInput("Biomart_archive2", "Biomart host", ensembl_archive)))
+                     conditionalPanel(condition=c("input.Species2 != 'not selected' && input.Species2 != 'Homo sapiens' &&
+                   input.Species2 != 'Mus musculus' && input.Species2 != 'Rattus norvegicus' &&
+                   input.Species2 != 'Drosophila melanogaster' && input.Species2 != 'Caenorhabditis elegans' &&
+                   input.Species2 != 'Bos taurus' && input.Species2 != 'Canis lupus familiaris' &&
+                   input.Species2 != 'Danio rerio' && input.Species2 != 'Gallus gallus' &&
+                   input.Species2 != 'Macaca mulatta' && input.Species2 != 'Pan troglodytes' &&
+                   input.Species2 != 'Saccharomyces cerevisiae' && input.Species2 != 'Sus scrofa' &&
+                   input.Species2 != 'Xenopus laevis' && input.Species2 != 'Arabidopsis thaliana'"),
+                                      column(6, selectInput("Ortholog2", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                      column(12, selectInput("Biomart_archive2", "Biomart host", ensembl_archive)))
                      ),
                    h4("Cut-off conditions:"),
                    fluidRow(
@@ -669,19 +671,22 @@ shinyUI(
                                                             img(src="input_format_multi.png", width = 400,height = 400)),
                                               placement = "right",options = list(container = "body")),
                    ),
-                   fluidRow(column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")),
+                   fluidRow(
                             column(6, selectInput("Species6", "Species", species_list, selected = "not selected")),
-                            column(6, conditionalPanel(condition=c("input.Species6 == 'Xenopus tropicalis' || 
-                   input.Species6 == 'Anolis carolinensis' || input.Species6 == 'Equus caballus' ||
-                   input.Species6 == 'Felis catus' || input.Species6 == 'Monodelphis domestica' || 
-                   input.Species6 == 'Ornithorhynchus anatinus' || input.Species6 == 'Heterocephalus glaber'"),
-                                                       selectInput("Ortholog6", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                            column(12, conditionalPanel(condition=c("input.Species6 == 'Xenopus tropicalis' || 
-                   input.Species6 == 'Anolis carolinensis' || input.Species6 == 'Equus caballus' ||
-                   input.Species6 == 'Felis catus' || input.Species6 == 'Monodelphis domestica' || 
-                   input.Species6 == 'Ornithorhynchus anatinus' || input.Species6 == 'Heterocephalus glaber'"),
-                                                        selectInput("Biomart_archive6", "Biomart host", ensembl_archive)))
+                            conditionalPanel(condition=c("input.Species6 != 'not selected' && input.Species6 != 'Homo sapiens' &&
+                   input.Species6 != 'Mus musculus' && input.Species6 != 'Rattus norvegicus' &&
+                   input.Species6 != 'Drosophila melanogaster' && input.Species6 != 'Caenorhabditis elegans' &&
+                   input.Species6 != 'Bos taurus' && input.Species6 != 'Canis lupus familiaris' &&
+                   input.Species6 != 'Danio rerio' && input.Species6 != 'Gallus gallus' &&
+                   input.Species6 != 'Macaca mulatta' && input.Species6 != 'Pan troglodytes' &&
+                   input.Species6 != 'Saccharomyces cerevisiae' && input.Species6 != 'Sus scrofa' &&
+                   input.Species6 != 'Xenopus laevis' && input.Species6 != 'Arabidopsis thaliana'"),
+                                             column(6, selectInput("Ortholog6", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                             column(12, selectInput("Biomart_archive6", "Biomart host", ensembl_archive)))
                             ),
+                   fluidRow(
+                     column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH"))
+                   ),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc6", "Fold Change", min   = 0, max   = NA, value = 1.5)),
@@ -1009,25 +1014,26 @@ shinyUI(
                              placement = "right",options = list(container = "body")),
                    fluidRow(
                      column(6, selectInput("Species7", "Species", species_list, selected = "not selected")),
-                     column(6, conditionalPanel(condition=c("input.Species7 == 'Xenopus tropicalis' || 
-                   input.Species7 == 'Anolis carolinensis' || input.Species7 == 'Equus caballus' ||
-                   input.Species7 == 'Felis catus' || input.Species7 == 'Monodelphis domestica' || 
-                   input.Species7 == 'Ornithorhynchus anatinus' || input.Species7 == 'Heterocephalus glaber'"),
-                                                selectInput("Ortholog7", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                     column(12, conditionalPanel(condition=c("input.Species7 == 'Xenopus tropicalis' || 
-                   input.Species7 == 'Anolis carolinensis' || input.Species7 == 'Equus caballus' ||
-                   input.Species7 == 'Felis catus' || input.Species7 == 'Monodelphis domestica' || 
-                   input.Species7 == 'Ornithorhynchus anatinus' || input.Species7 == 'Heterocephalus glaber'"),
-                                                selectInput("Biomart_archive7", "Biomart host", ensembl_archive))),
-                     column(6, selectInput(
-                       inputId = "pre_zscoring",
-                       strong(
-                         span("Option: Pre-zscoring"),
-                         span(icon("info-circle"), id = "icon_venn3", 
-                              options = list(template = popoverTempate))
-                       ),
-                       multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))
+                     conditionalPanel(condition=c("input.Species7 != 'not selected' && input.Species6 != 'Homo sapiens' &&
+                   input.Species7 != 'Mus musculus' && input.Species7 != 'Rattus norvegicus' &&
+                   input.Species7 != 'Drosophila melanogaster' && input.Species7 != 'Caenorhabditis elegans' &&
+                   input.Species7 != 'Bos taurus' && input.Species7 != 'Canis lupus familiaris' &&
+                   input.Species7 != 'Danio rerio' && input.Species7 != 'Gallus gallus' &&
+                   input.Species7 != 'Macaca mulatta' && input.Species7 != 'Pan troglodytes' &&
+                   input.Species7 != 'Saccharomyces cerevisiae' && input.Species7 != 'Sus scrofa' &&
+                   input.Species7 != 'Xenopus laevis' && input.Species7 != 'Arabidopsis thaliana'"),
+                     column(6, selectInput("Ortholog7", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(12, selectInput("Biomart_archive7", "Biomart host", ensembl_archive)))
                    ),
+                   fluidRow(
+                   column(6, selectInput(
+                     inputId = "pre_zscoring",
+                     strong(
+                       span("Option: Pre-zscoring"),
+                       span(icon("info-circle"), id = "icon_venn3", 
+                            options = list(template = popoverTempate))
+                     ),
+                     multiple = FALSE,choices = c("TRUE", "FALSE"), selected = "TRUE"))),
                    bsPopover("icon_venn3", "Option: Pre-zscoring:", 
                              content=paste("If True, each count data is z-scored before integrating multiple count data.<br><br>",
                                            img(src="pre-zscoring.png", width = 450,height = 200)), 
@@ -1174,16 +1180,16 @@ shinyUI(
                    ),
                    fluidRow(
                      column(6, selectInput("Species3", "Species", species_list, selected = "not selected")),
-                     column(6, conditionalPanel(condition=c("input.Species3 == 'Xenopus tropicalis' || 
-                   input.Species3 == 'Anolis carolinensis' || input.Species3 == 'Equus caballus' ||
-                   input.Species3 == 'Felis catus' || input.Species3 == 'Monodelphis domestica' || 
-                   input.Species3 == 'Ornithorhynchus anatinus' || input.Species3 == 'Heterocephalus glaber'"),
-                                                selectInput("Ortholog3", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                     column(12, conditionalPanel(condition=c("input.Species3 == 'Xenopus tropicalis' || 
-                   input.Species3 == 'Anolis carolinensis' || input.Species3 == 'Equus caballus' ||
-                   input.Species3 == 'Felis catus' || input.Species3 == 'Monodelphis domestica' || 
-                   input.Species3 == 'Ornithorhynchus anatinus' || input.Species3 == 'Heterocephalus glaber'"),
-                                                selectInput("Biomart_archive3", "Biomart host", ensembl_archive)))
+                     conditionalPanel(condition=c("input.Species3 != 'not selected' && input.Species3 != 'Homo sapiens' &&
+                   input.Species3 != 'Mus musculus' && input.Species3 != 'Rattus norvegicus' &&
+                   input.Species3 != 'Drosophila melanogaster' && input.Species3 != 'Caenorhabditis elegans' &&
+                   input.Species3 != 'Bos taurus' && input.Species3 != 'Canis lupus familiaris' &&
+                   input.Species3 != 'Danio rerio' && input.Species3 != 'Gallus gallus' &&
+                   input.Species3 != 'Macaca mulatta' && input.Species3 != 'Pan troglodytes' &&
+                   input.Species3 != 'Saccharomyces cerevisiae' && input.Species3 != 'Sus scrofa' &&
+                   input.Species3 != 'Xenopus laevis' && input.Species3 != 'Arabidopsis thaliana'"),
+                     column(6, selectInput("Ortholog3", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(12, selectInput("Biomart_archive3", "Biomart host", ensembl_archive)))
                      ),
                    h4("Filter option 1:"),
                    fileInput("file10",
@@ -1390,16 +1396,16 @@ shinyUI(
                              placement = "right",options = list(container = "body")),
                    fluidRow(
                      column(6, selectInput("Species4", "Species", species_list, selected = "not selected")),
-                     column(6, conditionalPanel(condition=c("input.Species4 == 'Xenopus tropicalis' || 
-                   input.Species4 == 'Anolis carolinensis' || input.Species4 == 'Equus caballus' ||
-                   input.Species4 == 'Felis catus' || input.Species4 == 'Monodelphis domestica' || 
-                   input.Species4 == 'Ornithorhynchus anatinus' || input.Species4 == 'Heterocephalus glaber'"),
-                                                selectInput("Ortholog4", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                     column(12, conditionalPanel(condition=c("input.Species4 == 'Xenopus tropicalis' || 
-                   input.Species4 == 'Anolis carolinensis' || input.Species4 == 'Equus caballus' ||
-                   input.Species4 == 'Felis catus' || input.Species4 == 'Monodelphis domestica' || 
-                   input.Species4 == 'Ornithorhynchus anatinus' || input.Species4 == 'Heterocephalus glaber'"),
-                                                selectInput("Biomart_archive4", "Biomart host", ensembl_archive)))
+                     conditionalPanel(condition=c("input.Species4 != 'not selected' && input.Species4 != 'Homo sapiens' &&
+                   input.Species4 != 'Mus musculus' && input.Species4 != 'Rattus norvegicus' &&
+                   input.Species4 != 'Drosophila melanogaster' && input.Species4 != 'Caenorhabditis elegans' &&
+                   input.Species4 != 'Bos taurus' && input.Species4 != 'Canis lupus familiaris' &&
+                   input.Species4 != 'Danio rerio' && input.Species4 != 'Gallus gallus' &&
+                   input.Species4 != 'Macaca mulatta' && input.Species4 != 'Pan troglodytes' &&
+                   input.Species4 != 'Saccharomyces cerevisiae' && input.Species4 != 'Sus scrofa' &&
+                   input.Species4 != 'Xenopus laevis' && input.Species4 != 'Arabidopsis thaliana'"),
+                     column(6, selectInput("Ortholog4", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                     column(12, selectInput("Biomart_archive4", "Biomart host", ensembl_archive)))
                      ),
                    sliderInput("enrich_showCategory", "Most significant pathways",
                               min = 1, max = 20, value = 5,step = 1),
@@ -1541,16 +1547,16 @@ shinyUI(
                                         width = "80%"),
                               fluidRow(
                                 column(6, selectInput("Species5", "Species", species_list, selected = "not selected")),
-                                column(6, conditionalPanel(condition=c("input.Species5 == 'Xenopus tropicalis' || 
-                   input.Species5 == 'Anolis carolinensis' || input.Species5 == 'Equus caballus' ||
-                   input.Species5 == 'Felis catus' || input.Species5 == 'Monodelphis domestica' || 
-                   input.Species5 == 'Ornithorhynchus anatinus' || input.Species5 == 'Heterocephalus glaber'"),
-                                                           selectInput("Ortholog5", "Ortholog", orgDb_list, selected = "Mus musculus"))),
-                                column(12, conditionalPanel(condition=c("input.Species5 == 'Xenopus tropicalis' || 
-                   input.Species5 == 'Anolis carolinensis' || input.Species5 == 'Equus caballus' ||
-                   input.Species5 == 'Felis catus' || input.Species5 == 'Monodelphis domestica' || 
-                   input.Species5 == 'Ornithorhynchus anatinus' || input.Species5 == 'Heterocephalus glaber'"),
-                                                           selectInput("Biomart_archive5", "Biomart host", ensembl_archive)))
+                                conditionalPanel(condition=c("input.Species5 != 'not selected' && input.Species5 != 'Homo sapiens' &&
+                   input.Species5 != 'Mus musculus' && input.Species5 != 'Rattus norvegicus' &&
+                   input.Species5 != 'Drosophila melanogaster' && input.Species5 != 'Caenorhabditis elegans' &&
+                   input.Species5 != 'Bos taurus' && input.Species5 != 'Canis lupus familiaris' &&
+                   input.Species5 != 'Danio rerio' && input.Species5 != 'Gallus gallus' &&
+                   input.Species5 != 'Macaca mulatta' && input.Species5 != 'Pan troglodytes' &&
+                   input.Species5 != 'Saccharomyces cerevisiae' && input.Species5 != 'Sus scrofa' &&
+                   input.Species5 != 'Xenopus laevis' && input.Species5 != 'Arabidopsis thaliana'"),
+                                                 column(6, selectInput("Ortholog5", "Ortholog", orgDb_list, selected = "Mus musculus")),
+                                column(12, selectInput("Biomart_archive5", "Biomart host", ensembl_archive)))
                               ),
                               fluidRow(
                                 column(4, numericInput("fc4", "Fold Change", min   = 1, max   = NA, value = 2)),
@@ -1757,12 +1763,12 @@ shinyUI(
                                    h4("v1.0.6 (2023/6/7)"),
                                    strong("・Add new function: generating report (.docx) when 'download summary' button is pressed in the setting panel of 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'.(2023/6/7)"),br(),
                                    strong("・Fix 'GOI reset' button in the 'Pair-wise DEG', '3 conditions DEG', 'Normalized data count analysis',and 'Volcano navi'.(2023/6/7)"),br(),
-                                   h4("v1.0.7 (2023/7/7)"),
+                                   h4("v1.0.7 (2023/7/10)"),
+                                   strong("・Add approximately 200 non-model organisms."),br(),
+                                   strong("・Add new function for the non-model organisms. Related species (Ortholog) can be selected for pathway analysis."),br(),
                                    strong("・Add the function to export and import a Recode.Rdata file in the '3 conditions DEG'. 
                                           Recode.Rdata can be obtained by clicking the 'Download summary' button and be imported using 'Option: Recode.Rdata' mode. You can skip the time-consuming EBSeq analysis."),br(),
                                    strong("・Add the functions for log2FoldChange cut-off and statistical analysis in the 'Normalized count analysis'."),br(),
-                                   strong("・Add new species (Heterocephalus glaber)"),br(),
-                                   strong("・Add new function for the non-model organisms (such as Heterocephalus glaber). Related species (Ortholog) can be selected for pathway analysis."),br(),
                                    strong("・Bug fix. Pathway analysis of non-model organism."),br(),
                             )
                           )

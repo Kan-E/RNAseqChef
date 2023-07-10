@@ -48,13 +48,8 @@ shinyUI(
                         "Add new functions to the '3 conditions DEG' and 'Normalized count analysis'.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
-<<<<<<< Updated upstream
-                        "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 2023, in press.", 
-                        a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810")),
-=======
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, (2023), 299(6), 104810.", 
                         a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),),
->>>>>>> Stashed changes
                  column(12,br(),
                         column(6,br(),
                                h4(strong("Pair-wise DEG")),

@@ -301,15 +301,17 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
           colname <- c("ENSEMBL","SYMBOL","ENTREZID")
           colname1<- c("ENSEMBL")
           genes <- getBM(attributes = c("ensembl_gene_id"), mart = use)
+          filter <- "ensembl_gene_id"
         }else{
           attribute <- c("ensembl_gene_id","external_gene_name")
           colname <- c("Original_symbol","SYMBOL","ENTREZID")
           colname1<- c("Original_symbol")
           genes <- getBM(attributes = c("external_gene_name"), mart = use)
+          filter <- "external_gene_name"
         }
         ortho_mart = useMart("ensembl", dataset = ortho, host=Biomart_archive)
         genes2 = try(getLDS(attributes = c("ensembl_gene_id"),
-                        values = genes ,mart = use,
+                        values = genes ,mart = use,filters = filter,
                         attributesL = c("external_gene_name","entrezgene_id"),
                         martL = ortho_mart, uniqueRows=T))
         if(length(class(genes2)) == 1){

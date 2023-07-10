@@ -253,8 +253,6 @@ dorothea <- function(species, confidence = "recommend",type){
   return(net3)
 }
 ensembl_archive <- c("https://dec2021.archive.ensembl.org",
-                     "https://apr2022.archive.ensembl.org","https://jul2022.archive.ensembl.org",
-                     "https://oct2022.archive.ensembl.org","https://feb2023.archive.ensembl.org",
                      "https://www.ensembl.org")
 
   c(read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")$Scientific_common_name)

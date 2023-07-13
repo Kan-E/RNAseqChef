@@ -1,4 +1,4 @@
-dataset	Scientific_name	description	version	Scientific_common_name
+	dataset	Scientific_name	description	version	Scientific_common_name
 1	abrachyrhynchus_gene_ensembl	Anser_brachyrhynchus	Pink-footed goose	ASM259213v1	Anser_brachyrhynchus (Pink-footed goose)
 2	acalliptera_gene_ensembl	Astatotilapia_calliptera	Eastern happy	fAstCal1.2	Astatotilapia_calliptera (Eastern happy)
 3	acarolinensis_gene_ensembl	Anolis carolinensis	Green anole	AnoCar2.0v2	Anolis carolinensis (Green anole)
@@ -60,6 +60,7 @@ dataset	Scientific_name	description	version	Scientific_common_name
 64	elucius_gene_ensembl	Esox_lucius	Northern pike	Eluc_v4	Esox_lucius (Northern pike)
 65	etelfairi_gene_ensembl	Echinops_telfairi	Lesser hedgehog tenrec	TENREC	Echinops_telfairi (Lesser hedgehog tenrec)
 66	falbicollis_gene_ensembl	Ficedula_albicollis	Collared flycatcher	FicAlb1.5	Ficedula_albicollis (Collared flycatcher)
+67	fcatus_gene_ensembl	Felis_catus	Cat genes (Felis_catus_9.0)	Felis_catus_9.0	Felis_catus (Cat)
 68	fheteroclitus_gene_ensembl	Fundulus_heteroclitus	Mummichog	Fundulus_heteroclitus-3.0.2	Fundulus_heteroclitus (Mummichog)
 69	gaculeatus_gene_ensembl	Gasterosteus_aculeatus	Stickleback	BROAD S1	Gasterosteus_aculeatus (Stickleback)
 70	gevgoodei_gene_ensembl	Gopherus_evgoodei	Goodes thornscrub tortoise	rGopEvg1_v1.p	Gopherus_evgoodei (Goodes thornscrub tortoise)

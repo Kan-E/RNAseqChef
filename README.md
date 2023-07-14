@@ -1,6 +1,9 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7095217.svg)](https://doi.org/10.5281/zenodo.7095217)
 
-# RNAseqChef is currently under maintenance. I apologize for the inconvenience.
+
+```diff
+- RNAseqChef is currently under maintenance. I apologize for the inconvenience.
+```
 
 # RNAseqChef
 RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application ([https://imeg-ku.shinyapps.io/RNAseqChef/](https://imeg-ku.shinyapps.io/RNAseqChef/)) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>

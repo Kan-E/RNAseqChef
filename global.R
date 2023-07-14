@@ -62,18 +62,19 @@ file.copy("Rmd/pair_report.Rmd",file.path(tempdir(),"pair_report.Rmd"), overwrit
 file.copy("Rmd/pair_batch_report.Rmd",file.path(tempdir(),"pair_batch_report.Rmd"), overwrite = TRUE)
 file.copy("Rmd/3conditions_report.Rmd",file.path(tempdir(),"3conditions_report.Rmd"), overwrite = TRUE)
 file.copy("Rmd/multi_report.Rmd",file.path(tempdir(),"multi_report.Rmd"), overwrite = TRUE)
+file.copy("dds.rds",file.path(tempdir(),"dds.rds"), overwrite = TRUE)
 msigdbr_species <- msigdbr_species()$species_name
 gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interaction Database)",
                    "BioCarta","WikiPathways", "GO biological process", 
                    "GO cellular component","GO molecular function", "Human phenotype ontology", 
                    "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
                    "Transcription factor targets", "miRNA target")
-biomart_data <- read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")
+biomart_data <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")
 no_orgDb<-c(biomart_data$Scientific_common_name)
 species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                   "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
                   "Danio rerio","Gallus gallus","Macaca mulatta",
-                  "Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa","Xenopus laevis","Arabidopsis thaliana",no_orgDb)
+                  "Pan troglodytes","Saccharomyces cerevisiae","Xenopus laevis","Arabidopsis thaliana",no_orgDb)
 species_list_nonmodel <- no_orgDb
 read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
@@ -258,7 +259,7 @@ ensembl_archive <- c("https://dec2021.archive.ensembl.org",
   c(read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")$Scientific_common_name)
 orgDb_list <- c("Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                 "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
-                "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae","Sus scrofa")
+                "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae")
 no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive){
   if(Species != "not selected"){
     if(!is.null(Ortholog)){
@@ -343,7 +344,6 @@ org <- function(Species, Ortholog=NULL){
             "Macaca mulatta" = org <- org.Mmu.eg.db,
             "Pan troglodytes" = org <- org.Pt.eg.db,
             "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
-            "Sus scrofa" = org <- org.Ss.eg.db,
             "Arabidopsis thaliana" = org <- org.At.tair.db)
     }else{
     switch (Ortholog,
@@ -359,7 +359,6 @@ org <- function(Species, Ortholog=NULL){
             "Macaca mulatta" = org <- org.Mmu.eg.db,
             "Pan troglodytes" = org <- org.Pt.eg.db,
             "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
-            "Sus scrofa" = org <- org.Ss.eg.db,
             "Arabidopsis thaliana" = org <- org.At.tair.db)
     }
     return(org)
@@ -865,7 +864,7 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
       data5 <- data5[,1: (Cond_1 + Cond_2 + Cond_3)]
       data.z <- genescale(data5, axis=1, method="Z")
       ht <- as.grob(Heatmap(data.z, name = "z-score", column_order = colnames(data.z),
-                            clustering_method_columns = 'ward.D2',
+                            clustering_method_columns = 'ward.D2',use_raster = TRUE,
                             show_row_names = F, show_row_dend = T,column_names_side = "top"))
     }
     
@@ -1873,7 +1872,7 @@ GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL){
     show_row_names = FALSE
   }
   ht <- Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
-                clustering_method_columns = 'ward.D2',
+                clustering_method_columns = 'ward.D2',use_raster = TRUE,
                 show_row_names = show_row_names, show_row_dend = F,column_names_side = "top",
                 row_names_gp = gpar(fontface = "italic"))
   if(!is.null(type)) {

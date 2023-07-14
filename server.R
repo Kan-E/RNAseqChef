@@ -1915,7 +1915,7 @@ shinyServer(function(input, output, session) {
           }else{
             data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
             ht <- as.grob(Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
-                                  clustering_method_columns = 'ward.D2',
+                                  clustering_method_columns = 'ward.D2',use_raster = TRUE,
                                   show_row_names = F, show_row_dend = F,column_names_side = "top"))
           }
           p <- plot_grid(m1, ht, rel_widths = c(2, 1))
@@ -3849,7 +3849,9 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
+      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  {
+        return(read_df(tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt"))
+        }
       if(!is.null(tmp)){
         load(tmp)
         return(rawcount)
@@ -3869,7 +3871,6 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
       load(tmp)
       if(!is.null(metadata)) return(metadata) else return(NULL)
@@ -3880,7 +3881,6 @@ shinyServer(function(input, output, session) {
     tmp <- input$norm_file2$datapath
     if (input$data_file_type2 == "RowRecode_cond3" && !is.null(tmp)){
       recode <- input$file_recode_cond3$datapath
-      if(is.null(recode) && input$goButton2 > 0 )  recode = "data/recode.Rdata"
       if(!is.null(recode)){
         load(recode)
         return(norm_count_matrix) 
@@ -3931,11 +3931,10 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(input$file_recode_cond3) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
         load(tmp)
        return(d_rawcount) 
-      }
+      }else if(input$goButton2 >0) return(row_count_matrix2())
     }
   })
   
@@ -3991,11 +3990,12 @@ shinyServer(function(input, output, session) {
   MultiOut <- reactive({
     if (input$data_file_type2 == "RowRecode_cond3"){
       tmp <- input$file_recode_cond3$datapath
-      if(is.null(tmp) && input$goButton2 > 0 )  tmp = "data/recode.Rdata"
       if(!is.null(tmp)){
         load(tmp)
-        return(dds) 
+      }else if(input$goButton2 >0) {
+        dds <- readRDS(file.path(tempdir(),"dds.rds"))
       }
+      return(dds)
     }else{
     withProgress(message = "EBSeq multiple comparison test takes 5 - 10 minutes",{
       count <- d_row_count_matrix2()
@@ -6040,12 +6040,12 @@ shinyServer(function(input, output, session) {
                           clustering_method_columns = 'ward.D2',
                           cluster_row_slices = T, show_row_names = T,
                           top_annotation = HeatmapAnnotation(condition = cond, col = list(condition = cond_color)),
-                          column_names_side = "top",
+                          column_names_side = "top",use_raster = TRUE,
                           row_names_gp = gpar(fontface = "italic"))
           }else{
             ht <- Heatmap(base_z, name = "z-score",
                           clustering_method_columns = 'ward.D2',
-                          cluster_row_slices = T, show_row_names = F,
+                          cluster_row_slices = T, show_row_names = F,use_raster = TRUE,
                           top_annotation = HeatmapAnnotation(condition = cond, col = list(condition = cond_color)),
                           column_names_side = "top")
           }

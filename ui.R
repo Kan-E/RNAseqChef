@@ -1599,7 +1599,7 @@ shinyUI(
                    input.Species5 != 'Bos taurus' && input.Species5 != 'Canis lupus familiaris' &&
                    input.Species5 != 'Danio rerio' && input.Species5 != 'Gallus gallus' &&
                    input.Species5 != 'Macaca mulatta' && input.Species5 != 'Pan troglodytes' &&
-                   input.Species5 != 'Saccharomyces cerevisiae' && input.Species5 != 'Sus scrofa' &&
+                   input.Species5 != 'Saccharomyces cerevisiae' && 
                    input.Species5 != 'Xenopus laevis' && input.Species5 != 'Arabidopsis thaliana'"),
                                                  column(6, selectInput("Ortholog5", strong(
                                                    span("Ortholog"),

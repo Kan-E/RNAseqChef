@@ -6343,7 +6343,9 @@ shinyServer(function(input, output, session) {
     tmp <- NULL
     if(!is.null(input$enrich_data_file[, 1])){
       for(nr in 1:length(input$enrich_data_file[, 1])){
-        if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "xlsx") df <- read.xls(input$enrich_data_file[[nr, 'datapath']], header=TRUE)
+        if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "xlsx") {
+          df <- try(as.data.frame(read_xlsx(input$enrich_data_file[[nr, 'datapath']])))
+        }
         if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "csv") df <- read.csv(input$enrich_data_file[[nr, 'datapath']], header=TRUE, sep = ",",quote = "")
         if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "txt" || 
            tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "tsv") df <- read.table(input$enrich_data_file[[nr, 'datapath']], header=TRUE, sep = "\t",quote = "")

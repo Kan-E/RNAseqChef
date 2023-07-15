@@ -1,6 +1,6 @@
 library(shiny)
 library(DT)
-library(gdata)
+library(readxl)
 library(rstatix)
 library(multcomp)
 library(tidyverse)
@@ -80,11 +80,19 @@ read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- try(read.xls(tmp, header=TRUE, row.names = 1))
+    if(tools::file_ext(tmp) == "xlsx") {
+      df2 <- read_xlsx(tmp) 
+      df2 <- as.data.frame(df2)
+      df <- try(data.frame(row.names = df2[,1]),silent = T)
+      if(class(df) != "try-error") {
+        rownames(df2) <- df2[,1]
+        df <- df2[,-1]
+      }
+    }
     if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = ""))
     if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = ""))
     if(class(df) == "try-error") {
-      if(tools::file_ext(tmp) == "xlsx") df <- try(read.xls(tmp, header=TRUE))
+      if(tools::file_ext(tmp) == "xlsx") df <- try(as.data.frame(read_xlsx(tmp)))
       if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",",quote = ""))
       if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t",quote = ""))
       if(class(df) != "try-error") {
@@ -113,7 +121,10 @@ read_gene_list <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx") df <- read.xls(tmp, header=TRUE)
+    if(tools::file_ext(tmp) == "xlsx"){
+      df <- try(read_xlsx(tmp))
+      df <- as.data.frame(df)
+    }
     if(tools::file_ext(tmp) == "csv") df <- read.csv(tmp, header=TRUE, sep = ",",quote = "")
     if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- read.table(tmp, header=TRUE, sep = "\t",quote = "")
     rownames(df) = gsub("\"", "", rownames(df))
@@ -256,7 +267,6 @@ dorothea <- function(species, confidence = "recommend",type){
 ensembl_archive <- c("https://dec2021.archive.ensembl.org",
                      "https://www.ensembl.org")
 
-  c(read.table("data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")$Scientific_common_name)
 orgDb_list <- c("Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                 "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
                 "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae")

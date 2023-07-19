@@ -44,6 +44,7 @@ shinyUI(
                  column(12,
                         br(),
                         h4("Current version (v1.0.7, 2023/7/14~15)"),
+                        "(2023/7/19) Minor bug fix. Adjust column names of count data imported from excel files.",br(),
                         "Add new functions for non-model organisms.",br(),
                         "Add new functions to the '3 conditions DEG' and 'Normalized count analysis'.",br(),
                         "Fixed bug regarding the import of excel files (7/15).",br(),
@@ -1824,6 +1825,7 @@ shinyUI(
                                           Recode.Rdata can be obtained by clicking the 'Download summary' button and be imported using 'Option: Recode.Rdata' mode. You can skip the time-consuming EBSeq analysis."),br(),
                                    strong("・Add the functions for log2FoldChange cut-off and statistical analysis in the 'Normalized count analysis'."),br(),
                                    strong("・Bug fix. Pathway analysis of non-model organism."),br(),
+                                   strong("・Bug fix. Adjust column names of count data from excel files."),br(),
                             )
                           )
                  )

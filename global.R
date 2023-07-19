@@ -87,6 +87,7 @@ read_df <- function(tmp, Species=NULL){
       if(class(df) != "try-error") {
         rownames(df2) <- df2[,1]
         df <- df2[,-1]
+        colnames(df) <- gsub("-",".",colnames(df))
       }
     }
     if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = ""))

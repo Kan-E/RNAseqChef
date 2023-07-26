@@ -1,0 +1,72 @@
+dataset	Scientific_common_name	version
+aastaci_eg_gene	Aphanomyces astaci	GCA000520075v1
+aclavatus_eg_gene	Aspergillus clavatus NRRL 1	ASM271v1
+aflavus_eg_gene	Aspergillus flavus NRRL3357	JCVI-afl1-v2.0
+afumigatus_eg_gene	Aspergillus fumigatus Af293	ASM265v1
+afumigatusa1163_eg_gene	Aspergillus fumigatus A1163	ASM15014v1
+agossypii_eg_gene	Ashbya gossypii	ASM9102v1
+ainvadans_eg_gene	Aphanomyces invadans	GCA000520115v1
+anidulans_eg_gene	Aspergillus nidulans	ASM1142v1
+aniger_eg_gene	Aspergillus niger	ASM285v2
+aoryzae_eg_gene	Aspergillus oryzae RIB40	ASM18445v3
+aterreus_eg_gene	Aspergillus terreus NIH2624	ASM14961v1
+bbassiana_eg_gene	Beauveria bassiana	ASM168263v1
+bcinerea_eg_gene	Botrytis cinerea B05.10	ASM83294v1
+bgraminis_eg_gene	Blumeria graminis	EF2
+calbicans_eg_gene	Candida albicans	GCA000182965v3
+cauris_eg_gene	Candida auris	GCA002759435v2
+cduobushaemulonis_eg_gene	Candida duobushaemulonis	GCA002926085v1
+cglabrata_eg_gene	Candida glabrata	GCA000002545v2
+cgloeosporioides_eg_gene	Colletotrichum gloeosporioides	Colletotrichum gloeosporioides Nara gc-5
+cgraminicola_eg_gene	Colletotrichum graminicola	C_graminicola_M1_001_V1
+chaemuloni_eg_gene	[Candida] haemuloni	GCA002926055v1
+chigginsianum_eg_gene	Colletotrichum higginsianum	ASM31379v2
+cneoformans_eg_gene	Cryptococcus neoformans var. neoformans JEC21	ASM9104v1
+corbiculare_eg_gene	Colletotrichum orbiculare	Corbiculare240422v01
+cparapsilosis_eg_gene	Candida parapsilosis	GCA000182765v2
+cpseudohaemulonis_eg_gene	[Candida] pseudohaemulonii	GCA003013735v1
+ctropicalis_eg_gene	Candida tropicalis	GCA000006335v3
+dseptosporum_eg_gene	Dothistroma septosporum	Dothistroma septosporum NZE10 v1.0
+fculmorum_eg_gene	Fusarium culmorum UK99	EF 1
+ffujikuroi_eg_gene	Fusarium fujikuroi	EF 1
+fgraminearum_eg_gene	Fusarium graminearum str. PH-1	RR 1
+foxysporum_eg_gene	Fusarium oxysporum	FO2
+fpseudograminearum_eg_gene	Fusarium pseudograminearum	FP7
+fsolani_eg_gene	Fusarium solani	v2.0
+fverticillioides_eg_gene	Fusarium verticillioides	ASM14955v1
+ggraminis_eg_gene	Gaeumannomyces tritici R3-111a-1	Gae_graminis_V2
+gultimum_eg_gene	Globisporangium ultimum	GCA000143045v1
+harabidopsidis_eg_gene	Hyaloperonospora arabidopsidis	GCA000173235v2
+hcapsulatum_eg_gene	Histoplasma capsulatum	GCA000170615v1
+kpastoris_eg_gene	Komagataella pastoris	ASM2700v1
+lmaculans_eg_gene	Leptosphaeria maculans	ASM23037v1
+mlaricipopulina_eg_gene	Melampsora larici-populina	v1.0
+moryzae_eg_gene	Magnaporthe oryzae	MG8
+mpoae_eg_gene	Magnaporthe poae	Mag_poae_ATCC_64411_V1
+mviolaceum_eg_gene	Microbotryum violaceum	M_violaceum_V1
+ncrassa_eg_gene	Neurospora crassa	NC12
+nfischeri_eg_gene	Aspergillus fischeri NRRL 181	ASM14964v1
+pchrysosporium_eg_gene	Phanerochaete chrysosporium	GCA000167175v1
+pgraminis_eg_gene	Puccinia graminis	ASM14992v1
+pgraminisug99_eg_gene	Puccinia graminis Ug99	v1
+pnodorum_eg_gene	Phaeosphaeria nodorum	ASM14691v1
+poryzae_eg_gene	Magnaporthe oryzae	GCA900474545v2
+pstriiformis_eg_gene	Puccinia striiformis f. sp. tritici PST-130 str. Race 130	PST-130_1.0
+pteres_eg_gene	Pyrenophora teres	PyrTer_1.0
+ptriticina_eg_gene	Puccinia triticina	ASM15152v1
+ptriticirepentis_eg_gene	Pyrenophora tritici-repentis Pt-1C-BFP	ASM14998v1
+scerevisiae_eg_gene	Saccharomyces cerevisiae	R64-1-1
+scryophilus_eg_gene	Schizosaccharomyces cryophilus	SCY4
+sjaponicus_eg_gene	Schizosaccharomyces japonicus	SJ5
+soctosporus_eg_gene	Schizosaccharomyces octosporus	SO6
+spombe_eg_gene	Schizosaccharomyces pombe	ASM294v2
+sreilianum_eg_gene	Sporisorium reilianum	ASM23024v1
+ssclerotiorum_eg_gene	Sclerotinia sclerotiorum	ASM14694v1
+tmelanosporum_eg_gene	Tuber melanosporum	ASM15164v1
+treesei_eg_gene	Trichoderma reesei	v2.0
+tvirens_eg_gene	Trichoderma virens	ASM17099v1
+umaydis_eg_gene	Ustilago maydis	Umaydis521_2.0
+vdahliae_eg_gene	Verticillium dahliae	ASM15067v2
+vdahliaejr2_eg_gene	Verticillium dahliae JR2	VDAG_JR2v.4.0
+ylipolytica_eg_gene	Yarrowia lipolytica	ASM252v1
+ztritici_eg_gene	Zymoseptoria tritici	MG2

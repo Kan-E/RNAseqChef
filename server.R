@@ -1507,9 +1507,15 @@ shinyServer(function(input, output, session) {
           res <- as.data.frame(topTags(result, n = nrow(count)))
           qvalue <- qvalue::qvalue(res$PValue)
           res$padj <- qvalue$qvalues
-          ihw_res <- ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1)
+          ihw_res <- try(ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
+          if(length(class(ihw_res)) == 1){
+            if(class(ihw_res) == "try-error"){
+              res$ihw_padj <- NA
+            }
+          }else{
           ihw_res_df <- IHW::as.data.frame(ihw_res)
           res$ihw_padj <- ihw_res_df$adj_pvalue
+          }
           if(input$FDR_method == "BH"){label <- c("log2FoldChange", "log2CPM", "PValue","padj", "Qvalue", "IHW_FDR")}
           if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
           if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}

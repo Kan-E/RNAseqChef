@@ -1,0 +1,254 @@
+dataset	description	version	Scientific_common_name
+aagca019059575v1_eg_gene	"Amphibalanus amphitrite (Acorn barnacle, SeventyFive) genes (NRLGWU_Aamphi_draft)"	NRLGWU_Aamphi_draft	"Amphibalanus amphitrite (Acorn barnacle, SeventyFive)"
+aagca914969975_eg_gene	"Anopheles atroparvus (Mosquito, Infravec2 EBRE) genes (atroparvus_hifiasm_n225_277Mb)"	atroparvus_hifiasm_n225_277Mb	"Anopheles atroparvus (Mosquito, Infravec2 EBRE)"
+aalbimanus_eg_gene	"Anopheles albimanus (Mosquito, STECLA) genes (AalbS2)"	AalbS2	"Anopheles albimanus (Mosquito, STECLA)"
+aalbopictus_eg_gene	"Aedes albopictus (Asian tiger mosquito, Foshan) genes (AaloF1)"	AaloF1	"Aedes albopictus (Asian tiger mosquito, Foshan)"
+aalvpagwg_eg_gene	"Aedes aegypti (Yellow fever mosquito, LVP_AGWG) genes (AaegL5)"	AaegL5	"Aedes aegypti (Yellow fever mosquito, LVP_AGWG)"
+aarabiensis_eg_gene	"Anopheles arabiensis (Mosquito, Dongola) genes (AaraD1)"	AaraD1	"Anopheles arabiensis (Mosquito, Dongola)"
+acephalotes_eg_gene	Atta cephalotes (Leaf-cutter ant) genes (Attacep1.0)	Attacep1.0	Atta cephalotes (Leaf-cutter ant)
+acgca000002075v2_eg_gene	"Aplysia californica (California sea hare, F4 #8) genes (AplCal3.0)"	AplCal3.0	"Aplysia californica (California sea hare, F4 #8)"
+achristyi_eg_gene	"Anopheles christyi (Mosquito, ACHKN1017) genes (AchrA1)"	AchrA1	"Anopheles christyi (Mosquito, ACHKN1017)"
+acngousso_eg_gene	"Anopheles coluzzii (Mosquito, Ngousso) genes (AcolN1)"	AcolN1	"Anopheles coluzzii (Mosquito, Ngousso)"
+acoluzzii_eg_gene	"Anopheles coluzzii (Mosquito, Mali-NIH) genes (AcolM1)"	AcolM1	"Anopheles coluzzii (Mosquito, Mali-NIH)"
+aculicifacies_eg_gene	"Anopheles culicifacies (Mosquito, A-37) genes (AculA1)"	AculA1	"Anopheles culicifacies (Mosquito, A-37)"
+adarlingi_eg_gene	"Anopheles darlingi (American malaria mosquito, Coari) genes (AdarC3)"	AdarC3	"Anopheles darlingi (American malaria mosquito, Coari)"
+adgca000469605v1rs_eg_gene	Apis dorsata (Giant honeybee) genes (Apis_dorsata_1.3)	Apis_dorsata_1.3	Apis dorsata (Giant honeybee)
+adirus_eg_gene	"Anopheles dirus (Mosquito, WRAIR2) genes (AdirW1)"	AdirW1	"Anopheles dirus (Mosquito, WRAIR2)"
+aegca000204515v1rs_eg_gene	Acromyrmex echinatior (Panamanian leaf-cutter ant) genes (Aech_3.9)	Aech_3.9	Acromyrmex echinatior (Panamanian leaf-cutter ant)
+aegca011057435_eg_gene	"Actinia equina (Beadlet anemone, AE1) genes (equina_smartden.arrow4.noredun)"	equina_smartden.arrow4.noredun	"Actinia equina (Beadlet anemone, AE1)"
+aepiroticus_eg_gene	"Anopheles epiroticus (Mosquito, Epiroticus2) genes (AepiE1)"	AepiE1	"Anopheles epiroticus (Mosquito, Epiroticus2)"
+afarauti_eg_gene	"Anopheles farauti (Mosquito, FAR1) genes (AfarF2)"	AfarF2	"Anopheles farauti (Mosquito, FAR1)"
+afgca000184785v2rs_eg_gene	Apis florea (Dwarf honeybee) genes (Aflo_1.0)	Aflo_1.0	Apis florea (Dwarf honeybee)
+afunestus_eg_gene	"Anopheles funestus (African malaria mosquito, FUMOZ) genes (AfunF3)"	AfunF3	"Anopheles funestus (African malaria mosquito, FUMOZ)"
+agambiae_eg_gene	"Anopheles gambiae (African malaria mosquito, PEST) genes (AgamP4)"	AgamP4	"Anopheles gambiae (African malaria mosquito, PEST)"
+aggca014905175v1_eg_gene	"Aphidius gifuensis (Parasitoid wasp, YNYX2018) genes (ASM1490517v1)"	ASM1490517v1	"Aphidius gifuensis (Parasitoid wasp, YNYX2018)"
+aggca022605725v3rs_eg_gene	Anthonomus grandis grandis (Boll weevil) genes (icAntGran1.3)	icAntGran1.3	Anthonomus grandis grandis (Boll weevil)
+aglabripennis_eg_gene	"Anoplophora glabripennis (Asian long-horned beetle, ALB-LARVAE) genes (Agla_2.0)"	Agla_2.0	"Anoplophora glabripennis (Asian long-horned beetle, ALB-LARVAE)"
+ajgca011630105v1_eg_gene	"Anneissia japonica (Sea lily, Jap-2015-1) genes (ASM1163010v1)"	ASM1163010v1	"Anneissia japonica (Sea lily, Jap-2015-1)"
+amaculatus_eg_gene	"Anopheles maculatus (Mosquito, maculatus3) genes (AmacM1)"	AmacM1	"Anopheles maculatus (Mosquito, maculatus3)"
+amelas_eg_gene	"Anopheles melas (Mosquito, CM1001059_A) genes (AmelC2)"	AmelC2	"Anopheles melas (Mosquito, CM1001059_A)"
+amellifera_eg_gene	"Apis mellifera (Honey bee, DH4) genes (Amel_HAv3.1)"	Amel_HAv3.1	"Apis mellifera (Honey bee, DH4)"
+amerus_eg_gene	"Anopheles merus (Mosquito, MAF) genes (AmerM2)"	AmerM2	"Anopheles merus (Mosquito, MAF)"
+amgca013753865v1_eg_gene	"Acropora millepora (Stony coral, JS-1) genes (Amil_v2.1)"	Amil_v2.1	"Acropora millepora (Stony coral, JS-1)"
+aminimus_eg_gene	"Anopheles minimus (Mosquito, MINIMUS1) genes (AminM1)"	AminM1	"Anopheles minimus (Mosquito, MINIMUS1)"
+apgca000699045v2_eg_gene	"Agrilus planipennis (Emerald ash borer, EAB-ADULT) genes (Apla_2.0)"	Apla_2.0	"Agrilus planipennis (Emerald ash borer, EAB-ADULT)"
+apgca001949145v1_eg_gene	Acanthaster planci (Crown-of-thorns starfish) genes (OKI_Apl_1.0)	OKI_Apl_1.0	Acanthaster planci (Crown-of-thorns starfish)
+apgca005508785v2rs_eg_gene	"Acyrthosiphon pisum (Pea aphid, AL4f) genes (pea_aphid_22Mar2018_4r6ur_v2)"	pea_aphid_22Mar2018_4r6ur_v2	"Acyrthosiphon pisum (Pea aphid, AL4f)"
+apisum_eg_gene	"Acyrthosiphon pisum (Pea aphid, AL4f) genes (pea_aphid_22Mar2018_4r6ur)"	pea_aphid_22Mar2018_4r6ur	"Acyrthosiphon pisum (Pea aphid, AL4f)"
+aqgca000090795v2rs_eg_gene	Amphimedon queenslandica (Demosponge) genes (v1.1)	v1.1	Amphimedon queenslandica (Demosponge)
+aquadriannulatus_eg_gene	"Anopheles quadriannulatus (Mosquito, SANGWE) genes (AquaS1)"	AquaS1	"Anopheles quadriannulatus (Mosquito, SANGWE)"
+aqueenslandica_eg_gene	Amphimedon queenslandica (Demosponge) genes (Aqu1)	Aqu1	Amphimedon queenslandica (Demosponge)
+argca000344095v2_eg_gene	"Athalia rosae (Coleseed sawfly, CS-ADULT) genes (Aros_2.0)"	Aros_2.0	"Athalia rosae (Coleseed sawfly, CS-ADULT)"
+argca902459465v3_eg_gene	Asterias rubens (European starfish) genes (eAstRub1.3)	eAstRub1.3	Asterias rubens (European starfish)
+argca917208135v1_eg_gene	"Athalia rosae (Coleseed sawfly, reference) genes (iyAthRosa1.1)"	iyAthRosa1.1	"Athalia rosae (Coleseed sawfly, reference)"
+aschina_eg_gene	"Anopheles sinensis (Mosquito, China) genes (AsinC2)"	AsinC2	"Anopheles sinensis (Mosquito, China)"
+asindian_eg_gene	"Anopheles stephensi (Asian malaria mosquito, Indian) genes (AsteI2)"	AsteI2	"Anopheles stephensi (Asian malaria mosquito, Indian)"
+asinensis_eg_gene	"Anopheles sinensis (Mosquito, SINENSIS) genes (AsinS2)"	AsinS2	"Anopheles sinensis (Mosquito, SINENSIS)"
+astephensi_eg_gene	"Anopheles stephensi (Asian malaria mosquito, SDA-500) genes (AsteS1)"	AsteS1	"Anopheles stephensi (Asian malaria mosquito, SDA-500)"
+asuum_eg_gene	"Ascaris suum (Pig roundworm, AG01) genes (ASM18702v3)"	ASM18702v3	"Ascaris suum (Pig roundworm, AG01)"
+atgca001186105v1rs_eg_gene	"Amyelois transitella (Naval orange worm, UIUC subculture of SPIRL-1966) genes (ASM118610v1)"	ASM118610v1	"Amyelois transitella (Naval orange worm, UIUC subculture of SPIRL-1966)"
+atgca009602425v1_eg_gene	Actinia tenebrosa (Australian red waratah sea anemone) genes (ASM960242v1)	ASM960242v1	Actinia tenebrosa (Australian red waratah sea anemone)
+avaga_eg_gene	Adineta vaga (Rotifer) genes (AMS_PRJEB1171_v1)	AMS_PRJEB1171_v1	Adineta vaga (Rotifer)
+bagca900239965v1rs_eg_gene	Bicyclus anynana (Squinting bush brown) genes (Bicyclus_anynana_v1.2)	Bicyclus_anynana_v1.2	Bicyclus anynana (Squinting bush brown)
+bantarctica_eg_gene	Belgica antarctica (Antarctic midge) genes (ASM77530v1)	ASM77530v1	Belgica antarctica (Antarctic midge)
+bdgca000789215v2_eg_gene	"Bactrocera dorsalis (Oriental fruit fly, Punador) genes (ASM78921v2)"	ASM78921v2	"Bactrocera dorsalis (Oriental fruit fly, Punador)"
+bglabrata_eg_gene	"Biomphalaria glabrata (Bloodfluke planorb, BB02) genes (BglaB1)"	BglaB1	"Biomphalaria glabrata (Bloodfluke planorb, BB02)"
+bimpatiens_eg_gene	Bombus impatiens (Common eastern bumblebee) genes (BIMP_2.2)	BIMP_2.2	Bombus impatiens (Common eastern bumblebee)
+blanceolatum_eg_gene	Branchiostoma lanceolatum (Amphioxus) genes (BraLan2)	BraLan2	Branchiostoma lanceolatum (Amphioxus)
+blgca001853355v1_eg_gene	"Bactrocera latifrons (Solanum fruit fly, USDA-ARS-PBARC rearing strain) genes (ASM185335v1)"	ASM185335v1	"Bactrocera latifrons (Solanum fruit fly, USDA-ARS-PBARC rearing strain)"
+bmalayi_eg_gene	"Brugia malayi (Nematode, FR3) genes (Bmal-4.0)"	Bmal-4.0	"Brugia malayi (Nematode, FR3)"
+bmgca003987935v1rs_eg_gene	"Bombyx mandarina (Wild silkworm, Bman2017) genes (ASM398793v1)"	ASM398793v1	"Bombyx mandarina (Wild silkworm, Bman2017)"
+bmori_eg_gene	"Bombyx mori (Domestic silkworm, p50T) genes (Bmori_2016v1.0)"	Bmori_2016v1.0	"Bombyx mori (Domestic silkworm, p50T)"
+btasiaii5_eg_gene	"Bemisia tabaci (Silverleaf whitefly, Asia II-5) genes (ASIAII5_n227_616Mb)"	ASIAII5_n227_616Mb	"Bemisia tabaci (Silverleaf whitefly, Asia II-5)"
+bterrestris_eg_gene	Bombus terrestris (Buff-tailed bumblebee) genes (Bter_1.0)	Bter_1.0	Bombus terrestris (Buff-tailed bumblebee)
+btgca016617805v2_eg_gene	"Bactrocera tryoni (Queensland fruitfly, S06) genes (CSIRO_BtryS06_freeze1)"	CSIRO_BtryS06_freeze1	"Bactrocera tryoni (Queensland fruitfly, S06)"
+btgca910591885v2_eg_gene	"Bombus terrestris (buff-tailed bumblebee, reference) genes (iyBomTerr1.2)"	iyBomTerr1.2	"Bombus terrestris (buff-tailed bumblebee, reference)"
+btssa1nig_eg_gene	"Bemisia tabaci (Silverleaf whitefly, SSA1-SG1 Ng) genes (SSA1SG1_Nigeria_n4493_656Mb)"	SSA1SG1_Nigeria_n4493_656Mb	"Bemisia tabaci (Silverleaf whitefly, SSA1-SG1 Ng)"
+btssa1ug_eg_gene	"Bemisia tabaci (Silverleaf whitefly, SSA1-SG1 Ug) genes (SSA1_SG1_Uganda_n955_657Mb)"	SSA1_SG1_Uganda_n955_657Mb	"Bemisia tabaci (Silverleaf whitefly, SSA1-SG1 Ug)"
+btssa2nig_eg_gene	"Bemisia tabaci (Silverleaf whitefly, SSA2 Ng) genes (SSA2_Nigeria_n785_625mb)"	SSA2_Nigeria_n785_625mb	"Bemisia tabaci (Silverleaf whitefly, SSA2 Ng)"
+btssa3nig_eg_gene	"Bemisia tabaci (Silverleaf whitefly, SSA3 Ng) genes (SSA3_Nigeria_2278n_648mb)"	SSA3_Nigeria_2278n_648mb	"Bemisia tabaci (Silverleaf whitefly, SSA3 Ng)"
+btuganda1_eg_gene	"Bemisia tabaci (Silverleaf whitefly, Uganda-1) genes (Uganda1_n5713_630Mb)"	Uganda1_n5713_630Mb	"Bemisia tabaci (Silverleaf whitefly, Uganda-1)"
+cbrenneri_eg_gene	Caenorhabditis brenneri (Nematode) genes (C_brenneri-6.0.1b)	C_brenneri-6.0.1b	Caenorhabditis brenneri (Nematode)
+cbriggsae_eg_gene	Caenorhabditis briggsae (Nematode) genes (CB4)	CB4	Caenorhabditis briggsae (Nematode)
+ccgca000347755v4_eg_gene	Ceratitis capitata (Mediterranean fruit fly) genes (Ccap_2.0)	Ccap_2.0	Ceratitis capitata (Mediterranean fruit fly)
+celegans_eg_gene	"Caenorhabditis elegans (Nematode, N2) genes (WBcel235)"	WBcel235	Caenorhabditis elegans
+cfgca000648655v2_eg_gene	"Copidosoma floridanum (Parasitoid wasp, CFLO.00-Male) genes (Cflo_2.0)"	Cflo_2.0	"Copidosoma floridanum (Parasitoid wasp, CFLO.00-Male)"
+cfgca003227725v1rs_eg_gene	"Camponotus floridanus (Florida carpenter ant, SB8) genes (Cflo_v7.5)"	Cflo_v7.5	"Camponotus floridanus (Florida carpenter ant, SB8)"
+cggca020080835v1_eg_gene	"Cotesia glomerata (White butterfly parasite wasp, CgM1) genes (MPM_Cglom_v2.3)"	MPM_Cglom_v2.3	"Cotesia glomerata (White butterfly parasite wasp, CgM1)"
+cgigas_eg_gene	Crassostrea gigas (Pacific oyster) genes (cgigas_uk_roslin_v1)	cgigas_uk_roslin_v1	Crassostrea gigas (Pacific oyster)
+chgca902728285_eg_gene	"Clytia hemisphaerica (Jellyfish, Z4C2) genes (Clytia_hemisphaerica_genome_assembly)"	Clytia_hemisphaerica_genome_assembly	"Clytia hemisphaerica (Jellyfish, Z4C2)"
+cigca013357705v1rs_eg_gene	"Chelonus insularis (Parasitoid wasp, UGA/USDA-ARS -01) genes (ASM1335770v1)"	ASM1335770v1	"Chelonus insularis (Parasitoid wasp, UGA/USDA-ARS -01)"
+cjaponica_eg_gene	Caenorhabditis japonica (Nematode) genes (C_japonica-7.0.1)	C_japonica-7.0.1	Caenorhabditis japonica (Nematode)
+clectularius_eg_gene	"Cimex lectularius (Bed bug, Harlan) genes (Clec_2.0)"	Clec_2.0	"Cimex lectularius (Bed bug, Harlan)"
+cqgca015732765v1_eg_gene	"Culex quinquefasciatus (Southern house mosquito, JHB) genes (VPISU_Cqui_1.0_pri_paternal)"	VPISU_Cqui_1.0_pri_paternal	"Culex quinquefasciatus (Southern house mosquito, JHB)"
+cquinquefasciatus_eg_gene	"Culex quinquefasciatus (Southern house mosquito, Johannesburg) genes (CpipJ2)"	CpipJ2	"Culex quinquefasciatus (Southern house mosquito, Johannesburg)"
+cremanei_eg_gene	Caenorhabditis remanei (Nematode) genes (C_remanei-15.0.1)	C_remanei-15.0.1	Caenorhabditis remanei (Nematode)
+csgca000671375v2_eg_gene	"Centruroides sculpturatus (Bark scorpion, CEXI.00-Female) genes (Cexi_2.0)"	Cexi_2.0	"Centruroides sculpturatus (Bark scorpion, CEXI.00-Female)"
+csonorensis_eg_gene	Culicoides sonorensis (Biting Midge) genes (Cson1)	Cson1	Culicoides sonorensis (Biting Midge)
+cteleta_eg_gene	Capitella teleta (Bristle worm) genes (Capitella teleta v1.0)	Capitella teleta v1.0	Capitella teleta (Bristle worm)
+cvgca002022765v4_eg_gene	"Crassostrea virginica (Eastern oyster, RU13XGHG1-28) genes (C_virginica_3.0)"	C_virginica_3.0	"Crassostrea virginica (Eastern oyster, RU13XGHG1-28)"
+dagca023375885v2rs_eg_gene	"Dermacentor andersoni (Rocky Mountain wood tick, qqDerAnde1) genes (qqDerAnde1.2)"	qqDerAnde1.2	"Dermacentor andersoni (Rocky Mountain wood tick, qqDerAnde1)"
+dananassae_eg_gene	"Drosophila ananassae (Fruit fly, TSC#14024-0371.13) genes (dana_caf1)"	dana_caf1	"Drosophila ananassae (Fruit fly, TSC#14024-0371.13)"
+derecta_eg_gene	"Drosophila erecta (Fruit fly, TSC#14021-0224.01) genes (dere_caf1)"	dere_caf1	"Drosophila erecta (Fruit fly, TSC#14021-0224.01)"
+dggca004324835v1_eg_gene	"Dendronephthya gigantea (Carnation coral, DGI-Jeju-01) genes (DenGig_1.0)"	DenGig_1.0	"Dendronephthya gigantea (Carnation coral, DGI-Jeju-01)"
+dggca904063045v1_eg_gene	Dimorphilus gyrociliatus (Segmented worms) genes (Dgyrociliatus_assembly)	Dgyrociliatus_assembly	Dimorphilus gyrociliatus (Segmented worms)
+dgrimshawi_eg_gene	"Drosophila grimshawi (Fruit fly, TSC#15287-2541.00) genes (dgri_caf1)"	dgri_caf1	"Drosophila grimshawi (Fruit fly, TSC#15287-2541.00)"
+dmelanogaster_eg_gene	Drosophila melanogaster (Fruit fly) genes (BDGP6.46)	BDGP6.46	Drosophila melanogaster
+dmgca020631705v2_eg_gene	"Daphnia magna (Fresh water planktonic, NIES) genes (ASM2063170v1.1)"	ASM2063170v1.1	"Daphnia magna (Fresh water planktonic, NIES)"
+dmojavensis_eg_gene	"Drosophila mojavensis (Fruit fly, TSC#15081-1352.22) genes (dmoj_caf1)"	dmoj_caf1	"Drosophila mojavensis (Fruit fly, TSC#15081-1352.22)"
+dngca001186385v1_eg_gene	"Diuraphis noxia (Russian wheat aphid, RWA2) genes (Dnoxia_1.0)"	Dnoxia_1.0	"Diuraphis noxia (Russian wheat aphid, RWA2)"
+dngca001272555v1rs_eg_gene	"Dufourea novaeangliae (Bee, 0120121106) genes (ASM127255v1)"	ASM127255v1	"Dufourea novaeangliae (Bee, 0120121106)"
+dpersimilis_eg_gene	"Drosophila persimilis (Fruit fly, MSH-3) genes (dper_caf1)"	dper_caf1	"Drosophila persimilis (Fruit fly, MSH-3)"
+dpgca000355655v1_eg_gene	Dendroctonus ponderosae (Mountain pine beetle) genes (DendPond_male_1.0)	DendPond_male_1.0	Dendroctonus ponderosae (Mountain pine beetle)
+dpgca001901225v2_eg_gene	"Dermatophagoides pteronyssinus (European house dust mite, airmid) genes (ASM190122v2)"	ASM190122v2	"Dermatophagoides pteronyssinus (European house dust mite, airmid)"
+dpgca021134715v1rs_eg_gene	"Daphnia pulex (Common water flea, KAP4) genes (ASM2113471v1)"	ASM2113471v1	"Daphnia pulex (Common water flea, KAP4)"
+dpgca021234035v2rs_eg_gene	"Daphnia pulicaria (Water flea, SC F1-1A) genes (SC_F0_13B)"	SC_F0_13B	"Daphnia pulicaria (Water flea, SC F1-1A)"
+dplexippus_eg_gene	"Danaus plexippus plexippus (Monarch butterfly, F-2) genes (Dplex_v4)"	Dplex_v4	"Danaus plexippus plexippus (Monarch butterfly, F-2)"
+dpseudoobscura_eg_gene	"Drosophila pseudoobscura pseudoobscura (Fruit fly, MV2-25) genes (Dpse_3.0)"	Dpse_3.0	"Drosophila pseudoobscura pseudoobscura (Fruit fly, MV2-25)"
+dpulex_eg_gene	Daphnia pulex (Common water flea) genes (V1.0)	V1.0	Daphnia pulex (Common water flea)
+dsechellia_eg_gene	"Drosophila sechellia (Fruit fly, Rob3c) genes (dsec_caf1)"	dsec_caf1	"Drosophila sechellia (Fruit fly, Rob3c)"
+dsgca013339745v1_eg_gene	"Dermacentor silvarum (Tick, Dsil-2018) genes (ASM1333974v1)"	ASM1333974v1	"Dermacentor silvarum (Tick, Dsil-2018)"
+dsimulans_eg_gene	"Drosophila simulans (Fruit fly, w501) genes (ASM75419v3)"	ASM75419v3	"Drosophila simulans (Fruit fly, w501)"
+dtinctorium_eg_gene	"Dinothrombium tinctorium (Red velvet mite, UoL-WK) genes (DtinU1)"	DtinU1	"Dinothrombium tinctorium (Red velvet mite, UoL-WK)"
+dvgca003013835v2_eg_gene	"Diabrotica virgifera virgifera (Western corn rootworm, Ped12-6-A-3) genes (Dvir_v2.0)"	Dvir_v2.0	"Diabrotica virgifera virgifera (Western corn rootworm, Ped12-6-A-3)"
+dvgca917563875v2rs_eg_gene	Diabrotica virgifera virgifera (Western corn rootworm) genes (PGI_DIABVI_V3a)	PGI_DIABVI_V3a	Diabrotica virgifera virgifera (Western corn rootworm)
+dvirilis_eg_gene	"Drosophila virilis (Fruit fly, TSC#15010-1051.87) genes (dvir_caf1)"	dvir_caf1	"Drosophila virilis (Fruit fly, TSC#15010-1051.87)"
+dwillistoni_eg_gene	"Drosophila willistoni (Fruit fly, TSC#14030-0811.24) genes (dwil_caf1)"	dwil_caf1	"Drosophila willistoni (Fruit fly, TSC#14030-0811.24)"
+dyakuba_eg_gene	"Drosophila yakuba (Fruit fly, Tai18E2) genes (dyak_caf1)"	dyak_caf1	"Drosophila yakuba (Fruit fly, Tai18E2)"
+eagca000591075v2_eg_gene	"Eurytemora affinis (Calanoid copepod, Atlantic clade) genes (Eaff_2.0)"	Eaff_2.0	"Eurytemora affinis (Calanoid copepod, Atlantic clade)"
+edgca001417965v1_eg_gene	"Exaiptasia diaphana (Sea anemone, CC7) genes (Aiptasia_genome_1.1)"	Aiptasia_genome_1.1	"Exaiptasia diaphana (Sea anemone, CC7)"
+eggca000524195v1rs_eg_gene	Echinococcus granulosus (Dog tapeworm) genes (ASM52419v1)	ASM52419v1	Echinococcus granulosus (Dog tapeworm)
+emgca001483705v1rs_eg_gene	"Eufriesea mexicana (Bee, 0111107269) genes (ASM148370v1)"	ASM148370v1	"Eufriesea mexicana (Bee, 0111107269)"
+fcandida_eg_gene	"Folsomia candida (Springtail, str. VU population) genes (ASM221717v1)"	ASM221717v1	"Folsomia candida (Springtail, str. VU population)"
+gagca016097555v1_eg_gene	"Gigantopelta aegis (Deep sea snail, Gae_Host) genes (Gae_host_genome)"	Gae_host_genome	"Gigantopelta aegis (Deep sea snail, Gae_Host)"
+gausteni_eg_gene	"Glossina austeni (Tsetse fly, TTRI) genes (GausT1)"	GausT1	"Glossina austeni (Tsetse fly, TTRI)"
+gbrevipalpis_eg_gene	"Glossina brevipalpis (Tsetse fly, IAEA) genes (GbreI1)"	GbreI1	"Glossina brevipalpis (Tsetse fly, IAEA)"
+gfuscipes_eg_gene	"Glossina fuscipes (Tsetse fly, IAEA_lab_2018) genes (Yale_Gfus_2)"	Yale_Gfus_2	"Glossina fuscipes (Tsetse fly, IAEA_lab_2018)"
+gmgca003640425v2rs_eg_gene	"Galleria mellonella (Greater wax moth, Carbio01_MB) genes (ASM364042v2)"	ASM364042v2	"Galleria mellonella (Greater wax moth, Carbio01_MB)"
+gmorsitans_eg_gene	"Glossina morsitans morsitans (Tsetse fly, Yale) genes (GmorY1)"	GmorY1	"Glossina morsitans morsitans (Tsetse fly, Yale)"
+gogca000255335v2rs_eg_gene	Galendromus occidentalis (Western predatory mite) genes (Mocc_1.0)	Mocc_1.0	Galendromus occidentalis (Western predatory mite)
+gpallidipes_eg_gene	"Glossina pallidipes (Tsetse fly, IAEA) genes (GpalI1)"	GpalI1	"Glossina pallidipes (Tsetse fly, IAEA)"
+gpalpalis_eg_gene	"Glossina palpalis gambiensis (Tsetse fly, IAEA) genes (GpapI1)"	GpapI1	"Glossina palpalis gambiensis (Tsetse fly, IAEA)"
+hagca000764305v2_eg_gene	"Hyalella azteca (Amphipod, HAZT.00-mixed) genes (Hazt_2.0)"	Hazt_2.0	"Hyalella azteca (Amphipod, HAZT.00-mixed)"
+hagca013339685v1_eg_gene	"Hyalomma asiaticum (Tick, Hyas-2018) genes (ASM1333968v1)"	ASM1333968v1	"Hyalomma asiaticum (Tick, Hyas-2018)"
+hagca018991925v1_eg_gene	"Homarus americanus (American lobster, GMGI-L3) genes (GMGI_Hamer_2.0)"	GMGI_Hamer_2.0	"Homarus americanus (American lobster, GMGI-L3)"
+hagca023701775v1rs_eg_gene	"Helicoverpa armigera (Cotton bollworm, SCD) genes (HaSCD2)"	HaSCD2	"Helicoverpa armigera (Cotton bollworm, SCD)"
+hegca002082055v1_eg_gene	"Hypsibius exemplaris (Water bear tardigrade, Z151) genes (nHd_3.1)"	nHd_3.1	"Hypsibius exemplaris (Water bear tardigrade, Z151)"
+higca905115235v1_eg_gene	Hermetia illucens (Black soldier fly) genes (iHerIll2.2.curated.20191125)	iHerIll2.2.curated.20191125	Hermetia illucens (Black soldier fly)
+hlgca001263275v1rs_eg_gene	"Habropoda laboriosa (Southeastern blueberry bee, 0110345459) genes (ASM126327v1)"	ASM126327v1	"Habropoda laboriosa (Southeastern blueberry bee, 0110345459)"
+hlgca013339765v1_eg_gene	"Haemaphysalis longicornis (Longhorned tick, HaeL-2018) genes (ASM1333976v1)"	ASM1333976v1	"Haemaphysalis longicornis (Longhorned tick, HaeL-2018)"
+hmelpomene_eg_gene	Heliconius melpomene (Postman butterfly) genes (Hmel1)	Hmel1	Heliconius melpomene (Postman butterfly)
+hmiamia_eg_gene	"Hofstenia miamia (Panther worm, MS-H3) genes (HmiaM1)"	HmiaM1	"Hofstenia miamia (Panther worm, MS-H3)"
+hmicrostoma_eg_gene	Hymenolepis microstoma (Rodent tapeworm) genes (HMN_v3)	HMN_v3	Hymenolepis microstoma (Rodent tapeworm)
+hrgca003918875v1rs_eg_gene	"Haliotis rubra (Blacklip abalone, DU_JTF1) genes (ASM391887v1)"	ASM391887v1	"Haliotis rubra (Blacklip abalone, DU_JTF1)"
+hrgca023055435v1rs_eg_gene	"Haliotis rufescens (Red abalone, VD_foot) genes (xgHalRufe1.0.p)"	xgHalRufe1.0.p	"Haliotis rufescens (Red abalone, VD_foot)"
+hrobusta_eg_gene	Helobdella robusta (Freshwater leech) genes (Helro1)	Helro1	Helobdella robusta (Freshwater leech)
+hsgca003227715v2rs_eg_gene	"Harpegnathos saltator (Indian jumping ant, DR-91) genes (Hsal_v8.5)"	Hsal_v8.5	"Harpegnathos saltator (Indian jumping ant, DR-91)"
+hvgca000004095v1_eg_gene	"Hydra vulgaris (Swiftwater hydra, 105) genes (Hydra_RP_1.0)"	Hydra_RP_1.0	"Hydra vulgaris (Swiftwater hydra, 105)"
+hvgca021130785v2rs_eg_gene	"Homalodisca vitripennis (Glassy winged sharpshooter, AUS2020) genes (UT_GWSS_2.1)"	UT_GWSS_2.1	"Homalodisca vitripennis (Glassy winged sharpshooter, AUS2020)"
+hvgca022113875v1rs_eg_gene	"Hydra vulgaris (Swiftwater hydra, 105) genes (Hydra_105_v3)"	Hydra_105_v3	"Hydra vulgaris (Swiftwater hydra, 105)"
+hzgca022581195v1rs_eg_gene	"Helicoverpa zea (Corn earworm, HzStark_Cry1AcR) genes (ilHelZeax1.1)"	ilHelZeax1.1	"Helicoverpa zea (Corn earworm, HzStark_Cry1AcR)"
+ipgca013358835v1_eg_gene	"Ixodes persulcatus (Taiga tick, Iper-2018) genes (BIME_Iper_1.3)"	BIME_Iper_1.3	"Ixodes persulcatus (Taiga tick, Iper-2018)"
+iscapularis_eg_gene	"Ixodes scapularis (Black-legged tick, Wikel) genes (IscaW1)"	IscaW1	"Ixodes scapularis (Black-legged tick, Wikel)"
+isgca016920785v2_eg_gene	"Ixodes scapularis (Black-legged tick, PalLabHiFi) genes (ASM1692078v2)"	ASM1692078v2	"Ixodes scapularis (Black-legged tick, PalLabHiFi)"
+isise6_eg_gene	"Ixodes scapularis (Black-legged tick, ISE6) genes (IscaI1)"	IscaI1	"Ixodes scapularis (Black-legged tick, ISE6)"
+lagca001039355v2_eg_gene	"Lingula anatina (Lamp shell, Amm_Jpn) genes (LinAna2.0)"	LinAna2.0	"Lingula anatina (Lamp shell, Amm_Jpn)"
+lanatina_eg_gene	Lingula anatina (Lamp shell) genes (LinAna1.0)	LinAna1.0	Lingula anatina (Lamp shell)
+lcgca022045245v1rs_eg_gene	"Lucilia cuprina (Australian sheep blowfly, Lc7/37) genes (ASM2204524v1)"	ASM2204524v1	"Lucilia cuprina (Australian sheep blowfly, Lc7/37)"
+lcuprina_eg_gene	"Lucilia cuprina (Australian sheep blowfly, LS) genes (ASM118794v1)"	ASM118794v1	"Lucilia cuprina (Australian sheep blowfly, LS)"
+ldeliense_eg_gene	"Leptotrombidium deliense (Harvest mite, UoL-UT) genes (LdelU1)"	LdelU1	"Leptotrombidium deliense (Harvest mite, UoL-UT)"
+ldgca000500325v2_eg_gene	"Leptinotarsa decemlineata (Colorado potato beetle, Imidocloprid resistant) genes (Ldec_2.0)"	Ldec_2.0	"Leptinotarsa decemlineata (Colorado potato beetle, Imidocloprid resistant)"
+lggca023078275v1rs_eg_gene	"Leguminivora glycinivorella (Soybean pod borer, SPB_JAAS2020) genes (LegGlyc_1.1)"	LegGlyc_1.1	"Leguminivora glycinivorella (Soybean pod borer, SPB_JAAS2020)"
+lgigantea_eg_gene	Lottia gigantea (Owl limpet) genes (Lotgi1)	Lotgi1	Lottia gigantea (Owl limpet)
+lhgca000217595v1rs_eg_gene	Linepithema humile (Argentine ant) genes (Lhum_UMD_V04)	Lhum_UMD_V04	Linepithema humile (Argentine ant)
+lloa_eg_gene	"Loa loa (Eye worm, Cameroon SouthWest Province isolate) genes (Loa_loa_V3)"	Loa_loa_V3	"Loa loa (Eye worm, Cameroon SouthWest Province isolate)"
+llongipalpis_eg_gene	"Lutzomyia longipalpis (Sand fly, Jacobina) genes (LlonJ1)"	LlonJ1	"Lutzomyia longipalpis (Sand fly, Jacobina)"
+lpgca000517525v1_eg_gene	Limulus polyphemus (Atlantic horseshoe crab) genes (Limulus_polyphemus_2.1.2)	Limulus_polyphemus_2.1.2	Limulus polyphemus (Atlantic horseshoe crab)
+lsalmonis_eg_gene	Lepeophtheirus salmonis (Salmon louse) genes (LSalAtl2s)	LSalAtl2s	Lepeophtheirus salmonis (Salmon louse)
+lsgca016086655v3rs_eg_gene	"Lepeophtheirus salmonis (Salmon louse, Lsal2020) genes (UVic_Lsal_1.0)"	UVic_Lsal_1.0	"Lepeophtheirus salmonis (Salmon louse, Lsal2020)"
+lvgca018143015v1_eg_gene	"Lytechinus variegatus (Green sea urchin, NC3) genes (Lvar_3.0)"	Lvar_3.0	"Lytechinus variegatus (Green sea urchin, NC3)"
+mcgca905220565v1_eg_gene	"Melitaea cinxia (Glanville fritillary, reference) genes (ilMelCinx1.1)"	ilMelCinx1.1	"Melitaea cinxia (Glanville fritillary, reference)"
+mcinxia_eg_gene	Melitaea cinxia (Glanville fritillary) genes (MelCinx1.0)	MelCinx1.0	Melitaea cinxia (Glanville fritillary)
+mdestructor_eg_gene	"Mayetiola destructor (Hessian fly, Kansas Great Plain) genes (Mdes_1.0)"	Mdes_1.0	"Mayetiola destructor (Hessian fly, Kansas Great Plain)"
+mdomestica_eg_gene	"Musca domestica (House fly, aabys) genes (MdomA1)"	MdomA1	"Musca domestica (House fly, aabys)"
+mleidyi_eg_gene	Mnemiopsis leidyi (Warty comb jelly) genes (MneLei_Aug2011)	MneLei_Aug2011	Mnemiopsis leidyi (Warty comb jelly)
+mmgca014805675v2_eg_gene	"Mercenaria mercenaria (Hard clam (quahog), YKG-2019) genes (ASM1480567v1.1)"	ASM1480567v1.1	"Mercenaria mercenaria (Hard clam (quahog), YKG-2019)"
+mpgca013373865v2_eg_gene	"Monomorium pharaonis (Pharaoh ant, MP-MQ-018) genes (ASM1337386v2)"	ASM1337386v2	"Monomorium pharaonis (Pharaoh ant, MP-MQ-018)"
+mrgca000220905v1rs_eg_gene	Megachile rotundata (Alfalfa leafcutting bee) genes (MROT_1.0)	MROT_1.0	Megachile rotundata (Alfalfa leafcutting bee)
+mscalaris_eg_gene	Megaselia scalaris (Coffin fly) genes (Msca1)	Msca1	Megaselia scalaris (Coffin fly)
+msgca014839805v1rs_eg_gene	"Manduca sexta (Tobacco hornworm, Smith_Timp_Sample1) genes (JHU_Msex_v1.0)"	JHU_Msex_v1.0	"Manduca sexta (Tobacco hornworm, Smith_Timp_Sample1)"
+mygca002113885v2_eg_gene	"Mizuhopecten yessoensis (Yesso scallop, PY_sf001) genes (ASM211388v2)"	ASM211388v2	"Mizuhopecten yessoensis (Yesso scallop, PY_sf001)"
+namericanus_eg_gene	"Necator americanus (New World hookworm, N. amaericanus Hunan isolate) genes (N_americanus_v1)"	N_americanus_v1	"Necator americanus (New World hookworm, N. amaericanus Hunan isolate)"
+nlgca014356525v1rs_eg_gene	"Nilaparvata lugens (Brown planthopper, BPH) genes (ASM1435652v1)"	ASM1435652v1	"Nilaparvata lugens (Brown planthopper, BPH)"
+nlgca021901455v1rs_eg_gene	"Neodiprion lecontei (Redheaded pine sawfly, iyNeoLeco1) genes (iyNeoLeco1.1)"	iyNeoLeco1.1	"Neodiprion lecontei (Redheaded pine sawfly, iyNeoLeco1)"
+npgca021155775v1rs_eg_gene	"Neodiprion pinetum (White pine sawfly, iyNeoPine1) genes (iyNeoPine1.1)"	iyNeoPine1.1	"Neodiprion pinetum (White pine sawfly, iyNeoPine1)"
+nvectensis_eg_gene	"Nematostella vectensis (Starlet sea anemone, CH2 x CH6) genes (ASM20922v1)"	ASM20922v1	"Nematostella vectensis (Starlet sea anemone, CH2 x CH6)"
+nvitripennis_eg_gene	"Nasonia vitripennis (Jewel wasp, AsymCx) genes (Nvit_psr_1.1)"	Nvit_psr_1.1	"Nasonia vitripennis (Jewel wasp, AsymCx)"
+oagca000612105v2_eg_gene	"Orussus abietinus (Parasitic wood wasp, OABI.00-Male) genes (Oabi_2.0)"	Oabi_2.0	"Orussus abietinus (Parasitic wood wasp, OABI.00-Male)"
+obgca001194135v1_eg_gene	"Octopus bimaculoides (Octopus, UCB-OBI-ISO-001) genes (Octopus_bimaculoides_v2_0)"	Octopus_bimaculoides_v2_0	"Octopus bimaculoides (Octopus, UCB-OBI-ISO-001)"
+obgca003672135v1_eg_gene	"Ooceraea biroi (Clonal raider ant, clonal line C1) genes (Obir_v5.4)"	Obir_v5.4	"Ooceraea biroi (Clonal raider ant, clonal line C1)"
+obimaculoides_eg_gene	Octopus bimaculoides (California two-spot octopus) genes (PRJNA270931)	PRJNA270931	Octopus bimaculoides (California two-spot octopus)
+ocincta_eg_gene	Orchesella cincta (Springtail) genes (ASM171814v1)	ASM171814v1	Orchesella cincta (Springtail)
+ofgca002042975v1_eg_gene	"Orbicella faveolata (Mountainous star coral, FL) genes (ofav_dov_v1)"	ofav_dov_v1	"Orbicella faveolata (Mountainous star coral, FL)"
+ofgca903813345v1_eg_gene	Owenia fusiformis (Segmented worms) genes (Owenia_assembly_annotated)	Owenia_assembly_annotated	Owenia fusiformis (Segmented worms)
+osgca006345805v1_eg_gene	Octopus sinensis (East Asian common octopus) genes (ASM634580v1)	ASM634580v1	Octopus sinensis (East Asian common octopus)
+otgca000648695v2_eg_gene	Onthophagus taurus (Dung beetle) genes (Otau_2.0)	Otau_2.0	Onthophagus taurus (Dung beetle)
+ovolvulus_eg_gene	"Onchocerca volvulus (Nematode, O. volvulus Cameroon isolate) genes (ASM49940v2)"	ASM49940v2	"Onchocerca volvulus (Nematode, O. volvulus Cameroon isolate)"
+pbgca000187915v1rs_eg_gene	Pogonomyrmex barbatus (Red harvester ant) genes (Pbar_UMD_V03)	Pbar_UMD_V03	Pogonomyrmex barbatus (Red harvester ant)
+pcgca000485595v2_eg_gene	Priapulus caudatus (Penis worm) genes (Priapulus_caudatus-5.0.1)	Priapulus_caudatus-5.0.1	Priapulus caudatus (Penis worm)
+pcgca001313835v1rs_eg_gene	"Polistes canadensis (Red paper wasp, GaletaPanama2010) genes (ASM131383v1)"	ASM131383v1	"Polistes canadensis (Red paper wasp, GaletaPanama2010)"
+pcgca003073045v1_eg_gene	"Pomacea canaliculata (Apple snail, SZHN2017) genes (ASM307304v1)"	ASM307304v1	"Pomacea canaliculata (Apple snail, SZHN2017)"
+pcgca019202785v2rs_eg_gene	Penaeus chinensis (Fleshy prawn) genes (ASM1920278v2)	ASM1920278v2	Penaeus chinensis (Fleshy prawn)
+pcgca020424385v2_eg_gene	"Procambarus clarkii (Red swamp crayfish, Jiangsu) genes (ASM2042438v2)"	ASM2042438v2	"Procambarus clarkii (Red swamp crayfish, Jiangsu)"
+pdgca001465965v1rs_eg_gene	"Polistes dominula (European paper wasp, PdomPennStateAug2009) genes (Pdom_r1.2)"	Pdom_r1.2	"Polistes dominula (European paper wasp, PdomPennStateAug2009)"
+pdgca003704095v1_eg_gene	"Pocillopora damicornis (Cauliflower coral, RSMAS) genes (ASM370409v1)"	ASM370409v1	"Pocillopora damicornis (Cauliflower coral, RSMAS)"
+pfgca010416935v1rs_eg_gene	"Polistes fuscatus (Common paper wasp, 324) genes (CU_Pfus_HIC)"	CU_Pfus_HIC	"Polistes fuscatus (Common paper wasp, 324)"
+pggca024362695v1rs_eg_gene	Pectinophora gossypiella (Pink bollworm) genes (ilPecGoss1.1)	ilPecGoss1.1	Pectinophora gossypiella (Pink bollworm)
+phumanus_eg_gene	"Pediculus humanus corporis (Human body louse, USDA) genes (PhumU2)"	PhumU2	"Pediculus humanus corporis (Human body louse, USDA)"
+pjgca017312705v1_eg_gene	"Penaeus japonicus (Kuruma shrimp, Ginoza2017) genes (Mj_TUMSAT_v1.0)"	Mj_TUMSAT_v1.0	"Penaeus japonicus (Kuruma shrimp, Ginoza2017)"
+plgca012934845v2gb_eg_gene	"Pomphorhynchus laevis (Thorny-headed worm, GPI110) genes (ASM1293484v2)"	ASM1293484v2	"Pomphorhynchus laevis (Thorny-headed worm, GPI110)"
+pmgca015228065v1_eg_gene	"Penaeus monodon (Black tiger shrimp, SGIC_2016) genes (NSTDA_Pmon_1)"	NSTDA_Pmon_1	"Penaeus monodon (Black tiger shrimp, SGIC_2016)"
+pmgca015706575v1_eg_gene	"Patiria miniata (Bat star starfish, m_02_andy) genes (Pmin_3.0)"	Pmin_3.0	"Patiria miniata (Bat star starfish, m_02_andy)"
+ppacificus_eg_gene	"Pristionchus pacificus (Nematode, PS312) genes (El_Paco)"	El_Paco	"Pristionchus pacificus (Nematode, PS312)"
+ppapatasi_eg_gene	"Phlebotomus papatasi (Sand fly, Israel) genes (PpapI1)"	PpapI1	"Phlebotomus papatasi (Sand fly, Israel)"
+ppgca011947565v2_eg_gene	"Pollicipes pollicipes (Goose neck barnacle, AB1234) genes (Ppol_2)"	Ppol_2	"Pollicipes pollicipes (Goose neck barnacle, AB1234)"
+ppgca918844115_eg_gene	"Phlebotomus perniciosus (Sand fly, Murcia) genes (pperniciosus_illum_n82538_165Mb)"	pperniciosus_illum_n82538_165Mb	"Phlebotomus perniciosus (Sand fly, Murcia)"
+ppgca918844115v2_eg_gene	Phlebotomus perniciosus (Murcia) genes (pperniciosus_asm_v2.0)	pperniciosus_asm_v2.0	Phlebotomus perniciosus (Murcia)
+ptgca000365465v3_eg_gene	"Parasteatoda tepidariorum (Common house spider, Goettingen) genes (Ptep_3.0)"	Ptep_3.0	"Parasteatoda tepidariorum (Common house spider, Goettingen)"
+ptgca017591435v1_eg_gene	"Portunus trituberculatus (Swimming crab, SZX2019) genes (ASM1759143v1)"	ASM1759143v1	"Portunus trituberculatus (Swimming crab, SZX2019)"
+pvgca003789085v1_eg_gene	Penaeus vannamei (Pacific white shrimp) genes (ASM378908v1)	ASM378908v1	Penaeus vannamei (Pacific white shrimp)
+rmgca003676215v3_eg_gene	"Rhopalosiphum maidis (Corn leaf aphid, BTI-1) genes (ASM367621v3)"	ASM367621v3	"Rhopalosiphum maidis (Corn leaf aphid, BTI-1)"
+rmgca013339725v1_eg_gene	"Rhipicephalus microplus (Southern cattle tick, Rmic-2018) genes (ASM1333972v1)"	ASM1333972v1	"Rhipicephalus microplus (Southern cattle tick, Rmic-2018)"
+rpgca013731165v1_eg_gene	"Rhagoletis pomonella (Apple magot fly, Grant_MI) genes (Rhpom_1.0)"	Rhpom_1.0	"Rhagoletis pomonella (Apple magot fly, Grant_MI)"
+rprolixus_eg_gene	"Rhodnius prolixus (Kissing bug, CDC) genes (RproC3)"	RproC3	"Rhodnius prolixus (Kissing bug, CDC)"
+rsgca013339695v1_eg_gene	"Rhipicephalus sanguineus (Brown dog tick, Rsan-2018) genes (ASM1333969v1)"	ASM1333969v1	"Rhipicephalus sanguineus (Brown dog tick, Rsan-2018)"
+sagca021461395v2rs_eg_gene	"Schistocerca americana (American grasshopper, TAMUIC-IGC-003095) genes (iqSchAmer2.1)"	iqSchAmer2.1	"Schistocerca americana (American grasshopper, TAMUIC-IGC-003095)"
+scalcitrans_eg_gene	"Stomoxys calcitrans (Stable fly, USDA) genes (ScalU1)"	ScalU1	"Stomoxys calcitrans (Stable fly, USDA)"
+sdgca010614865v2rs_eg_gene	"Stegodyphus dumicola (Social spider, AA2019) genes (ASM1061486v2)"	ASM1061486v2	"Stegodyphus dumicola (Social spider, AA2019)"
+sfgca003268045v1_eg_gene	"Sipha flava (Yellow sugarcane aphid, LNK) genes (YSA_version1)"	YSA_version1	"Sipha flava (Yellow sugarcane aphid, LNK)"
+shgca000699445v2rs_eg_gene	Schistosoma haematobium (Urinary blood fluke) genes (SchHae_2.0)	SchHae_2.0	Schistosoma haematobium (Urinary blood fluke)
+sinvicta_eg_gene	"Solenopsis invicta (Red fire ant, M01_SB) genes (UNIL_Sinv_3.0)"	UNIL_Sinv_3.0	"Solenopsis invicta (Red fire ant, M01_SB)"
+skgca000003605v1_eg_gene	Saccoglossus kowalevskii (Acorn worm) genes (Skow_1.1)	Skow_1.1	Saccoglossus kowalevskii (Acorn worm)
+smansoni_eg_gene	Schistosoma mansoni (Flatworm) genes (Smansoni_v7)	Smansoni_v7	Schistosoma mansoni (Flatworm)
+smaritima_eg_gene	Strigamia maritima (Soil centipede) genes (Smar1)	Smar1	Strigamia maritima (Soil centipede)
+smimosarum_eg_gene	Stegodyphus mimosarum (African social velvet spider) genes (Stegodyphus_mimosarum_v1)	Stegodyphus_mimosarum_v1	Stegodyphus mimosarum (African social velvet spider)
+sogca002938485v2rs_eg_gene	Sitophilus oryzae (Rice weevil) genes (Soryzae_2.0)	Soryzae_2.0	Sitophilus oryzae (Rice weevil)
+spgca002571385v1_eg_gene	"Stylophora pistillata (Hood coral, CSM Monaco) genes (Stylophora_pistillata_v1)"	Stylophora_pistillata_v1	"Stylophora pistillata (Hood coral, CSM Monaco)"
+spurpuratus_eg_gene	"Strongylocentrotus purpuratus (Purple sea urchin, Spur 01) genes (Spur_5.0)"	Spur_5.0	"Strongylocentrotus purpuratus (Purple sea urchin, Spur 01)"
+sratti_eg_gene	Strongyloides ratti (Threadworm) genes (S_ratti_ED321_v5_0_4)	S_ratti_ED321_v5_0_4	Strongyloides ratti (Threadworm)
+sscabiei_eg_gene	"Sarcoptes scabiei (Itch mite, SSS_KF_BRIS2020) genes (ASM1459567v1)"	ASM1459567v1	"Sarcoptes scabiei (Itch mite, SSS_KF_BRIS2020)"
+tadhaerens_eg_gene	"Trichoplax adhaerens (Placozoa, Grell-BS-1999) genes (ASM15027v1)"	ASM15027v1	"Trichoplax adhaerens (Placozoa, Grell-BS-1999)"
+tcastaneum_eg_gene	"Tribolium castaneum (Red flour beetle, Georgia GA2) genes (Tcas5.2)"	Tcas5.2	"Tribolium castaneum (Red flour beetle, Georgia GA2)"
+tcgca007210705_eg_gene	"Tigriopus californicus (Copepod, San Diego) genes (Tcal_SD_v2.1)"	Tcal_SD_v2.1	"Tigriopus californicus (Copepod, San Diego)"
+tdalmanni_eg_gene	"Teleopsis dalmanni (Malaysian stalk-eyed fly, 2A) genes (ASM223713v2)"	ASM223713v2	"Teleopsis dalmanni (Malaysian stalk-eyed fly, 2A)"
+tkitauei_eg_gene	Thelohanellus kitauei (Myxozoan endoparasite) genes (ASM82789v1)	ASM82789v1	Thelohanellus kitauei (Myxozoan endoparasite)
+tmuris_eg_gene	Trichuris muris (Nematode) genes (TMUE3.0)	TMUE3.0	Trichuris muris (Nematode)
+tpgca000599845v3_eg_gene	"Trichogramma pretiosum (Parasitoid wasp, Unisexual culture from Peru) genes (Tpre_2.0)"	Tpre_2.0	"Trichogramma pretiosum (Parasitoid wasp, Unisexual culture from Peru)"
+tpgca012932325v1rs_eg_gene	"Thrips palmi (Melon Thrips, BJ-2018) genes (TpBJ_2018v1)"	TpBJ_2018v1	"Thrips palmi (Melon Thrips, BJ-2018)"
+tspiralis_eg_gene	"Trichinella spiralis (Pork worm, ISS_195) genes (Tspiralis1)"	Tspiralis1	"Trichinella spiralis (Pork worm, ISS_195)"
+turticae_eg_gene	Tetranychus urticae (Two-spotted spider mite) genes (ASM23943v1)	ASM23943v1	Tetranychus urticae (Two-spotted spider mite)
+tvgca011764245_eg_gene	"Trialeurodes vaporariorum (Greenhouse whitefly, IVF) genes (ASM1176424v1)"	ASM1176424v1	"Trialeurodes vaporariorum (Greenhouse whitefly, IVF)"
+vcgca019457755v1rs_eg_gene	"Venturia canescens (Endoparasitoid wasp, UGA) genes (ASM1945775v1)"	ASM1945775v1	"Venturia canescens (Endoparasitoid wasp, UGA)"
+vdgca002443255_eg_gene	Varroa destructor (Honeybee mite) genes (Vdes_3.0)	Vdes_3.0	Varroa destructor (Honeybee mite)
+zcgca012273895v2rs_eg_gene	Zerene cesonia (Southern Dogface) genes (Zerene_cesonia_1.1)	Zerene_cesonia_1.1	Zerene cesonia (Southern Dogface)
+znevadensis_eg_gene	Zootermopsis nevadensis (Nevada dampwood termite) genes (ZooNev1.0)	ZooNev1.0	Zootermopsis nevadensis (Nevada dampwood termite)

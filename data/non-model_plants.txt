@@ -1,0 +1,119 @@
+Scientific_common_name	dataset	version	Classification	Taxon.ID	Assembly	Accession
+Actinidia chinensis	achinensis_eg_gene	Red5_PS1_1.69.0	eudicotyledons	1590841	Red5_PS1_1.69.0	GCA_003024255.1
+Aegilops tauschii	atauschii_eg_gene	Aet v4.0	Liliopsida	200361	Aet_v4.0	GCA_002575655.1
+Amborella trichopoda	atrichopoda_eg_gene	AMTR1.0	Amborellales	13333	AMTR1.0	GCA_000471905.1
+Ananas comosus	acomosus_eg_gene	F153	Liliopsida	4615	F153	GCA_902162155.1
+Arabidopsis halleri	ahalleri_eg_gene	Ahal2.2	eudicotyledons	63677	Ahal2.2	GCA_900078215.1
+Arabidopsis lyrata	alyrata_eg_gene	v.1.0	eudicotyledons	81972	v.1.0	GCA_000004255.1
+Arabidopsis thaliana	athaliana_eg_gene	TAIR10	eudicotyledons	3702	TAIR10	GCA_000001735.1
+Arabis alpina	aalpina_eg_gene	A_alpina_V4	eudicotyledons	50452	A_alpina_V4	GCA_000733195.1
+Asparagus officinalis	aofficinalis_eg_gene	Aspof.V1	Liliopsida	4686	Aspof.V1	GCA_001876935.1
+Beta vulgaris	bvulgaris_eg_gene	RefBeet-1.2.2	eudicotyledons	3555	RefBeet-1.2.2	GCA_000511025.2
+Brachypodium distachyon	bdistachyon_eg_gene	Brachypodium_distachyon_v3.0	Liliopsida	15368	Brachypodium_distachyon_v3.0	GCA_000005505.4
+Brassica napus	bnapus_eg_gene	AST_PRJEB5043_v1	eudicotyledons	3708	AST_PRJEB5043_v1	GCA_000751015.1
+Brassica oleracea	boleracea_eg_gene	BOL	eudicotyledons	109376	BOL	GCA_000695525.1
+Brassica rapa	brapa_eg_gene	Brapa_1.0	eudicotyledons	3711	Brapa_1.0	GCA_000309985.1
+Brassica rapa R-o-18	brro18_eg_gene	SCU_BraROA_2.3	eudicotyledons	1813537	SCU_BraROA_2.3	GCA_017639395.1
+Camelina sativa	csativa_eg_gene	Cs	eudicotyledons	90675	Cs	GCA_000633955.1
+Cannabis sativa female	csfemale_eg_gene	cs10	eudicotyledons	3483	cs10	GCA_900626175.1
+Capsicum annuum	cannuum_eg_gene	ASM51225v2	eudicotyledons	4072	ASM51225v2	GCA_000512255.2
+Chara braunii	cbraunii_eg_gene	Cbr_1.0	Streptophyta	69332	Cbr_1.0	GCA_003427395.1
+Chenopodium quinoa	cquinoa_eg_gene	ASM168347v1	eudicotyledons	63459	ASM168347v1	GCA_001683475.1
+Chlamydomonas reinhardtii	creinhardtii_eg_gene	Chlamydomonas_reinhardtii_v5.5	Chlorophyta	3055	Chlamydomonas_reinhardtii_v5.5	GCA_000002595.3
+Chondrus crispus	ccrispus_eg_gene	ASM35022v2	Rhodophyta	2769	ASM35022v2	GCA_000350225.2
+Citrullus lanatus	clanatus_eg_gene	Cla97_v1	eudicotyledons	3654	Cla97_v1	GCA_000238415.2
+Citrus clementina	cclementina_eg_gene	Citrus_clementina_v1.0	eudicotyledons	85681	Citrus_clementina_v1.0	GCA_000493195.1
+Coffea canephora	ccanephora_eg_gene	AUK_PRJEB4211_v1	eudicotyledons	49390	AUK_PRJEB4211_v1	GCA_900059795.1
+Corchorus capsularis	ccapsularis_eg_gene	CCACVL1_1.0	eudicotyledons	210143	CCACVL1_1.0	GCA_001974805.1
+Corylus avellana	cavellana_eg_gene	CavTom2PMs-1.0	eudicotyledons	13451	CavTom2PMs-1.0	GCA_901000735.2
+Cucumis melo	cmelo_eg_gene	Melonv4	eudicotyledons	3656	Melonv4	GCA_902497455.1
+Cucumis sativus	csativus_eg_gene	ASM407v2	eudicotyledons	3659	ASM407v2	GCA_000004075.2
+Cyanidioschyzon merolae	cmerolae_eg_gene	ASM9120v1	Rhodophyta	280699	ASM9120v1	GCA_000091205.1
+Cynara cardunculus	ccardunculus_eg_gene	CcrdV1	eudicotyledons	59895	CcrdV1	GCA_001531365.1
+Daucus carota	dcarota_eg_gene	ASM162521v1	eudicotyledons	79200	ASM162521v1	GCA_001625215.1
+Dioscorea rotundata	drotundata_eg_gene	TDr96_F1_v2_PseudoChromosome	Liliopsida	55577	TDr96_F1_v2_PseudoChromosome	GCA_009730915.1
+Eragrostis curvula	ecurvula_eg_gene	CERZOS_E.curvula1.0	Liliopsida	38414	CERZOS_E.curvula1.0	GCA_007726485.1
+Eragrostis tef	etef_eg_gene	ASM97063v1	Liliopsida	110835	Salk_teff_dabbi_3.0	GCA_024500355.1
+Eucalyptus grandis	egrandis_eg_gene	Egrandis1_0	eudicotyledons	71139	Egrandis1_0	GCA_000612305.1
+Eutrema salsugineum	esalsugineum_eg_gene	Eutsalg1_0	eudicotyledons	72664	Eutsalg1_0	GCA_000478725.1
+Ficus carica	fcarica_eg_gene	UNIPI_FiCari_1.0	eudicotyledons	3494	UNIPI_FiCari_1.0	GCA_009761775.1
+Galdieria sulphuraria	gsulphuraria_eg_gene	ASM34128v1	Rhodophyta	130081	ASM34128v1	GCA_000341285.1
+Glycine max	gmax_eg_gene	Glycine_max_v2.1	eudicotyledons	3847	Glycine_max_v2.1	GCA_000004515.4
+Gossypium raimondii	graimondii_eg_gene	Graimondii2_0_v6	eudicotyledons	29730	Graimondii2_0_v6	GCA_000327365.1
+Helianthus annuus	hannuus_eg_gene	HanXRQr2.0-SUNRISE	eudicotyledons	4232	HanXRQr2.0-SUNRISE	GCA_002127325.2
+Hordeum vulgare	hvulgare_eg_gene	MorexV3_pseudomolecules_assembly	Liliopsida	112509	MorexV3_pseudomolecules_assembly	GCA_904849725.1
+Hordeum vulgare GoldenPromise	hvgoldenpromise_eg_gene	GPv1	Liliopsida	112509	GPv1	GCA_902500625.1
+Hordeum vulgare TRITEX	hvtritex_eg_gene	Morex_V2_scaf	Liliopsida	112509	Morex_V2_scaf	GCA_903813605.1
+Ipomoea triloba	itriloba_eg_gene	ASM357664v1	eudicotyledons	35885	ASM357664v1	GCA_003576645.1
+Juglans regia	jregia_eg_gene	Walnut_2.0	eudicotyledons	51240	Walnut_2.0	GCA_001411555.2
+Kalanchoe fedtschenkoi	kfedtschenkoi_eg_gene	K_fedtschenkoi_M2_v1	eudicotyledons	63787	K_fedtschenkoi_M2_v1	GCA_002312845.1
+Lactuca sativa	lsativa_eg_gene	Lsat_Salinas_v7	eudicotyledons	4236	Lsat_Salinas_v7	GCA_002870075.2
+Leersia perrieri	lperrieri_eg_gene	Lperr_V1.4	Liliopsida	77586	Lperr_V1.4	GCA_000325765.3
+Lupinus angustifolius	langustifolius_eg_gene	LupAngTanjil_v1.0	eudicotyledons	3871	LupAngTanjil_v1.0	GCA_001865875.1
+Malus domestica Golden	mdgolden_eg_gene	ASM211411v1	eudicotyledons	3750	ASM211411v1	GCA_002114115.1
+Manihot esculenta	mesculenta_eg_gene	Manihot esculenta v6	eudicotyledons	3983	Manihot_esculenta_v6	GCA_001659605.1
+Marchantia polymorpha	mpolymorpha_eg_gene	Marchanta_polymorpha_v1	Embryophyta	3197	Marchanta_polymorpha_v1	GCA_003032435.1
+Medicago truncatula	mtruncatula_eg_gene	MedtrA17_4.0	eudicotyledons	3880	MedtrA17_4.0	GCA_000219495.2
+Musa acuminata	macuminata_eg_gene	Musa_acuminata_v2	Liliopsida	214687	Musa_acuminata_v2	GCA_904845865.1
+Nicotiana attenuata	nattenuata_eg_gene	NIATTr2	eudicotyledons	49451	NIATTr2	GCA_001879085.1
+Nymphaea colorata	ncolorata_eg_gene	ASM883128v1	Embryophyta	210225	ASM883128v1	GCA_008831285.1
+Olea europaea	oeuropaea_eg_gene	OLEA9	eudicotyledons	158383	OLEA9	GCA_902713445.1
+Olea europaea var. sylvestris	oesylvestris_eg_gene	O_europaea_v1	eudicotyledons	158386	O_europaea_v1	GCA_002742605.1
+Oryza barthii	obarthii_eg_gene	O.barthii_v1	Liliopsida	65489	O.barthii_v1	GCA_000182155.2
+Oryza brachyantha	obrachyantha_eg_gene	Oryza_brachyantha.v1.4b	Liliopsida	4533	Oryza_brachyantha.v1.4b	GCA_000231095.2
+Oryza glaberrima	oglaberrima_eg_gene	Oryza_glaberrima_V1	Liliopsida	4538	Oryza_glaberrima_V1	GCA_000147395.1
+Oryza glumipatula	oglumipatula_eg_gene	Oryza_glumaepatula_v1.5	Liliopsida	40148	Oryza_glumaepatula_v1.5	GCA_000576495.1
+Oryza longistaminata	olongistaminata_eg_gene	O_longistaminata_v1.0	Liliopsida	4528	O_longistaminata_v1.0	GCA_000789195.1
+Oryza meridionalis	omeridionalis_eg_gene	Oryza_meridionalis_v1.3	Liliopsida	40149	Oryza_meridionalis_v1.3	GCA_000338895.2
+Oryza nivara	onivara_eg_gene	Oryza_nivara_v1.0	Liliopsida	4536	Oryza_nivara_v1.0	GCA_000576065.1
+Oryza punctata	opunctata_eg_gene	Oryza_punctata_v1.2	Liliopsida	4537	Oryza_punctata_v1.2	GCA_000573905.1
+Oryza rufipogon	orufipogon_eg_gene	OR_W1943	Liliopsida	4529	OR_W1943	GCA_000817225.1
+Oryza sativa Indica Group	oindica_eg_gene	ASM465v1	Liliopsida	39946	ASM465v1	GCA_000004655.2
+Oryza sativa Japonica Group	osativa_eg_gene	IRGSP-1.0	Liliopsida	39947	IRGSP-1.0	GCA_001433935.1
+Ostreococcus lucimarinus	olucimarinus_eg_gene	ASM9206v1	Chlorophyta	436017	ASM9206v1	GCA_000092065.1
+Panicum hallii FIL2	phfil2_eg_gene	PHallii_v3.1	Liliopsida	206008	PHallii_v3.1	GCA_002211085.2
+Panicum hallii HAL2	phallii_eg_gene	PhalliiHAL_v2.1	Liliopsida	1504633	PhalliiHAL_v2.1	GCA_003061485.1
+Papaver somniferum	psomniferum_eg_gene	ASM357369v1	Embryophyta	3469	ASM357369v1	GCA_003573695.1
+Phaseolus vulgaris	pvulgaris_eg_gene	PhaVulg1_0	eudicotyledons	3885	PhaVulg1_0	GCA_000499845.1
+Physcomitrium patens	ppatens_eg_gene	Phypa V3	Embryophyta	3218	Phypa_V3	GCA_000002425.2
+Pistacia vera	pvera_eg_gene	PisVer_v2	eudicotyledons	55513	PisVer_v2	GCA_008641045.1
+Populus trichocarpa	ptrichocarpa_eg_gene	Pop_tri_v3	eudicotyledons	3694	Pop_tri_v4	GCA_000002775.4
+Prunus avium	pavium_eg_gene	PAV_r1.0	eudicotyledons	42229	PAV_r1.0	GCA_002207925.1
+Prunus dulcis	pdulcis_eg_gene	ALMONDv2	eudicotyledons	3755	ALMONDv2	GCA_902201215.1
+Prunus persica	ppersica_eg_gene	Prunus_persica_NCBIv2	eudicotyledons	3760	Prunus_persica_NCBIv2	GCA_000346465.2
+Quercus lobata	qlobata_eg_gene	ValleyOak3.0	eudicotyledons	97700	ValleyOak3.0	GCA_001633185.2
+Rosa chinensis	rchinensis_eg_gene	RchiOBHm-V2	eudicotyledons	74649	RchiOBHm-V2	GCA_002994745.2
+Saccharum spontaneum	sspontaneum_eg_gene	Sspon.HiC_chr_asm	Liliopsida	62335	Sspon.HiC_chr_asm	GCA_003544955.1
+Selaginella moellendorffii	smoellendorffii_eg_gene	v1.0	Embryophyta	88036	v1.0	GCA_000143415.1
+Sesamum indicum	sindicum_eg_gene	S_indicum_v1.0	eudicotyledons	4182	S_indicum_v1.0	GCA_000512975.1
+Setaria italica	sitalica_eg_gene	Setaria_italica_v2.0	Liliopsida	4555	Setaria_italica_v2.0	GCA_000263155.2
+Setaria viridis	sviridis_eg_gene	Setaria_viridis_v2.0	Liliopsida	4556	Setaria_viridis_v2.0	GCA_005286985.1
+Solanum lycopersicum	slycopersicum_eg_gene	SL3.0	eudicotyledons	4081	SL3.0	GCA_000188115.3
+Solanum tuberosum	stuberosum_eg_gene	SolTub_3.0	eudicotyledons	4113	SolTub_3.0	GCA_000226075.1
+Sorghum bicolor	sbicolor_eg_gene	Sorghum_bicolor_NCBIv3	Liliopsida	4558	Sorghum_bicolor_NCBIv3	GCA_000003195.3
+Theobroma cacao Belizian Criollo B97-61/B2	tccriollo_eg_gene	Criollo_cocoa_genome_V2	eudicotyledons	3641	Criollo_cocoa_genome_V2	GCA_000208745.2
+Theobroma cacao Matina 1-6	tcacao_eg_gene	Theobroma_cacao_20110822	eudicotyledons	3641	Theobroma_cacao_20110822	GCA_000403535.1
+Trifolium pratense	tpratense_eg_gene	Trpr	eudicotyledons	57577	Trpr	GCA_900079335.1
+Triticum aestivum	taestivum_eg_gene	IWGSC	Liliopsida	4565	IWGSC	GCA_900519105.1
+Triticum aestivum Arinalrfor	taarinalrfor_eg_gene	PGSBv2.0_Arinalrfor	Liliopsida	4565	PGSBv2.1	GCA_903993985.1
+Triticum aestivum Cadenza	tacadenza_eg_gene	TGAC_cadenza	Liliopsida	4565	EIv1.1	GCA_902810645.1
+Triticum aestivum Claire	taclaire_eg_gene	TGAC_paragon	Liliopsida	4565	EIv1.1	GCA_902810655.1
+Triticum aestivum Jagger	tajagger_eg_gene	PGSBv2.0_Jagger	Liliopsida	4565	PGSBv2.1	GCA_903993795.1
+Triticum aestivum Julius	tajulius_eg_gene	PGSBv2.0_Julius	Liliopsida	4565	PGSBv2.1	GCA_903994195.1
+Triticum aestivum Lancer	talancer_eg_gene	PGSBv2.0_Lancer	Liliopsida	4565	PGSBv2.1	GCA_903993975.1
+Triticum aestivum Landmark	talandmark_eg_gene	PGSBv2.0_Landmark	Liliopsida	4565	PGSBv2.1	GCA_903995565.1
+Triticum aestivum Mace	tamace_eg_gene	PGSBv2.0_Mace	Liliopsida	4565	PGSBv2.1	GCA_903994175.1
+Triticum aestivum Norin61	tanorin61_eg_gene	PGSBv2.0_Norin61	Liliopsida	4565	PGSBv2.1	GCA_904066035.1
+Triticum aestivum Paragon	taparagon_eg_gene	EI_paragon	Liliopsida	4565	EIv1.1	GCA_902810665.1
+Triticum aestivum Robigus	tarobigus_eg_gene	TGAC_robigus	Liliopsida	4565	EIv1.1	GCA_902810685.1
+Triticum aestivum Stanley	tastanley_eg_gene	PGSBv2.2_Stanley	Liliopsida	4565	PGSBv2.2	GCA_903994155.1
+Triticum aestivum Sy Mattis	tamattis_eg_gene	PGSBv2.0_Mattis	Liliopsida	4565	PGSBv2.1	GCA_903994185.1
+Triticum aestivum Weebill	taweebil_eg_gene	EI_WeebilV1	Liliopsida	4565	WeebilV1	GCA_902810675.1
+Triticum dicoccoides	tdicoccoides_eg_gene	WEWSeq v.1.0	Liliopsida	85692	WEWSeq_v.1.0	GCA_002162155.1
+Triticum spelta	tspelta_eg_gene	PGSBv2.0_Spelta	Liliopsida	58933	PGSBv2.0	GCA_903994165.1
+Triticum turgidum	tturgidum_eg_gene	svevo	Liliopsida	4567	Svevo.v1	GCA_900231445.1
+Triticum urartu	turartu_eg_gene	ASM34745v1	Liliopsida	4572	IGDB	GCA_003073215.1
+Vigna angularis	vangularis_eg_gene	Vigan1.1	eudicotyledons	3914	Vigan1.1	GCA_001190045.1
+Vigna radiata	vradiata_eg_gene	Vradiata_ver6	eudicotyledons	3916	Vradiata_ver6	GCA_000741045.2
+Vitis vinifera	vvinifera_eg_gene	12X	eudicotyledons	29760	PN40024.v4	GCA_910591555.1
+Zea mays	zmays_eg_gene	Zm-B73-REFERENCE-NAM-5.0	Liliopsida	4577	Zm-B73-REFERENCE-NAM-5.0	GCA_902167145.1

@@ -144,10 +144,7 @@ shinyUI(
                                   'EBSeq'="EBSeq",
                                   'edgeR'="edgeR"
                                 ),selected = "DESeq2"),
-                   conditionalPanel(condition="input.DEG_method=='DESeq2'",
-                                    selectInput("FDR_method", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")
-                   ),
-                   conditionalPanel(condition="input.DEG_method=='edgeR'",
+                   conditionalPanel(condition=c("input.DEG_method=='DESeq2' || input.DEG_method=='edgeR'"),
                                     selectInput("FDR_method", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")
                    ),
                    conditionalPanel(condition="input.DEG_method=='edgeR'"),

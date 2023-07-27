@@ -69,8 +69,6 @@ RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('org.Mmu.eg.db', update = F)" && \
     R -e "BiocManager::install('org.Pt.eg.db', update = F)" && \
     R -e "BiocManager::install('org.Sc.sgd.db', update = F)" && \
-    R -e "BiocManager::install('org.Ss.eg.db', update = F)" && \
-    R -e "BiocManager::install('AnnotationHub', update = F)" && \
     R -e "BiocManager::install('org.At.tair.db', update = F)" && \
     R -e "BiocManager::install('colorspace', update = F)" && \
     R -e "BiocManager::install('magick', update = F)" && \

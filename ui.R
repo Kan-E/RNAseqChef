@@ -43,11 +43,11 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.0.7, 2023/7/14~15)"),
-                        "(2023/7/19) Bug fix. Adjust the import of Excel files whose column names include hyphens.",br(),
-                        "Add new functions for non-model organisms.",br(),
-                        "Add new functions to the '3 conditions DEG' and 'Normalized count analysis'.",br(),
-                        "Fixed bug regarding the import of excel files (7/15).",br(),
+                        h4("Current version (v1.0.8, 2023/8/1)"),
+                        p("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
+                          Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected).", style = "color:red"),
+                        "Add new species (117 plants, 70 fungi, and 251 metazoa).",br(),
+                        "Improve the image to provide instructions on the input format for the Venn diagram.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, (2023), 299(6), 104810.", 
@@ -147,7 +147,6 @@ shinyUI(
                    conditionalPanel(condition=c("input.DEG_method=='DESeq2' || input.DEG_method=='edgeR'"),
                                     selectInput("FDR_method", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")
                    ),
-                   conditionalPanel(condition="input.DEG_method=='edgeR'"),
                    fluidRow(
                      column(6, selectInput("Species", "Species", species_list, selected = "not selected")),
                      conditionalPanel(condition=c("input.Species != 'not selected' && input.Species != 'Homo sapiens' &&
@@ -1019,7 +1018,7 @@ shinyUI(
                              content= paste("The first column is", strong("gene name"), ".<br>", 
                              "The second and subsequent columns do not affect the analysis.<br>", 
                              "The maximum number of uploads is",strong("7 files"), ".<br><br>", 
-                             img(src="venn_input.png", width = 100,height = 300)),
+                             img(src="venn_input.png", width = 400,height = 300)),
                              placement = "right",options = list(container = "body")),
                    h4("Input for integrated heatmap"),
                    fileInput(
@@ -1237,7 +1236,7 @@ shinyUI(
                              width = "80%"),
                    h4("Filter option 2:"),
                    fluidRow(
-                     column(4, numericInput("fc3", "Fold Change", min   = 1, max   = NA, value = 2)),
+                     column(4, numericInput("fc3", "Fold Change", min   = 1, max   = NA, value = 1)),
                      column(4, numericInput("basemean3", "Basemean", min   = 0, max   = NA, value = 0),
                      )
                    ),
@@ -1823,6 +1822,13 @@ shinyUI(
                                    strong("・Add the functions for log2FoldChange cut-off and statistical analysis in the 'Normalized count analysis'."),br(),
                                    strong("・Bug fix. Pathway analysis of non-model organism."),br(),
                                    strong("(2023/7/19) Bug fix. Adjust the import of Excel files whose column names include hyphens."),br(),
+                                   h4("v1.0.8 (2023/8/1)"),
+                                   strong("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
+                                          Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected). In the previous versions, 'BH' was always used as the FDR control method when EdgeR was used, even if 'Qvalue' and 'IHW' were selected."),br(),
+                                   strong("Add new species (117 plants, 70 fungi, and 251 metazoa)."),br(),
+                                   strong("(Docker version (ARM)): fix bug regarding edgeR in pair-wise DEG."),br(),
+                                   strong("Improve the image to provide instructions on the input format for the Venn diagram."),br(),
+                                   img(src="venn_input.png", width = 400,height = 300),br(),
                             )
                           )
                  )

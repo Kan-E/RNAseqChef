@@ -1,5 +1,5 @@
 ---
-title: "3 conditions DEG with RNAseqChef v1.0.6"
+title: "3 conditions DEG with RNAseqChef v1.0.8"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -46,6 +46,13 @@ if(params$input$data_file_type2 == "Row4" && !is.null(params$input$file6)) {
  **EBSeq**
  - Species: 
  **`r params$input$Species2`**
+```{r echo = FALSE, results='asis'}
+if(sum(is.element(no_orgDb, params$input$Species2)) == 1){
+  try(cat(paste0("\nOrtholog: **", params$input$Ortholog2,"**\n\n")))
+  try(cat(paste0("Host: **", params$input$Biomart_archive2,"**\n\n")))
+}
+```
+
  - Cut-off condition: 
  FoldChange = **`r params$input$fc2`**, FDR = **`r params$input$fdr2`**, 
  Basemean = **`r params$input$basemean2`**

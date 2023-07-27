@@ -1,5 +1,5 @@
 ---
-title: "Pair-wise DEG with RNAseqChef v1.0.6"
+title: "Pair-wise DEG with RNAseqChef v1.0.8"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -51,6 +51,13 @@ if(params$input$data_file_type == "Row2" && !is.null(params$input$file2)) {
  **`r params$input$FDR_method`**
  - Species: 
  **`r params$input$Species`**
+```{r echo = FALSE, results='asis'}
+if(sum(is.element(no_orgDb, params$input$Species)) == 1){
+  try(cat(paste0("\nOrtholog: **", params$input$Ortholog,"**\n\n")))
+  try(cat(paste0("Host: **", params$input$Biomart_archive,"**\n\n")))
+}
+```
+
  - Cut-off condition: 
  FoldChange = **`r params$input$fc`**, FDR = **`r params$input$fdr`**, 
  Basemean = **`r params$input$basemean`**

@@ -1,5 +1,5 @@
 ---
-title: "Multi DEG with RNAseqChef v1.0.6"
+title: "Multi DEG with RNAseqChef v1.0.8"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -59,6 +59,13 @@ for(i in 1:length(label)){
  **`r params$input$FDR_method6`**
  - Species: 
  **`r params$input$Species6`**
+```{r echo = FALSE, results='asis'}
+if(sum(is.element(no_orgDb, params$input$Species6)) == 1){
+  try(cat(paste0("\nOrtholog: **", params$input$Ortholog6,"**\n\n")))
+  try(cat(paste0("Host: **", params$input$Biomart_archive6,"**\n\n")))
+}
+```
+
  - Cut-off condition: 
  FoldChange = **`r params$input$fc6`**, FDR = **`r params$input$fdr6`**, 
  Basemean = **`r params$input$basemean6`**

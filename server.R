@@ -2,6 +2,183 @@ popoverTempate <-
   '<div class="popover popover-lg" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
 shinyServer(function(input, output, session) {
   options(shiny.maxRequestSize=3000*1024^2)
+  
+  
+  observeEvent(input$Species,({
+    if(sum(is.element(no_orgDb_plants,input$Species)) == 1){
+      updateSelectInput(session,inputId = "Ortholog", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species)) == 1){
+      updateSelectInput(session,inputId = "Ortholog", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species)) == 1){
+      updateSelectInput(session,inputId = "Ortholog", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species)) == 1){
+      updateSelectInput(session,inputId = "Ortholog", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species2,({
+    if(sum(is.element(no_orgDb_plants,input$Species2)) == 1){
+      updateSelectInput(session,inputId = "Ortholog2", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive2", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species2)) == 1){
+      updateSelectInput(session,inputId = "Ortholog2", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive2", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species2)) == 1){
+      updateSelectInput(session,inputId = "Ortholog2", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive2", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species2)) == 1){
+      updateSelectInput(session,inputId = "Ortholog2", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive2", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species3,({
+    if(sum(is.element(no_orgDb_plants,input$Species3)) == 1){
+      updateSelectInput(session,inputId = "Ortholog3", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive3", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species3)) == 1){
+      updateSelectInput(session,inputId = "Ortholog3", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive3", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species3)) == 1){
+      updateSelectInput(session,inputId = "Ortholog3", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive3", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species3)) == 1){
+      updateSelectInput(session,inputId = "Ortholog3", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive3", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species4,({
+    if(sum(is.element(no_orgDb_plants,input$Species4)) == 1){
+      updateSelectInput(session,inputId = "Ortholog4", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive4", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species4)) == 1){
+      updateSelectInput(session,inputId = "Ortholog4", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive4", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species4)) == 1){
+      updateSelectInput(session,inputId = "Ortholog4", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive4", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species4)) == 1){
+      updateSelectInput(session,inputId = "Ortholog4", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive4", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species5,({
+    if(sum(is.element(no_orgDb_plants,input$Species5)) == 1){
+      updateSelectInput(session,inputId = "Ortholog5", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive5", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species5)) == 1){
+      updateSelectInput(session,inputId = "Ortholog5", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive5", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species5)) == 1){
+      updateSelectInput(session,inputId = "Ortholog5", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive5", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species5)) == 1){
+      updateSelectInput(session,inputId = "Ortholog5", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive5", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species6,({
+    if(sum(is.element(no_orgDb_plants,input$Species6)) == 1){
+      updateSelectInput(session,inputId = "Ortholog6", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive6", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species6)) == 1){
+      updateSelectInput(session,inputId = "Ortholog6", 
+                        "Ortholog6",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive6", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species6)) == 1){
+      updateSelectInput(session,inputId = "Ortholog6", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive6", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species6)) == 1){
+      updateSelectInput(session,inputId = "Ortholog6", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive6", "Biomart host", ensembl_archive)
+    }
+  }))
+  observeEvent(input$Species7,({
+    if(sum(is.element(no_orgDb_plants,input$Species7)) == 1){
+      updateSelectInput(session,inputId = "Ortholog7", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive7", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species7)) == 1){
+      updateSelectInput(session,inputId = "Ortholog7", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive7", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species7)) == 1){
+      updateSelectInput(session,inputId = "Ortholog7", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive7", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species7)) == 1){
+      updateSelectInput(session,inputId = "Ortholog7", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive7", "Biomart host", ensembl_archive)
+    }
+  }))
   # pair-wise ------------------------------------------------------------------------------
   org1 <- reactive({
     return(org(Species = input$Species,Ortholog = input$Ortholog))
@@ -10,7 +187,7 @@ shinyServer(function(input, output, session) {
     return(no_org_ID(count = row_count_matrix(),Species = input$Species,Ortholog = input$Ortholog,Biomart_archive=input$Biomart_archive))
   })
   org_code1 <- reactive({
-    return(org_code(Species = input$Species))
+    return(org_code(Species = input$Species, Ortholog= input$Ortholog))
   })
   gene_type1 <- reactive({
     return(gene_type(my.symbols=rownames(row_count_matrix()),org=org1(),Species=input$Species))
@@ -155,9 +332,13 @@ shinyServer(function(input, output, session) {
         res <- as.data.frame(topTags(result, n = nrow(count)))
         qvalue <- qvalue::qvalue(res$PValue)
         res$padj <- qvalue$qvalues
-        ihw_res <- ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1)
+        ihw_res <- try(ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
+          if(class(ihw_res) == "try-error"){
+            res$ihw_padj <- NA
+        }else{
         ihw_res_df <- IHW::as.data.frame(ihw_res)
         res$ihw_padj <- ihw_res_df$adj_pvalue
+        }
         if(input$FDR_method == "BH"){label <- c("log2FoldChange", "log2CPM", "PValue","padj", "Qvalue", "IHW_FDR")}
         if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
         if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}
@@ -1111,34 +1292,34 @@ shinyServer(function(input, output, session) {
   })
   
   enrichment_enricher <- reactive({
-    if((input$Species == "Xenopus laevis" || input$Species == "Arabidopsis thaliana") && 
+    if((input$Species == "Xenopus laevis" || input$Ortholog == "Arabidopsis thaliana" || input$Species == "Arabidopsis thaliana") && 
        is.null(input$Gene_set)){
       return(NULL)
     }else{
       data3 <- data_degcount2()
       if(!is.null(input$Gene_set) && input$Species != "not selected" && !is.null(data3)){
         withProgress(message = "enrichment analysis",{
-          if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
+          if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
             H_t2g <- Hallmark_set()
             H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
             em_up <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
             em_down <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
           }else{
             if(input$Gene_set == "KEGG"){
-              em_up <- try(enrichKEGG(dplyr::filter(data3, group == "Up")$ENTREZID, organism = org_code(input$Species), pvalueCutoff = 0.05,keyType = "ncbi-geneid")) 
-              em_down <- try(enrichKEGG(dplyr::filter(data3, group == "Down")$ENTREZID, organism = org_code(input$Species), pvalueCutoff = 0.05,keyType = "ncbi-geneid"))
+              em_up <- try(enrichKEGG(dplyr::filter(data3, group == "Up")$ENTREZID, organism = org_code(input$Species, Ortholog= input$Ortholog), pvalueCutoff = 0.05,keyType = "ncbi-geneid")) 
+              em_down <- try(enrichKEGG(dplyr::filter(data3, group == "Down")$ENTREZID, organism = org_code(input$Species, Ortholog= input$Ortholog), pvalueCutoff = 0.05,keyType = "ncbi-geneid"))
             }
             if(input$Gene_set == "GO biological process"){
-              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb = org(input$Species), ont = "BP",pvalueCutoff = 0.05)) 
-              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID, OrgDb = org(input$Species), ont = "BP",pvalueCutoff = 0.05))
+              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb = org(input$Species, Ortholog= input$Ortholog), ont = "BP",pvalueCutoff = 0.05)) 
+              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID, OrgDb = org(input$Species, Ortholog= input$Ortholog), ont = "BP",pvalueCutoff = 0.05))
             }
             if(input$Gene_set == "GO cellular component"){
-              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb= org(input$Species), ont = "CC",pvalueCutoff = 0.05)) 
-              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID,OrgDb= org(input$Species), ont = "CC",pvalueCutoff = 0.05))
+              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb= org(input$Species, Ortholog= input$Ortholog), ont = "CC",pvalueCutoff = 0.05)) 
+              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID,OrgDb= org(input$Species, Ortholog= input$Ortholog), ont = "CC",pvalueCutoff = 0.05))
             }
             if(input$Gene_set == "GO molecular function"){
-              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb = org(input$Species), ont = "MF",pvalueCutoff = 0.05)) 
-              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID, OrgDb = org(input$Species), ont = "MF",pvalueCutoff = 0.05))
+              em_up <- try(enrichGO(dplyr::filter(data3, group == "Up")$ENTREZID, OrgDb = org(input$Species, Ortholog= input$Ortholog), ont = "MF",pvalueCutoff = 0.05)) 
+              em_down <- try(enrichGO(dplyr::filter(data3, group == "Down")$ENTREZID, OrgDb = org(input$Species, Ortholog= input$Ortholog), ont = "MF",pvalueCutoff = 0.05))
             }
           }
           df <- list()
@@ -1163,7 +1344,7 @@ shinyServer(function(input, output, session) {
   })
   
   enrichment_1_gsea <- reactive({
-    if((input$Species == "Xenopus laevis" || input$Species == "Arabidopsis thaliana") && 
+    if((input$Species == "Xenopus laevis" || input$Ortholog == "Arabidopsis thaliana" || input$Species == "Arabidopsis thaliana") && 
        (input$Gene_set != "KEGG" && 
         input$Gene_set != "GO biological process" && 
         input$Gene_set != "GO cellular component" && 
@@ -1180,26 +1361,26 @@ shinyServer(function(input, output, session) {
         names(geneList) = as.character(data$ENTREZID)
         geneList <- sort(geneList, decreasing = TRUE)
         withProgress(message = "GSEA",{
-          if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
+          if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
             H_t2g <- Hallmark_set()
             H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
             em3 <- try(GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                         minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
           }else{
             if(input$Gene_set == "KEGG"){
-              em3 <- try(gseKEGG(geneList, organism = org_code(input$Species),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseKEGG(geneList, organism = org_code(input$Species, Ortholog= input$Ortholog),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                              minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F,keyType = "ncbi-geneid"))
             }
             if(input$Gene_set == "GO biological process"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species),ont = "BP",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species, Ortholog= input$Ortholog),ont = "BP",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
             if(input$Gene_set == "GO cellular component"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species),ont = "CC",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species, Ortholog= input$Ortholog),ont = "CC",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
             if(input$Gene_set == "GO molecular function"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species),ont = "MF",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species, Ortholog= input$Ortholog),ont = "MF",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
           }
@@ -1348,7 +1529,7 @@ shinyServer(function(input, output, session) {
   )
   
   output$Gene_set <- renderUI({
-    if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
+    if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
       selectInput('Gene_set', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set', 'Gene Set', c("KEGG", "GO biological process", 
                                                 "GO cellular component","GO molecular function"))
@@ -1357,7 +1538,7 @@ shinyServer(function(input, output, session) {
   
   pair_enrich_table <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
-    if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
+    if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrichment_1_1()), H_t2g = Hallmark_set(), Gene_set = input$Gene_set))
     }else return(as.data.frame(enrichment_1_1()))
     }
@@ -1370,7 +1551,7 @@ shinyServer(function(input, output, session) {
   pair_gsea_table <- reactive({
     if(!is.null(input$Gene_set) && input$Species != "not selected"){
     data <- as.data.frame(enrichment_1_gsea())
-    if(input$Species != "Xenopus laevis" && input$Species != "Arabidopsis thaliana"){
+    if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
       H_t2g <- Hallmark_set()
       if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
         return(NULL)
@@ -1508,10 +1689,8 @@ shinyServer(function(input, output, session) {
           qvalue <- qvalue::qvalue(res$PValue)
           res$padj <- qvalue$qvalues
           ihw_res <- try(ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
-          if(length(class(ihw_res)) == 1){
             if(class(ihw_res) == "try-error"){
               res$ihw_padj <- NA
-            }
           }else{
           ihw_res_df <- IHW::as.data.frame(ihw_res)
           res$ihw_padj <- ihw_res_df$adj_pvalue
@@ -2017,7 +2196,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(multi_row_count_matrix()),org=org6(),Species=input$Species6))
   })
   org_code6 <- reactive({
-    return(org_code(Species = input$Species6))
+    return(org_code(Species = input$Species6, Ortholog= input$Ortholog6))
   })
   
   multi_row_count_matrix <- reactive({
@@ -3045,7 +3224,7 @@ shinyServer(function(input, output, session) {
   })
   
   multi_enrichment_1_gsea <- reactive({
-    if((input$Species6 == "Xenopus laevis" || input$Species6 == "Arabidopsis thaliana") && 
+    if((input$Species6 == "Xenopus laevis" || input$Ortholog6 == "Arabidopsis thaliana" || input$Species6 == "Arabidopsis thaliana") && 
        (input$Gene_set6 != "KEGG" && 
         input$Gene_set6 != "GO biological process" && 
         input$Gene_set6 != "GO cellular component" && 
@@ -3060,26 +3239,26 @@ shinyServer(function(input, output, session) {
         names(geneList) = as.character(data$ENTREZID)
         geneList <- sort(geneList, decreasing = TRUE)
         withProgress(message = "GSEA",{
-          if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+          if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
             H_t2g <- multi_Hallmark_set()
             H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
             em3 <- try(GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                         minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
           }else{
             if(input$Gene_set6 == "KEGG"){
-              em3 <- try(gseKEGG(geneList, organism = org_code(input$Species6),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseKEGG(geneList, organism = org_code(input$Species6, Ortholog= input$Ortholog6),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                              minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F,keyType = "ncbi-geneid"))
             }
             if(input$Gene_set6 == "GO biological process"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6),ont = "BP",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6, Ortholog= input$Ortholog6),ont = "BP",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
             if(input$Gene_set6 == "GO cellular component"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6),ont = "CC",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6, Ortholog= input$Ortholog6),ont = "CC",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
             if(input$Gene_set6 == "GO molecular function"){
-              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6),ont = "MF",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+              em3 <- try(gseGO(geneList, OrgDb = org(input$Species6, Ortholog= input$Ortholog6),ont = "MF",pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                            minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
             }
           }
@@ -3123,7 +3302,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$Gene_set6 <- renderUI({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       selectInput('Gene_set6', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set6', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
@@ -3133,7 +3312,7 @@ shinyServer(function(input, output, session) {
     if(is.null(dds) || length(input$selectEnrich_pair) != 2){
       return(NULL)
     }else{
-    if((input$Species6 == "Xenopus laevis" || input$Species6 == "Arabidopsis thaliana") && 
+    if((input$Species6 == "Xenopus laevis" || input$Ortholog6 == "Arabidopsis thaliana" || input$Species6 == "Arabidopsis thaliana") && 
        (input$Gene_set6 != "KEGG" && 
         input$Gene_set6 != "GO biological process" && 
         input$Gene_set6 != "GO cellular component" && 
@@ -3141,7 +3320,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       data <- as.data.frame(multi_enrichment_1_gsea())
-      if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+      if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
         H_t2g <- multi_Hallmark_set()
         if(length(as.data.frame(data)$Description) == 0 || is.null(H_t2g)){
           return(NULL)
@@ -3220,14 +3399,14 @@ shinyServer(function(input, output, session) {
   
   
   output$Gene_set7 <- renderUI({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       selectInput('Gene_set7', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set7', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
   })
   
   output$Gene_set8 <- renderUI({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       selectInput('Gene_set8', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set8', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
@@ -3314,7 +3493,7 @@ shinyServer(function(input, output, session) {
   })
   
   multi_enrich_viewer2 <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_viewer_forMulti2(gene_type=gene_type6(),df = multi_enrich_input1(), Species = input$Species6,Ortholog = ortholog6(), org = org6(),
                                      org_code = org_code6(),H_t2g = multi_Hallmark_set2(),Gene_set = input$Gene_set7))
     }else return(enrich_viewer_forMulti2_xenopus(gene_type=gene_type6(),df = multi_enrich_input1(), Species = input$Species6, org = org6(),
@@ -3322,14 +3501,14 @@ shinyServer(function(input, output, session) {
   })
   
   multi_enrich_viewer12 <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_viewer_forMulti2(gene_type=gene_type6(),df = multi_enrich_input2(), Species = input$Species6,Ortholog = ortholog6(), org = org6(),
                                      org_code = org_code6(),H_t2g = multi_Hallmark_set3(),Gene_set = input$Gene_set8))
     }else return(enrich_viewer_forMulti2_xenopus(gene_type=gene_type6(),df = multi_enrich_input2(), Species = input$Species6, org = org6(),
                                                  org_code = org_code6(),Ortholog = ortholog6(),Gene_set = input$Gene_set8))
   })
   multi_enrich_h <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_gene_list(data = enrich_viewer_forMulti1(gene_type=gene_type6(),df = multi_enrich_input1(), Species = input$Species6,Ortholog=ortholog6(), org = org6()),
                               Gene_set = input$Gene_set7, org = org6(), H_t2g = multi_Hallmark_set2()))
     }else return(enrich_gene_list_xenopus(data = enrich_viewer_forMulti1(gene_type=gene_type6(),df = multi_enrich_input1(), Species = input$Species6,Ortholog=ortholog6(), org = org6()),
@@ -3340,7 +3519,7 @@ shinyServer(function(input, output, session) {
                            enrich_gene_list = multi_enrich_h()))
   })
   multi_enrich_h2 <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_gene_list(data = enrich_viewer_forMulti1(gene_type=gene_type6(),df = multi_enrich_input2(), Species = input$Species6,Ortholog=ortholog6(), org = org6()),
                               Gene_set = input$Gene_set8, org = org6(), H_t2g = multi_Hallmark_set3()))
     }else return(enrich_gene_list_xenopus(data = enrich_viewer_forMulti1(gene_type=gene_type6(),df = multi_enrich_input2(), Species = input$Species6,Ortholog=ortholog6(), org = org6()),
@@ -3686,13 +3865,13 @@ shinyServer(function(input, output, session) {
   )
   
   multi_enrich_div_table <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_for_table(data = multi_enrich_viewer2(), H_t2g = multi_Hallmark_set2(), Gene_set = input$Gene_set7))
     }else return(as.data.frame(multi_enrich_viewer2()))
   })
   
   multi_enrich_k_table <- reactive({
-    if(input$Species6 != "Xenopus laevis" && input$Species6 != "Arabidopsis thaliana"){
+    if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
       return(enrich_for_table(data = multi_enrich_viewer12(), H_t2g = multi_Hallmark_set3(), Gene_set = input$Gene_set8))
     }else return(as.data.frame(multi_enrich_viewer12()))
   })
@@ -3839,7 +4018,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(row_count_matrix2()),org=org2(),Species=input$Species2))
   })
   org_code2 <- reactive({
-    return(org_code(Species = input$Species2))
+    return(org_code(Species = input$Species2, Ortholog= input$Ortholog2))
   })
   
   row_count_matrix2 <- reactive({
@@ -4643,7 +4822,7 @@ shinyServer(function(input, output, session) {
   })
   #3conditions enrichment_1 ------------------------------------------------------------------------------
   enrich3_1 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(keggEnrichment1(data3 = data_3degcount1_1(),data4 = data_3degcount2_1(),
                              Species = input$Species2, Gene_set = input$Gene_set2,
                              org = org2(),H_t2g = Hallmark_cond3()))
@@ -4680,7 +4859,7 @@ shinyServer(function(input, output, session) {
   })
   
   enrich3_2 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(keggEnrichment1(data3 = data_3degcount1_2(),data4 = data_3degcount2_2(),
                              Species = input$Species2, Gene_set = input$Gene_set2,
                              org = org2(),H_t2g = Hallmark_cond3()))
@@ -4707,7 +4886,7 @@ shinyServer(function(input, output, session) {
   })
   #3conditions enrichment_3 ------------------------------------------------------------------------------
   enrich3_3 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(keggEnrichment1(data3 = data_3degcount1_3(),data4 = data_3degcount2_3(),
                              Species = input$Species2, Gene_set = input$Gene_set2,
                              org = org2(),H_t2g = Hallmark_cond3()))
@@ -4735,24 +4914,24 @@ shinyServer(function(input, output, session) {
   })
   
   output$Gene_set2 <- renderUI({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       selectInput('Gene_set2', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set2', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
   })
   
   cond3_enrich_table1 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrichment3_1_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
     }else return(as.data.frame(enrichment3_1_1()))
   })
   cond3_enrich_table2 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrichment3_2_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
     }else return(as.data.frame(enrichment3_2_1()))
   })
   cond3_enrich_table3 <- reactive({
-    if(input$Species2 != "Xenopus laevis" && input$Species2 !=  "Arabidopsis thaliana"){
+    if(input$Species2 != "Xenopus laevis" && input$Ortholog2 !=  "Arabidopsis thaliana" && input$Species2 !=  "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrichment3_3_1()), H_t2g = Hallmark_cond3(), Gene_set = input$Gene_set2))
     }else return(as.data.frame(enrichment3_3_1()))
   })
@@ -4928,7 +5107,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(norm_count_input()),org=org3(),Species=input$Species3))
   })
   org_code3 <- reactive({
-    return(org_code(Species = input$Species3))
+    return(org_code(Species = input$Species3, Ortholog= input$Ortholog3))
   })
   
   norm_count_input <- reactive({
@@ -6170,7 +6349,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$Gene_set9 <- renderUI({
-    if(input$Species7 != "Xenopus laevis" && input$Species7 != "Arabidopsis thaliana"){
+    if(input$Species7 != "Xenopus laevis" && input$Ortholog7 != "Arabidopsis thaliana" && input$Species7 != "Arabidopsis thaliana"){
       selectInput('Gene_set9', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set9', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
@@ -6192,7 +6371,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(data),org=org7(),Species=input$Species7))
   })
   org_code7 <- reactive({
-    return(org_code(Species = input$Species7))
+    return(org_code(Species = input$Species7, Ortholog= input$Ortholog7))
   })
   
   venn_Hallmark_set <- reactive({
@@ -6200,14 +6379,14 @@ shinyServer(function(input, output, session) {
   })
   
   venn_enrich_viewer2 <- reactive({
-    if(input$Species7 != "Xenopus laevis" && input$Species7 != "Arabidopsis thaliana"){
+    if(input$Species7 != "Xenopus laevis" && input$Ortholog7 != "Arabidopsis thaliana" && input$Species7 != "Arabidopsis thaliana"){
       return(enrich_viewer_forMulti2(gene_type=gene_type7(),df = venn_enrich_input1(), Species = input$Species7,Ortholog = ortholog7(), org = org7(),
                                      org_code = org_code7(),H_t2g = venn_Hallmark_set(),Gene_set = input$Gene_set9))
     }else return(enrich_viewer_forMulti2_xenopus(gene_type=gene_type7(),df = venn_enrich_input1(), Species = input$Species7,Ortholog = ortholog7(), org = org7(),
                                                  org_code = org_code7(),Gene_set = input$Gene_set9))
   })
   venn_enrich_h <- reactive({
-    if(input$Species7 != "Xenopus laevis" && input$Species7 != "Arabidopsis thaliana"){
+    if(input$Species7 != "Xenopus laevis" && input$Ortholog7 != "Arabidopsis thaliana" && input$Species7 != "Arabidopsis thaliana"){
       return(enrich_gene_list(data = enrich_viewer_forMulti1(gene_type=gene_type7(),df = venn_enrich_input1(), Species = input$Species7,Ortholog=ortholog7(), org = org7()),
                               Gene_set = input$Gene_set9, org = org7(), H_t2g = venn_Hallmark_set()))
     }else return(enrich_gene_list_xenopus(data = enrich_viewer_forMulti1(gene_type=gene_type7(),df = venn_enrich_input1(), Species = input$Species7,Ortholog=ortholog7(), org = org7()),
@@ -6248,7 +6427,7 @@ shinyServer(function(input, output, session) {
   )
   
   venn_enrich_table <- reactive({
-    if(input$Species7 != "Xenopus laevis" && input$Species7 != "Arabidopsis thaliana"){
+    if(input$Species7 != "Xenopus laevis" && input$Ortholog7 != "Arabidopsis thaliana" && input$Species7 != "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(venn_enrich_viewer2()), H_t2g = venn_Hallmark_set(), Gene_set = input$Gene_set9))
     }else return(as.data.frame(venn_enrich_viewer2()))
   })
@@ -6340,7 +6519,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(data),org=org4(),Species=input$Species4))
   })
   org_code4 <- reactive({
-    return(org_code(Species = input$Species4))
+    return(org_code(Species = input$Species4, Ortholog= input$Ortholog4))
   })
   
   enrich_input <- reactive({
@@ -6409,7 +6588,7 @@ shinyServer(function(input, output, session) {
   })
   
   enrich_viewer2 <- reactive({
-    if((input$Species4 == "Xenopus laevis"  || input$Species4 == "Arabidopsis thaliana" ) && 
+    if((input$Species4 == "Xenopus laevis"  || input$Ortholog4 == "Arabidopsis thaliana" || input$Species4 == "Arabidopsis thaliana") && 
        (input$Gene_set3 != "KEGG" &&
         input$Gene_set3 != "GO biological process" &&
         input$Gene_set3 != "GO cellular component" &&
@@ -6424,25 +6603,25 @@ shinyServer(function(input, output, session) {
           withProgress(message = "enrichment analysis",{
             df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
             colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
-            if(input$Species4 != "Xenopus laevis" && input$Species4 != "Arabidopsis thaliana"){
+            if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
               H_t2g <- Hallmark_enrich()
               H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene) 
             }
             for (name in unique(data3$Group)) {
-              if(input$Species4 != "Xenopus laevis" && input$Species4 != "Arabidopsis thaliana"){
+              if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
                 em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g2, qvalueCutoff = 0.05)
               }else{
                 if(input$Gene_set3 == "KEGG"){
-                  em <- enrichKEGG(data3$ENTREZID[data3$Group == name], organism = org_code(input$Species4), pvalueCutoff = 0.05,keyType = "ncbi-geneid")
+                  em <- enrichKEGG(data3$ENTREZID[data3$Group == name], organism = org_code(input$Species4, Ortholog= input$Ortholog4), pvalueCutoff = 0.05,keyType = "ncbi-geneid")
                 }
                 if(input$Gene_set3 == "GO biological process"){
-                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb = org(input$Species4), ont = "BP",pvalueCutoff = 0.05)
+                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb = org(input$Species4, Ortholog= input$Ortholog4), ont = "BP",pvalueCutoff = 0.05)
                 }
                 if(input$Gene_set3 == "GO cellular component"){
-                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb= org(input$Species4), ont = "CC",pvalueCutoff = 0.05) 
+                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb= org(input$Species4, Ortholog= input$Ortholog4), ont = "CC",pvalueCutoff = 0.05) 
                 }
                 if(input$Gene_set3 == "GO molecular function"){
-                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb = org(input$Species4), ont = "MF",pvalueCutoff = 0.05) 
+                  em <- enrichGO(data3$ENTREZID[data3$Group == name], OrgDb = org(input$Species4, Ortholog= input$Ortholog4), ont = "MF",pvalueCutoff = 0.05) 
                 }
               }
               print(em)
@@ -6467,7 +6646,7 @@ shinyServer(function(input, output, session) {
   
   # enrichment plot ------------------------------------------------------------------------------
   enrich_venn <- reactive({
-    if(input$Species4 != "Xenopus laevis" && input$Species4 != "Arabidopsis thaliana"){
+    if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
       return(enrich_gene_list(data = enrich_viewer1(), Gene_set = input$Gene_set3,
                               org = org4(), H_t2g = Hallmark_enrich()))
     }else return(enrich_gene_list_xenopus(data = enrich_viewer1(), Gene_set = input$Gene_set3,
@@ -6554,7 +6733,7 @@ shinyServer(function(input, output, session) {
   )
   
   output$Gene_set3 <- renderUI({
-    if(input$Species4 != "Xenopus laevis" && input$Species4 != "Arabidopsis thaliana"){
+    if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
       selectInput('Gene_set3', 'Gene Set', gene_set_list)
     }else selectInput('Gene_set3', 'Gene Set', c("KEGG", "GO biological process", 
                                                  "GO cellular component","GO molecular function"))
@@ -6575,7 +6754,7 @@ shinyServer(function(input, output, session) {
   })
   
   enrich_viewer_table <- reactive({
-    if(input$Species4 != "Xenopus laevis" && input$Species4 != "Arabidopsis thaliana"){
+    if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
       return(enrich_for_table(data = as.data.frame(enrich_viewer2()), H_t2g = Hallmark_enrich(), Gene_set = input$Gene_set3))
     }else return(as.data.frame(enrich_viewer2()))
   })
@@ -6746,7 +6925,7 @@ shinyServer(function(input, output, session) {
     return(gene_type(my.symbols=rownames(degresult()),org=org5(),Species=input$Species5))
   })
   org_code5 <- reactive({
-    return(org_code(Species = input$Species5))
+    return(org_code(Species = input$Species5, Ortholog= input$Ortholog5))
   })
   
   degresult <- reactive({

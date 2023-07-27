@@ -52,7 +52,6 @@ library(org.Gg.eg.db)
 library(org.Mmu.eg.db)
 library(org.Pt.eg.db)
 library(org.Sc.sgd.db)
-library(org.Ss.eg.db)
 library(org.At.tair.db)
 library(colorspace)
 library(pdftools)
@@ -70,11 +69,19 @@ gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interact
                    "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
                    "Transcription factor targets", "miRNA target")
 biomart_data <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")
-no_orgDb<-c(biomart_data$Scientific_common_name)
+biomart_plants <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model_plants.txt",sep = "\t",header = T,quote = "")
+biomart_fungi <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model_fungi.txt",sep = "\t",header = T,quote = "")
+biomart_metazoa <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model_metazoa.txt",sep = "\t",header = T)
+no_orgDb_animals<-c(biomart_data$Scientific_common_name)
+no_orgDb_plants<-c(biomart_plants$Scientific_common_name)
+no_orgDb_fungi<-c(biomart_fungi$Scientific_common_name)
+no_orgDb_metazoa<-c(biomart_metazoa$Scientific_common_name)
+no_orgDb <- c(no_orgDb_animals,no_orgDb_metazoa,no_orgDb_plants,no_orgDb_fungi)
 species_list <- c("not selected", "Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                   "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
                   "Danio rerio","Gallus gallus","Macaca mulatta",
-                  "Pan troglodytes","Saccharomyces cerevisiae","Xenopus laevis","Arabidopsis thaliana",no_orgDb)
+                  "Pan troglodytes","Saccharomyces cerevisiae","Xenopus laevis","Arabidopsis thaliana",
+                  no_orgDb)
 species_list_nonmodel <- no_orgDb
 read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
@@ -97,7 +104,7 @@ read_df <- function(tmp, Species=NULL){
       if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",",quote = ""))
       if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t",quote = ""))
       if(class(df) != "try-error") {
-        validate("Error: There are duplicated genes in the uploaded data. Please fix them.")
+        validate("Error: There are duplicated genes or 'NA' in the uploaded data. Please fix them.")
       }else{
         validate(paste0("Error: the uploaded data is in an unexpected format. The original error message is as follows:\n",print(df)))
       }
@@ -122,7 +129,7 @@ read_gene_list <- function(tmp){
   if(is.null(tmp)) {
     return(NULL)
   }else{
-    if(tools::file_ext(tmp) == "xlsx"){
+    if(tools::file_ext(tmp) == "xlsx") {
       df <- try(read_xlsx(tmp))
       df <- as.data.frame(df)
     }
@@ -231,6 +238,7 @@ dorothea <- function(species, confidence = "recommend",type){
   if(species != "Mus musculus" && species != "Homo sapiens"){
     withProgress(message = paste0("Gene ID conversion from human to ", species, " for the regulon gene set. It takes a few minutes."),{
     genes <- net3$entrez_gene
+    if(species == "Saccharomyces cerevisiae" || species == "Arabidopsis thaliana") validate("'Saccharomyces cerevisiae' cannot use DoRothEA regulon.")
     switch (species,
             "Rattus norvegicus" = set <- "rnorvegicus_gene_ensembl",
             "Xenopus tropicalis" = set <- "xtropicalis_gene_ensembl",
@@ -246,10 +254,7 @@ dorothea <- function(species, confidence = "recommend",type){
             "Macaca mulatta" = set <- "mmulatta_gene_ensembl",
             "Monodelphis domestica" = set <- "mdomestica_gene_ensembl",
             "Ornithorhynchus anatinus" = set <- "oanatinus_gene_ensembl",
-            "Pan troglodytes" = set <- "ptroglodytes_gene_ensembl",
-            "Heterocephalus glaber" = set <- "hgfemale_gene_ensembl",
-            "Saccharomyces cerevisiae" = set <-"scerevisiae_gene_ensembl", 
-            "Sus scrofa" = set <- "sscrofa_gene_ensembl")
+            "Pan troglodytes" = set <- "ptroglodytes_gene_ensembl")
     convert = useMart("ensembl", dataset = set, host="https://dec2021.archive.ensembl.org")
     human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
     genes2 = getLDS(attributes = c("entrezgene_id"), filters = "entrezgene_id",
@@ -267,7 +272,12 @@ dorothea <- function(species, confidence = "recommend",type){
 }
 ensembl_archive <- c("https://dec2021.archive.ensembl.org",
                      "https://www.ensembl.org")
-
+ensembl_archive_plants <- c("https://plants.ensembl.org",
+                            "https://eg52-plants.ensembl.org")
+ensembl_archive_fungi <- c("https://dec2021-fungi.ensembl.org",
+                     "https://fungi.ensembl.org")
+ensembl_archive_metazoa <- c("https://metazoa.ensembl.org",
+                           "https://eg52-metazoa.ensembl.org")
 orgDb_list <- c("Homo sapiens", "Mus musculus", "Rattus norvegicus", 
                 "Drosophila melanogaster", "Caenorhabditis elegans","Bos taurus","Canis lupus familiaris",
                 "Danio rerio","Gallus gallus","Macaca mulatta","Pan troglodytes","Saccharomyces cerevisiae")
@@ -276,23 +286,40 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
     if(!is.null(Ortholog)){
     if(sum(is.element(no_orgDb, Species)) == 1){
       withProgress(message = "preparing a gene annotation. It takes a few minutes.",{
-        db <- useMart("ensembl", host=Biomart_archive)
-        ensembl <- dplyr::filter(biomart_data, Scientific_common_name == Species)$dataset
+        mart <- "ensembl"
+        bio_data <- biomart_data
+        if(Ortholog == "Arabidopsis thaliana") {
+          mart <- "plants_mart"
+          bio_data <- biomart_plants
+        }
+        if(Ortholog == "Saccharomyces cerevisiae") {
+          mart <- "fungi_mart"
+          bio_data <- biomart_fungi
+        }
+        if(Ortholog == "Drosophila melanogaster" || Ortholog == "Caenorhabditis elegans") {
+          mart <- "metazoa_mart"
+          bio_data <- biomart_metazoa
+        }
+        db <- useMart(mart, host=Biomart_archive)
+        ensembl <- dplyr::filter(bio_data, Scientific_common_name == Species)$dataset
         use <- useDataset(ensembl, mart = db)
-        genes_ensembl <- getBM(attributes = c("ensembl_gene_id","external_gene_name"), mart = use)
+        genes_ensembl <- try(getBM(attributes = c("ensembl_gene_id","external_gene_name"), mart = use))
         if(Ortholog == "Mus musculus") ortho <- "mmusculus_gene_ensembl"
         if(Ortholog == "Homo sapiens") ortho <- "hsapiens_gene_ensembl"
         if(Ortholog == "Rattus norvegicus") ortho <- "rnorvegicus_gene_ensembl"
-        if(Ortholog == "Drosophila melanogaster") ortho <- "dmelanogaster_gene_ensembl"
-        if(Ortholog == "Caenorhabditis elegans") ortho <- "celegans_gene_ensembl"
+        if(Ortholog == "Drosophila melanogaster") ortho <- "dmelanogaster_eg_gene"
+        if(Ortholog == "Caenorhabditis elegans") ortho <- "celegans_eg_gene"
         if(Ortholog == "Bos taurus") ortho <- "btaurus_gene_ensembl"
         if(Ortholog == "Canis lupus familiaris") ortho <- "clfamiliaris_gene_ensembl"
         if(Ortholog == "Danio rerio") ortho <- "drerio_gene_ensembl"
         if(Ortholog == "Gallus gallus") ortho <- "ggallus_gene_ensembl"
         if(Ortholog == "Macaca mulatta") ortho <- "mmulatta_gene_ensembl"
         if(Ortholog == "Pan troglodytes") ortho <- "ptroglodytes_gene_ensembl"
-        if(Ortholog == "Saccharomyces cerevisiae") ortho <- "scerevisiae_gene_ensembl"
-        if(Ortholog == "Sus scrofa") ortho <- "sscrofa_gene_ensembl"
+        if(Ortholog == "Saccharomyces cerevisiae") ortho <- "scerevisiae_eg_gene"
+        if(Ortholog == "Arabidopsis thaliana") ortho <- "athaliana_eg_gene"
+        if(class(genes_ensembl) == "try-error") {
+          type <- "ENSEMBL"
+        }else{
         if(is.null(gene_list)){
         count$ensembl_gene_id <- rownames(count)
         count$external_gene_name <- rownames(count)
@@ -306,6 +333,7 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
         }
         if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
         if(dim(ENSEMBL)[1] == 0 && dim(SYMBOL)[1] == 0) validate("Cannot identify gene IDs. Please check the 'Species' and use the 'Official gene symbol' or 'ENSEMBL ID' for gene names.")
+        }
         if(type == "ENSEMBL"){
           attribute <- c("ensembl_gene_id")
           colname <- c("ENSEMBL","SYMBOL","ENTREZID")
@@ -319,14 +347,33 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
           genes <- getBM(attributes = c("external_gene_name"), mart = use)
           filter <- "external_gene_name"
         }
-        ortho_mart = useMart("ensembl", dataset = ortho, host=Biomart_archive)
+        ortho_mart = useMart(mart, dataset = ortho, host=Biomart_archive)
         genes2 = try(getLDS(attributes = c("ensembl_gene_id"),
                         values = genes ,mart = use,filters = filter,
                         attributesL = c("external_gene_name","entrezgene_id"),
                         martL = ortho_mart, uniqueRows=T))
         if(length(class(genes2)) == 1){
-          if(class(genes2) == "try-error") validate("biomart has encountered an unexpected server error.
-                                                \nPlease try the other 'biomart host'.")
+          if(class(genes2) == "try-error") {
+            genes2 = try(getLDS(attributes = c("ensembl_gene_id"),
+                                values = genes ,mart = use,filters = filter,
+                                attributesL = c("external_gene_name","ensembl_gene_id"),
+                                martL = ortho_mart, uniqueRows=T))
+          }
+          if(class(genes2) == "try-error") {
+          validate("biomart has encountered an unexpected server error.
+                    \nPlease try using a different 'biomart host' or try again later.")
+          }else{
+            if(Ortholog == "Drosophila melanogaster") org <- org.Dm.eg.db
+            if(Ortholog == "Caenorhabditis elegans") org <- org.Ce.eg.db
+            my.symbols <- genes2[,3]
+            gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
+                                            keytype = "ENSEMBL",
+                                            columns = c("ENSEMBL","ENTREZID"))
+        colnames(gene_IDs) <- c("Gene.stable.ID.1","ENTREZID")
+        gene_IDs <- gene_IDs %>% distinct(Gene.stable.ID.1, .keep_all = T)
+        genes3 <- merge(genes2, gene_IDs, by="Gene.stable.ID.1")
+        genes2 <- genes3[,-1]
+          }
         }
         colnames(genes) <- colname1
         colnames(genes2) <- colname
@@ -375,8 +422,9 @@ org <- function(Species, Ortholog=NULL){
     return(org)
   }
 }
-org_code <- function(Species){
+org_code <- function(Species,Ortholog){
   if(Species != "not selected"){
+    if(sum(is.element(no_orgDb, Species)) == 0){
     switch (Species,
             "Mus musculus" = org_code <- "mmu",
             "Homo sapiens" = org_code <- "hsa",
@@ -398,8 +446,31 @@ org_code <- function(Species){
             "Pan troglodytes" = org_code <- "ptr",
             "Heterocephalus glaber" = org_code <- "hgl",
             "Saccharomyces cerevisiae" = org_code <- "sce",
-            "Sus scrofa" = org_code <- "ssc",
             "Arabidopsis thaliana" = org_code <- "ath")
+    }else{
+      switch (Ortholog,
+              "Mus musculus" = org_code <- "mmu",
+              "Homo sapiens" = org_code <- "hsa",
+              "Rattus norvegicus" = org_code <- "rno",
+              "Xenopus tropicalis" = org_code <- "xtr",
+              "Xenopus laevis" = org_code <- "xla",
+              "Drosophila melanogaster" = org_code <- "dme",
+              "Caenorhabditis elegans" = org_code <- "cel",
+              "Anolis carolinensis" = org_code <- "acs",
+              "Bos taurus" = org_code <- "bta",
+              "Canis lupus familiaris" = org_code <- "cfa",
+              "Danio rerio" = org_code <- "dre",
+              "Equus caballus" = org_code <- "ecb",
+              "Felis catus" = org_code <- "fca",
+              "Gallus gallus" = org_code <- "gga",
+              "Macaca mulatta" = org_code <- "mcc",
+              "Monodelphis domestica" = org_code <- "mdo",
+              "Ornithorhynchus anatinus" = org_code <- "oaa",
+              "Pan troglodytes" = org_code <- "ptr",
+              "Heterocephalus glaber" = org_code <- "hgl",
+              "Saccharomyces cerevisiae" = org_code <- "sce",
+              "Arabidopsis thaliana" = org_code <- "ath")
+    }
     return(org_code)
   }
 }
@@ -1907,7 +1978,7 @@ ensembl2symbol <- function(data,Species,Ortholog,gene_type,org, merge=TRUE, rown
     gene_IDs <- try(Ortholog[,-3])
     if(length(class(gene_IDs)) == 1){
       if(class(gene_IDs) == "try-error") validate("biomart has encountered an unexpected server error.
-                                                \nPlease try the other 'biomart host'.")
+                                                \nPlease try using a different 'biomart host' or try again later.")
     }
   }else{
     if(gene_type == "ENSEMBL"){

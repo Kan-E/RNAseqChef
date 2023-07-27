@@ -118,8 +118,11 @@ AnnotationDbi,AnnotationHub, org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db, org.Xl.eg
 - Marc Carlson (2022). org.Mmu.eg.db: Genome wide annotation for Rhesus. R package version 3.15.0.
 - Marc Carlson (2022). org.Pt.eg.db: Genome wide annotation for Chimp. R package version 3.15.0.
 - Marc Carlson (2022). org.Sc.sgd.db: Genome wide annotation for Yeast. R package version 3.15.0.
-- Marc Carlson (2022). org.Ss.eg.db: Genome wide annotation for Pig. R package version 3.15.0.
-- Morgan M, Shepherd L (2022). AnnotationHub: Client to access AnnotationHub resources. R package version 3.4.0.
+
+biomaRt (for ortholog)
+- Mapping identifiers for the integration of genomic datasets with the R/Bioconductor package
+  biomaRt. Steffen Durinck, Paul T. Spellman, Ewan Birney and Wolfgang Huber, Nature Protocols 4,
+  1184-1191 (2009).
 
 genefilter (for z-score normalization)
 - R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.

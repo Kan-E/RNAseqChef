@@ -30,7 +30,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     
 install.packages("https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz",repos = NULL, type = "source")
 
-pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel",
+pkgs <- c("shiny","DT","readxl","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel",
 "ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW",
 "qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db",
 "org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter",
@@ -38,8 +38,8 @@ pkgs <- c("shiny","DT","gdata","rstatix","multcomp","tidyverse","ggpubr","venn",
 "monaLisa","GenomicRanges","BiocParallel","SummarizedExperiment","JASPAR2020",
 "TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
 "BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools", "org.Bt.eg.db",
-"org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db","org.Ss.eg.db",
-"AnnotationHub","org.At.tair.db","colorspace","magick","pdftools")
+"org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db",
+"org.At.tair.db","colorspace","magick","pdftools")
 options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)

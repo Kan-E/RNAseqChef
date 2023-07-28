@@ -16,7 +16,7 @@ RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('shiny', update = F)" && \
     R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz',repos = NULL, type = 'source')" && \
     R -e "BiocManager::install('DT', update = F)" && \
-    R -e "BiocManager::install('gdata', update = F)" && \
+    R -e "BiocManager::install('readxl', update = F)" && \
     R -e "BiocManager::install('rstatix', update = F)" && \
     R -e "BiocManager::install('multcomp', update = F)" && \
     R -e "BiocManager::install('venn', update = F)" && \
@@ -80,7 +80,7 @@ COPY server.R /srv/shiny-server/RNAseqChef/
 COPY global.R /srv/shiny-server/RNAseqChef/
 COPY google-analytics.html /srv/shiny-server/RNAseqChef/
 COPY www /srv/shiny-server/RNAseqChef/www/
-COPY data /srv/shiny-server/RNAseqChef/data/
+COPY dds.rds /srv/shiny-server/RNAseqChef/
 COPY Rmd /srv/shiny-server/RNAseqChef/Rmd/
 COPY navAppend.js /srv/shiny-server/RNAseqChef/
 COPY shiny-server.conf /etc/shiny-server/

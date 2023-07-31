@@ -47,10 +47,11 @@ shinyUI(
                         p("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
                           Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected).", style = "color:red"),
                         "Add new species (117 plants, 70 fungi, and 251 metazoa).",br(),
+                        "Improve GOI profiling in the Pair-wise DEG, 3 conditions DEG, and volcano navi.",br(),
                         "Improve the image to provide instructions on the input format for the Venn diagram.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
-                        "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, (2023), 299(6), 104810.", 
+                        "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
                         a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),),
                  column(12,br(),
                         column(6,br(),
@@ -316,7 +317,11 @@ shinyUI(
                                 column(4, htmlOutput("volcano_y"))
                               ),
                               fluidRow(
-                                column(8, plotOutput("volcano1")),
+                                column(8, 
+                                       plotOutput("volcano1",
+                                                  brush = "plot1_brush"
+                                                  )
+                                       ),
                                 column(4, plotOutput("GOIheatmap"))
                               ),
                               div(
@@ -591,7 +596,8 @@ shinyUI(
                                 column(4, htmlOutput("cond3_yrange"))
                               ),
                               fluidRow(
-                                column(8, plotOutput("cond3_GOIscatter")),
+                                column(8, plotOutput("cond3_GOIscatter",
+                                                     brush = "plot1_brush_cond3")),
                                 column(4, plotOutput("cond3_GOIheatmap"))
                               ),
                               div(
@@ -1663,7 +1669,7 @@ shinyUI(
                                            column(4, htmlOutput("deg_volcano_y"))
                                          ),
                                          fluidRow(
-                                           column(8, plotOutput("deg_volcano1")),
+                                           column(8, plotOutput("deg_volcano1",brush = "plot1_brush_volcano")),
                                            column(4, plotOutput("deg_GOIheatmap"))
                                          ),
                                          div(
@@ -1828,7 +1834,11 @@ shinyUI(
                                    strong("Add new species (117 plants, 70 fungi, and 251 metazoa)."),br(),
                                    strong("(Docker version (ARM)): fix bug regarding edgeR in pair-wise DEG."),br(),
                                    strong("Improve the image to provide instructions on the input format for the Venn diagram."),br(),
-                                   img(src="venn_input.png", width = 400,height = 300),br(),
+                                   img(src="venn_input.png", width = 400,height = 300),br(),br(),
+                                   strong("Improve GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi."),
+                                   strong("You can select genes by drawing the box on the volcano/scatter plot."),br(),
+                                   img(src="pair-wise GOI profiling3.png", width = 400,height = 400),
+                                   img(src="cond 3 goi3.png", width = 400,height = 400),br(),
                             )
                           )
                  )

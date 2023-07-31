@@ -120,7 +120,9 @@ read_df <- function(tmp, Species=NULL){
     colnames(df) = str_sub(colnames(df), start = 3, end = -2) 
     }
     }
-    df[is.na(df)] <- 0
+    if(length(grep("padj", colnames(df))) == 0 || length(grep("log2FoldChange", colnames(df))) == 0){
+      df[is.na(df)] <- 0
+    }
     return(df)
     }
   }
@@ -352,29 +354,27 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
                         values = genes ,mart = use,filters = filter,
                         attributesL = c("external_gene_name","entrezgene_id"),
                         martL = ortho_mart, uniqueRows=T))
-        if(length(class(genes2)) == 1){
           if(class(genes2) == "try-error") {
-            genes2 = try(getLDS(attributes = c("ensembl_gene_id"),
+            genes4 = try(getLDS(attributes = c("ensembl_gene_id"),
                                 values = genes ,mart = use,filters = filter,
                                 attributesL = c("external_gene_name","ensembl_gene_id"),
                                 martL = ortho_mart, uniqueRows=T))
-          }
-          if(class(genes2) == "try-error") {
+          if(class(genes4) == "try-error") {
           validate("biomart has encountered an unexpected server error.
-                    \nPlease try using a different 'biomart host' or try again later.")
+                    Please try using a different 'biomart host' or try again later.")
           }else{
             if(Ortholog == "Drosophila melanogaster") org <- org.Dm.eg.db
             if(Ortholog == "Caenorhabditis elegans") org <- org.Ce.eg.db
-            my.symbols <- genes2[,3]
+            my.symbols <- genes4[,3]
             gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                             keytype = "ENSEMBL",
                                             columns = c("ENSEMBL","ENTREZID"))
         colnames(gene_IDs) <- c("Gene.stable.ID.1","ENTREZID")
         gene_IDs <- gene_IDs %>% distinct(Gene.stable.ID.1, .keep_all = T)
-        genes3 <- merge(genes2, gene_IDs, by="Gene.stable.ID.1")
+        genes3 <- merge(genes4, gene_IDs, by="Gene.stable.ID.1")
         genes2 <- genes3[,-1]
+            }
           }
-        }
         colnames(genes) <- colname1
         colnames(genes2) <- colname
         gene3<-merge(genes,genes2,by=colname1,all=T)
@@ -778,7 +778,7 @@ data_3degcount2 <- function(gene_type,data3, Species, Ortholog,org){
 }
 cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, specific, 
                                fc, fdr, basemean, y_axis=NULL, x_axis=NULL,
-                               GOI=NULL, heatmap = TRUE, Species){
+                               GOI=NULL, heatmap = TRUE, Species,brush=NULL){
   if(is.null(data)){
     return(NULL)
   }else{
@@ -907,7 +907,19 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
     if(!is.null(y_axis) && !is.null(x_axis)){
       p <- p +  xlim(x_axis) + ylim(y_axis)
     }
-    if(!is.null(GOI)) {
+    if(!is.null(dim(brush)[1])){
+    if(!is.null(GOI) || dim(brush)[1]!=0) {
+      if(dim(brush)[1]!=0){
+        if(gene_type != "SYMBOL"){
+          if(Species != "not selected"){
+            GOI <- brush$Unique_ID
+          }else{
+            GOI <- brush$Row.names
+          }
+        }else{
+          GOI <- brush$Row.names
+        }
+      }
       for(name in GOI){
         if(gene_type != "SYMBOL"){
           if(Species != "not selected"){
@@ -934,6 +946,7 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
         p <- p + ggrepel::geom_label_repel(data = dplyr::filter(data3, color == "GOI"), mapping = aes(label = Row.names),alpha = 0.6,label.size = NA, 
                                           box.padding = unit(0.35, "lines"), point.padding = unit(0.3,"lines"), force = 1, fontface = "bold.italic")
       }
+    }
     }
     if(heatmap == TRUE){
     if(length(unique(data3$sig)) == 1){
@@ -1066,8 +1079,6 @@ keggEnrichment1 <- function(data3, data4, Species, Gene_set, org, H_t2g){
   }else return(NULL)
 }
 keggEnrichment1_xenopus <- function(data3, data4, Species, Gene_set, org, org_code){
-  if(Gene_set == "KEGG" || Gene_set == "GO biological process" ||
-     Gene_set == "GO cellular component" || Gene_set == "GO molecular function"){
   if(!is.null(Gene_set) && Species != "not selected"){
     if(is.null(data4)){
       return(NULL)
@@ -1098,7 +1109,6 @@ keggEnrichment1_xenopus <- function(data3, data4, Species, Gene_set, org, org_co
       return(cnet_list2)
     }
   }else return(NULL)
-  }
 }
 
 keggEnrichment2 <- function(data3, data4,cnet_list2){
@@ -1515,8 +1525,6 @@ enrich_viewer_forMulti2 <- function(gene_type,df, Species,Ortholog, Gene_set, or
 }
 enrich_viewer_forMulti2_xenopus <- function(df, Species,Ortholog, Gene_set, org, org_code){
   if(!is.null(Gene_set)){
-  if(Gene_set == "KEGG" || Gene_set == "GO biological process" ||
-     Gene_set == "GO cellular component" || Gene_set == "GO molecular function"){
     data3 <- enrich_viewer_forMulti1(df = df, Species = Species,Ortholog = Ortholog, org = org)
     if(is.null(data3)){
       return(NULL)
@@ -1553,7 +1561,6 @@ enrich_viewer_forMulti2_xenopus <- function(df, Species,Ortholog, Gene_set, org,
       })
     }
   } 
-  }
 }
 enrich_keggGO_global <- function(formula_res, Gene_set){
     if(!is.null(Gene_set)){
@@ -1595,8 +1602,6 @@ enrich_gene_list <- function(data, Gene_set, H_t2g, org,org_code=NULL){
     }
 }
 enrich_gene_list_xenopus <- function(data, Gene_set, org,org_code=NULL){
-  if(Gene_set == "KEGG" || Gene_set == "GO biological process" ||
-     Gene_set == "GO cellular component" || Gene_set == "GO molecular function"){
     if(is.null(data)){
       return(NULL)
     }else{
@@ -1624,7 +1629,6 @@ enrich_gene_list_xenopus <- function(data, Gene_set, org,org_code=NULL){
         }
       return(df)
     }
-  }
 }
 
 

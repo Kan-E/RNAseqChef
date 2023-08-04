@@ -195,6 +195,9 @@ shinyServer(function(input, output, session) {
   gene_type1_batch <- reactive({
     return(gene_type(my.symbols=rownames(batch_files()[[1]]),org=org1(),Species=input$Species))
   })
+  ortholog1_batch <- reactive({
+    return(no_org_ID(count = batch_files()[[1]],Species = input$Species,Ortholog = input$Ortholog,Biomart_archive=input$Biomart_archive))
+  })
   
   row_count_matrix <- reactive({
     withProgress(message = "Importing row count matrix, please wait",{
@@ -1765,8 +1768,9 @@ shinyServer(function(input, output, session) {
         })
       }
       res <- as.data.frame(res)
+      print("a")
       if(input$Species != "not selected") res <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
-                                                                Ortholog=ortholog1(),data = res, org = org1())
+                                                                Ortholog=ortholog1_batch(),data = res, org = org1())
       count_list[name] <- list(res)
       }
     }
@@ -1827,7 +1831,7 @@ shinyServer(function(input, output, session) {
           normalized_counts <- GetNormalizedMat(count, Sizes)
         }
         if(input$Species != "not selected") normalized_counts <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
-                                                                                Ortholog=ortholog1(),data = normalized_counts, org = org1())
+                                                                                Ortholog=ortholog1_batch(),data = normalized_counts, org = org1())
         count_list[name] <- list(normalized_counts)
       }
       return(count_list)
@@ -1876,7 +1880,7 @@ shinyServer(function(input, output, session) {
           res <- res1[[name]]
           if(gene_type1_batch() != "SYMBOL"){
             gene_IDs <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
-                                       Ortholog=ortholog1(),data = res, org = org1(),merge=FALSE)
+                                       Ortholog=ortholog1_batch(),data = res, org = org1(),merge=FALSE)
             reslist[name] <- list(gene_IDs)
           }else{ reslist[name] <- list(NULL) }
         }
@@ -1941,7 +1945,7 @@ shinyServer(function(input, output, session) {
           if(gene_type1_batch() != "SYMBOL"){
             if(input$Species != "not selected"){
               if(sum(is.element(no_orgDb, input$Species))==1){
-                gene_IDs <- ortholog1()
+                gene_IDs <- ortholog1_batch()
               }else{
                 my.symbols <- data$Row.names
                 if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
@@ -1960,7 +1964,7 @@ shinyServer(function(input, output, session) {
           }else{
             if(input$Species != "not selected"){
               if(sum(is.element(no_orgDb, input$Species))==1){
-                gene_IDs <- ortholog1()[,-1]
+                gene_IDs <- ortholog1_batch()[,-1]
               }else{
                 my.symbols <- data$Row.names
                 gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,

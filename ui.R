@@ -44,6 +44,7 @@ shinyUI(
                  column(12,
                         br(),
                         h4("Current version (v1.0.8, 2023/8/1)"),
+                        p("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG.", style = "color:red"),
                         p("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
                           Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected).", style = "color:red"),
                         "Add new species (117 plants, 70 fungi, and 251 metazoa).",br(),
@@ -1838,7 +1839,8 @@ shinyUI(
                                    strong("Improve GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi."),
                                    strong("You can select genes by drawing the box on the volcano/scatter plot."),br(),
                                    img(src="pair-wise GOI profiling3.png", width = 400,height = 400),
-                                   img(src="cond 3 goi3.png", width = 400,height = 400),br(),
+                                   img(src="cond 3 goi3.png", width = 400,height = 400),br(),br(),
+                                   strong("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG."),br()
                             )
                           )
                  )

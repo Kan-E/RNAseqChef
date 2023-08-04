@@ -192,6 +192,9 @@ shinyServer(function(input, output, session) {
   gene_type1 <- reactive({
     return(gene_type(my.symbols=rownames(row_count_matrix()),org=org1(),Species=input$Species))
   })
+  gene_type1_batch <- reactive({
+    return(gene_type(my.symbols=rownames(batch_files()[[1]]),org=org1(),Species=input$Species))
+  })
   
   row_count_matrix <- reactive({
     withProgress(message = "Importing row count matrix, please wait",{
@@ -1762,7 +1765,7 @@ shinyServer(function(input, output, session) {
         })
       }
       res <- as.data.frame(res)
-      if(input$Species != "not selected") res <- ensembl2symbol(gene_type=gene_type1(),Species=input$Species,
+      if(input$Species != "not selected") res <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
                                                                 Ortholog=ortholog1(),data = res, org = org1())
       count_list[name] <- list(res)
       }
@@ -1823,7 +1826,7 @@ shinyServer(function(input, output, session) {
           Sizes <- MedianNorm(count)
           normalized_counts <- GetNormalizedMat(count, Sizes)
         }
-        if(input$Species != "not selected") normalized_counts <- ensembl2symbol(gene_type=gene_type1(),Species=input$Species,
+        if(input$Species != "not selected") normalized_counts <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
                                                                                 Ortholog=ortholog1(),data = normalized_counts, org = org1())
         count_list[name] <- list(normalized_counts)
       }
@@ -1871,8 +1874,8 @@ shinyServer(function(input, output, session) {
       if(input$Species != "not selected"){
         for (name in names(res1)) {
           res <- res1[[name]]
-          if(gene_type1() != "SYMBOL"){
-            gene_IDs <- ensembl2symbol(gene_type=gene_type1(),Species=input$Species,
+          if(gene_type1_batch() != "SYMBOL"){
+            gene_IDs <- ensembl2symbol(gene_type=gene_type1_batch(),Species=input$Species,
                                        Ortholog=ortholog1(),data = res, org = org1(),merge=FALSE)
             reslist[name] <- list(gene_IDs)
           }else{ reslist[name] <- list(NULL) }
@@ -1894,7 +1897,7 @@ shinyServer(function(input, output, session) {
         if(name != "combined"){
           data <- data1[[name]]
           count <- count1[[name]]
-          if(gene_type1() != "SYMBOL"){
+          if(gene_type1_batch() != "SYMBOL"){
             if(length(grep("SYMBOL", colnames(data))) != 0){
               data <- data[, - which(colnames(data) == "SYMBOL")]
               count <- count[, - which(colnames(count) == "SYMBOL")]
@@ -1935,7 +1938,7 @@ shinyServer(function(input, output, session) {
           if (Type == "limma"){
             data$log2FoldChange <- -1 * data$log2FoldChange
           }
-          if(gene_type1() != "SYMBOL"){
+          if(gene_type1_batch() != "SYMBOL"){
             if(input$Species != "not selected"){
               if(sum(is.element(no_orgDb, input$Species))==1){
                 gene_IDs <- ortholog1()
@@ -2036,7 +2039,7 @@ shinyServer(function(input, output, session) {
           rownames(up_all) <- up_all$Row.names
           up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
           if(input$Species != "not selected"){
-            if(gene_type1() != "SYMBOL"){
+            if(gene_type1_batch() != "SYMBOL"){
               up_all <- merge(up_all, gene_ID_pair_batch(), by=0)
               rownames(up_all) <- up_all$Row.names
               up_all <- up_all[,2:(1 + Cond_1 + Cond_2)]
@@ -2074,7 +2077,7 @@ shinyServer(function(input, output, session) {
           rownames(down_all) <- down_all$Row.names
           down_all <- down_all[,8:(7 + Cond_1 + Cond_2)]
           if(input$Species != "not selected"){
-            if(gene_type1() != "SYMBOL"){
+            if(gene_type1_batch() != "SYMBOL"){
               down_all <- merge(down_all, gene_ID_pair_batch(), by=0)
               rownames(down_all) <- down_all$Row.names
               down_all <- down_all[,2:(1 + Cond_1 + Cond_2)]
@@ -2098,7 +2101,7 @@ shinyServer(function(input, output, session) {
         if(name != "combined"){
           data <- data1[[name]]
           count <- count1[[name]]
-          if(gene_type1() != "SYMBOL"){
+          if(gene_type1_batch() != "SYMBOL"){
             if(length(grep("SYMBOL", colnames(data))) != 0){
               count <- count[, - which(colnames(count) == "SYMBOL")]
             }
@@ -2111,7 +2114,7 @@ shinyServer(function(input, output, session) {
           }
           Cond_1 <- vec[1]
           Cond_2 <- vec[2]
-          if(gene_type1() != "SYMBOL"){
+          if(gene_type1_batch() != "SYMBOL"){
             if(input$Species != "not selected"){
               genenames <- as.vector(data$SYMBOL)
             }else{ genenames=NULL }

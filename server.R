@@ -724,7 +724,7 @@ shinyServer(function(input, output, session) {
     if(gene_type1() != "SYMBOL"){
       if(input$Species != "not selected"){
         genenames <- as.vector(data$SYMBOL)
-      }else{ genenames=NULL }
+      }else{ genenames=as.vector(data$Row.names) }
     }else{
       genenames <- as.vector(data$Row.names)
     }
@@ -5244,7 +5244,7 @@ shinyServer(function(input, output, session) {
         return(read_df(tmp = tmp))
       }else{
         tmp <- input$file8$datapath
-        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt"
+        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv"
         return(read_df(tmp = tmp))
       }
       incProgress(1)
@@ -5921,6 +5921,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       withProgress(message = "k-means clustering",{
+        set.seed(123)
         ht <- Heatmap(data.z, name = "z-score",
                       column_order = colnames(data.z),
                       clustering_method_columns = 'ward.D2',
@@ -5932,7 +5933,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  norm_kmeans_cluster <- reactive({
+  pre_norm_kmeans_cluster <- reactive({
     ht <- norm_kmeans()
     data.z <- norm_data_z()
     data <- norm_count_matrix_cutoff2()
@@ -5964,7 +5965,20 @@ shinyServer(function(input, output, session) {
       }else return(NULL)
     }
   })
-  
+  norm_kmeans_cluster <- reactive({
+    count <- pre_norm_kmeans_cluster()
+    if(input$Species3 != "not selected"){
+      if(gene_type3() != "SYMBOL"){
+        gene_IDs  <- gene_ID_norm()
+        data2 <- merge(count, gene_IDs, by= 0)
+        rownames(data2) <- data2[,1]
+        data2 <- data2[, - which(colnames(data2) == "Row.names.y")]
+        data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
+        count <- data2[,-1]
+      }
+    }
+    return(count)
+  })
   
   output$norm_select_kmean <- renderUI({
     clusters <- norm_kmeans_cluster()
@@ -5986,6 +6000,11 @@ shinyServer(function(input, output, session) {
         cluster_name <- input$norm_select_kmean
         clusterCount <- dplyr::filter(clusters, Cluster %in% cluster_name)
         clusterCount <- clusterCount[,-1]
+        if(input$Species3 != "not selected"){
+          if(gene_type3() != "SYMBOL"){
+            data <- data[, - which(colnames(data) == "Unique_ID")]
+          }
+        }
         return(clusterCount)
       }
     }
@@ -6016,6 +6035,7 @@ shinyServer(function(input, output, session) {
         if(gene_type3() != "SYMBOL"){
           rownames(data) <- paste(data$SYMBOL,rownames(data), sep = "\n- ")
           data <- data[, - which(colnames(data) == "SYMBOL")]
+          data <- data[, - which(colnames(data) == "Unique_ID")]
         }
       }
       data <- data[, - which(colnames(data) == "Cluster")]

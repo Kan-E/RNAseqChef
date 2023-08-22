@@ -166,6 +166,9 @@ anno_rep <- function(row){
   return(row)
 }
 anno_rep_meta <- function(meta){
+  if(is.null(meta)) {
+    return(NULL)
+  }else{
   if(!str_detect(meta[1,1], "_1")){
     total <- length(meta[,1])
     cond1 <- length(which(meta[,1] == unique(meta[,1])[1]))
@@ -178,6 +181,7 @@ anno_rep_meta <- function(meta){
     }
   }
   return(meta)
+  }
 }
 
 gene_list_convert_for_enrichment <- function(gene_type,data, Ortholog,org,Species){

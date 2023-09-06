@@ -43,13 +43,11 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.0.8, 2023/8/1)"),
-                        p("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG.", style = "color:red"),
-                        p("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
-                          Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected).", style = "color:red"),
-                        "Add new species (117 plants, 70 fungi, and 251 metazoa).",br(),
-                        "Improve GOI profiling in the Pair-wise DEG, 3 conditions DEG, and volcano navi.",br(),
-                        "Improve the image to provide instructions on the input format for the Venn diagram.",br(),
+                        h4("Current version (v1.0.9, 2023/9/6)"),
+                        "Add new function 'Correlation analysis' in Normalized count analysis.",br(),
+                        "Enhance usability.",br(),
+                        "Improve the reproducibility of k-means clustering",br(),
+                        "Fix bug.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -189,7 +187,8 @@ shinyUI(
                              multiple = TRUE,
                              width = "80%"),
                    bsPopover("icon4", "Option: Normalized count file (txt, csv, or xlsx):", 
-                             content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
+                             content=paste0("You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.<br>",
+                                            strong("The column names of the normalized count data must match those of the uploaded raw count data.")), 
                              placement = "right",options = list(container = "body")),
                    strong(span("Output plot size setting for pdf (0: default)"),
                           span(icon("info-circle"), id = "pair_pdf_icon", 
@@ -238,7 +237,7 @@ shinyUI(
                    tabsetPanel(
                      type = "tabs",
                      tabPanel("Input Data",
-                              bsCollapse(id="input_collapse_panel",open="Row_count_panel",multiple = TRUE,
+                              bsCollapse(id="input_collapse_panel",open="Row_count_panel",multiple = FALSE,
                                          bsCollapsePanel(title="Raw_count_matrix:",
                                                          value="Row_count_panel",
                                                          dataTableOutput('Row_count_matrix')
@@ -249,6 +248,14 @@ shinyUI(
                                          ),
                                          bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                          value="D_row_count_matrix_panel",
+                                                         conditionalPanel(condition="input.data_file_type!='Row11'",
+                                                                          selectizeInput("sample_order", "Select samples:", choices = "", multiple = T),
+                                                                          textOutput("not_cond2_pair"),
+                                                                          tags$head(tags$style("#not_cond2_pair{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))
+                                                         ),
                                                          fluidRow(
                                                            column(4, downloadButton("download_pair_d_row_count", "Download defined raw count"))
                                                          ),
@@ -309,11 +316,13 @@ shinyUI(
                               )),
                      tabPanel("GOI profiling",
                               fluidRow(
-                                column(4, downloadButton("download_pair_volcano", "Download volcano plot")),
+                                column(4, downloadButton("download_pair_volcano", "Download volcano plot / MA plot")),
                                 column(4, downloadButton("download_pair_GOIheatmap", "Download heatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("GOI")),
+                                column(4, selectInput("GOI_plot_select","Plot type",c("Volcano plot","MA plot"),
+                                                      selected = "Volcano plot",multiple = F),
+                                       htmlOutput("GOI")),
                                 column(4, htmlOutput("volcano_x"), htmlOutput("GOIreset_pair")),
                                 column(4, htmlOutput("volcano_y"))
                               ),
@@ -467,7 +476,8 @@ shinyUI(
                              multiple = FALSE,
                              width = "80%"),
                    bsPopover("icon7", "Option: Normalized count file (txt, csv, or xlsx):", 
-                             content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
+                             content=paste0("You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.<br>",
+                                            strong("The column names of the normalized count data must match those of the uploaded raw count data.")), 
                              placement = "right",options = list(container = "body")),
                    strong(span("Output plot size setting for pdf (0: default)"),
                           span(icon("info-circle"), id = "cond3_pdf_icon", 
@@ -520,6 +530,14 @@ shinyUI(
                                          ),
                                          bsCollapsePanel(title="Defined_raw_count_matrix:",
                                                          value="D_row_count_matrix_panel2",
+                                                         conditionalPanel(condition="input.data_file_type2 != 'RowRecode_cond3'",
+                                                                          selectizeInput("sample_order_cond3", "Select samples:", choices = "", multiple = T),
+                                                                          textOutput("not_cond3_select"),
+                                                                          tags$head(tags$style("#not_cond3_select{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }"))
+                                                         ),
                                                          fluidRow(
                                                            column(4, downloadButton("download_cond3_d_row_count", "Download defined raw count"))
                                                          ),
@@ -915,15 +933,26 @@ shinyUI(
                               ),
                               fluidRow(
                                 column(4, htmlOutput("multi_kmeans_num"),
+                                       actionButton("kmeans_start_multi", "Start"),
+                                       tags$head(tags$style("#kmeans_start_multi{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"),
+                                                 tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                 )),
                                        downloadButton("download_multi_kmeans_heatmap", "Download heatmap"),
                                        downloadButton("download_multi_kmeans_boxplot", "Download boxplots")),
-                                column(8, plotOutput("multi_kmeans_heatmap"))
+                                column(8, htmlOutput("kmeans_order_multi"),
+                                       plotOutput("multi_kmeans_heatmap"))
                               ),
                               div(
                                 plotOutput("multi_kmeans_boxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
-                              bsCollapse(id="multi_collapse_panel2",open="multi_deg_kmeans_pattern_count_panel",multiple = TRUE,
+                              bsCollapse(id="multi_collapse_panel2",open="multi_deg_kmeans_pattern_panel",multiple = TRUE,
                               bsCollapsePanel(title="kmeans_result:",
                                               value="multi_deg_kmeans_pattern_panel",
                                               fluidRow(
@@ -1257,7 +1286,8 @@ shinyUI(
                    bsPopover("norm_pdf_icon", "Output plot size setting for pdf (default: 0): ", 
                              content=paste("You can adjust the plot size by using", strong('pdf_height'), "and", strong('pdf_width'), "parameters.<br>", 
                                            "Default size: <br>",strong("Clustering:"), "height = 3.5, width = 9<br>", 
-                                           strong("UMAP:"), "height = 3.5, width = 4.7 <br>",pdfSize_for_GOI),trigger = "click"), 
+                                           strong("UMAP:"), "height = 3.5, width = 4.7 <br>", 
+                                           strong("Correlation plot:"), "height = 5, width = 5 <br>",pdfSize_for_GOI),trigger = "click"), 
                    actionButton("goButton3", "example data"),
                    tags$head(tags$style("#goButton{color: black;
                                  font-size: 12px;
@@ -1291,6 +1321,7 @@ shinyUI(
                                          ),
                                          bsCollapsePanel(title="Defined_normalized_count_matrix:",
                                                          value="D_norm_count_matrix_panel",
+                                                         selectizeInput("sample_order_norm", "Select samples:", choices = "", multiple = T),
                                                          fluidRow(
                                                            column(4, downloadButton("download_d_norm_count", "Download defined normalized count"))
                                                          ),
@@ -1361,6 +1392,48 @@ shinyUI(
                               column(4, downloadButton("download_statisics", "Download table")),
                               dataTableOutput("statistical_table")
                      ),
+                     tabPanel("Correlation analysis",
+                              fluidRow(
+                                column(4, downloadButton("download_norm_corr", "Download correlation plot"))
+                              ),
+                              fluidRow(
+                                column(4,
+                                       radioButtons('corr_mode','Mode:',
+                                                    c('Screening'="corr_mode1",
+                                                      'Selected pair'="corr_mode2"
+                                                    ),selected = "corr_mode2"),
+                                       selectInput("corr_statistics","Statistics",c("spearman","pearson"),
+                                                   selected = "spearman",multiple = F),
+                                       htmlOutput("GOI_x"),
+                                       htmlOutput("GOI_y"),
+                                       htmlOutput("corr_color"),
+                                       conditionalPanel(condition="input.corr_mode=='corr_mode1'",
+                                       actionButton("corr_start", "Start"),
+                                       tags$head(tags$style("#corr_start{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"),
+                                                 tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                 ))
+                                       ),
+                                       htmlOutput("norm_corr_cutoff"),
+                                       htmlOutput("corr_fdr"),
+                                       htmlOutput("corr_rho")
+                                       ),
+                                column(8, plotOutput("norm_corrplot",brush = "plot1_brush_corr"))
+                              ),
+                              column(4, downloadButton("download_statisics_corrplot", "Download table")),
+                              dataTableOutput("statistical_table_corrplot"),
+                              fluidRow(
+                              column(4, htmlOutput("norm_corr_selected_list"),
+                                     htmlOutput("corr_color_selected"),
+                                     downloadButton("download_norm_corr_selected", "Download correlation plot (all genes from 'select GOI')"))
+                              ),
+                              plotOutput("norm_corrplot_selected")
+                     ),
                      tabPanel("k-means clustering",
                               fluidRow(
                                 column(4, htmlOutput("selectFC_norm"),
@@ -1382,6 +1455,7 @@ shinyUI(
           }"
                                                  ))),
                                 column(8, downloadButton("download_norm_kmeans_heatmap", "Download heatmap"),
+                                       htmlOutput("kmeans_order"),
                                        plotOutput("norm_kmeans_heatmap"))
                               ),
                               bsCollapse(id="norm_kmeans_collapse_panel",open="norm_kmeans_count",multiple = TRUE,
@@ -1488,6 +1562,8 @@ shinyUI(
                    tabsetPanel(
                      type = "tabs",
                      tabPanel("Input gene list",
+                              htmlOutput("pre_enrich_input_choice"),
+                              htmlOutput("enrich_input_choice"),
                               dataTableOutput('enrichment_input')
                      ),
                      tabPanel("Enrichment analysis",
@@ -1840,7 +1916,29 @@ shinyUI(
                                    strong("You can select genes by drawing the box on the volcano/scatter plot."),br(),
                                    img(src="pair-wise GOI profiling3.png", width = 400,height = 400),
                                    img(src="cond 3 goi3.png", width = 400,height = 400),br(),br(),
-                                   strong("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG."),br()
+                                   strong("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG."),br(),
+                                   h4("v1.0.9 (2023/9/6)"),
+                                   strong("・New function 'Correlation analysis' in Normalized count analysis."),br(),
+                                   strong("・Enhance usability"),br(),
+                                   strong("1. 'Select samples' function in Pair-wise DEG, 3 conditions DEG, and Normalized count analysis. 
+                                          You can choose the samples you want to analyze using the 'Select samples' function in Pair-wise DEG and 3 conditions DEG, and Normalized count analysis. 
+                                          It's not necessary to create a count file containing only the samples you intend to analyze, except for the batch-mode in Pair-wise DEG."),br(),
+                                   strong("2. k-means clustering in Multi DEG and Normalized count analysis. 
+                                          When genes of interest are selected in the 'kmeans_result (Multi DEG)' and 'k-means clustering result (Normalized count analysis)' panel, their positions are displayed on the heatmap.
+                                          Moreover, the order of clusters on the heatmap can be changed using the 'Order of clusters on the heatmap' function."),br(),
+                                   img(src="norm k-means 2.png", width = 600,height = 400),br(),br(),
+                                   strong("3. 'Order of groups' in the enrichment analysis."),br(), 
+                                   strong("In the previous versions, the x-axis in the dotplot was arranged alphabetically. you have the flexibility to change the order of groups."),br(),
+                                   strong("4. Add MA plot in GOI profiling of Pair-wise DEG."),br(),
+                                   strong("5. Rasterize Heatmap and volcano plot to reduce data size."),br(),
+                                   strong("・Improve the reproducibility of k-means clustering. typically relies on the initial cluster center, which poses a reproducibility issue."),br(), 
+                                   strong("In the previous versions, to mitigate this problem, k-means clustering was executed 100 times, and a final consensus k-means clustering was employed. However, this approach could not gurantee complete reproducibility"),br(),
+                                   strong("In the current version, to adress this problem, k-means clustering is performed with a fixed initial cluster center"),br(),
+                                   strong("・Fix bug."),br(),
+                                   strong("1. bug regarding input format 'normalized count data + meta data' in Normalized count analysis."),br(),
+                                   strong("2. bug when using ENSEMBL ID as gene names."),br(),
+                                   strong("   - Some table data formatting was skewed."),br(),
+                                   strong("   - 'Option: Select a normalized count file' in Pair-wise DEG and 3 conditions DEG was not work."),br(),
                             )
                           )
                  )

@@ -72,7 +72,9 @@ RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('org.At.tair.db', update = F)" && \
     R -e "BiocManager::install('colorspace', update = F)" && \
     R -e "BiocManager::install('magick', update = F)" && \
-    R -e "BiocManager::install('pdftools', update = F)"
+    R -e "BiocManager::install('pdftools', update = F)" && \
+    R -e "BiocManager::install('clue', update = F)" && \
+    R -e "devtools::install_github('VPetukhov/ggrastr')"
 RUN sudo rm -rf /srv/shiny-server/sample-apps /srv/shiny-server/index.html /srv/shiny-server/01_hello /srv/shiny-server/02_text /srv/shiny-server/03_reactivity /srv/shiny-server/04_mpg /srv/shiny-server/05_sliders /srv/shiny-server/06_tabsets /srv/shiny-server/07_widgets /srv/shiny-server/08_html /srv/shiny-server/09_upload /srv/shiny-server/10_download /srv/shiny-server/11_timer
 RUN mkdir -p /srv/shiny-server/RNAseqChef
 COPY ui.R /srv/shiny-server/RNAseqChef/

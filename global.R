@@ -56,6 +56,8 @@ library(org.At.tair.db)
 library(colorspace)
 library(pdftools)
 library(magick)
+library(clue)
+library(ggrastr) ##devtools::install_github('VPetukhov/ggrastr')
 options(repos = BiocManager::repositories())
 file.copy("Rmd/pair_report.Rmd",file.path(tempdir(),"pair_report.Rmd"), overwrite = TRUE)
 file.copy("Rmd/pair_batch_report.Rmd",file.path(tempdir(),"pair_batch_report.Rmd"), overwrite = TRUE)
@@ -87,6 +89,7 @@ read_df <- function(tmp, Species=NULL){
   if(is.null(tmp)) {
     return(NULL)
   }else{
+    if(sum(is.element(c("csv","txt","tsv","xlsx"), tools::file_ext(tmp))) == 0) validate("Error: the file extension is in an unexpected format.")
     if(tools::file_ext(tmp) == "xlsx") {
       df2 <- read_xlsx(tmp) 
       df2 <- as.data.frame(df2)
@@ -152,15 +155,16 @@ read_gene_list <- function(tmp){
 anno_rep <- function(row){
   if(!str_detect(colnames(row)[1], "_1")){
     colnames(row) <- gsub("\\.[0-9]+$", "", colnames(row))
-    total <- length(colnames(row))
+    name_list <- colnames(row) %>% sort()
+    row <- row %>% dplyr::select(all_of(name_list)) 
     unique_col <- unique(colnames(row))
-    cond1 <- length(which(colnames(row) == unique_col[1]))
-    cond2 <- length(which(colnames(row) == unique_col[2]))
-    for(i in 1:cond1){
-      colnames(row)[i] <- paste0(colnames(row)[i], "_", i)
-    }
-    for(i in 1:cond2){
-      colnames(row)[(cond1 + i)] <- paste0(colnames(row)[(cond1 + i)], "_", i)
+    total <- 0
+    for(i in 1:length(unique_col)){
+      cond <- length(which(colnames(row) == unique_col[i]))
+      for(k in 1:cond){
+        colnames(row)[total + k] <- paste0(colnames(row)[total + k], "_", k)
+      }
+      total <- total + cond
     }
   }
   return(row)
@@ -170,14 +174,22 @@ anno_rep_meta <- function(meta){
     return(NULL)
   }else{
   if(!str_detect(meta[1,1], "_1")){
-    total <- length(meta[,1])
-    cond1 <- length(which(meta[,1] == unique(meta[,1])[1]))
-    cond2 <- length(which(meta[,1] == unique(meta[,1])[2]))
-    for(i in 1:cond1){
-      meta[i,1] <- paste0(meta[i,1], "_", i)
+    meta[,1] <- gsub("\\.[0-9]+$", "", meta[,1])
+    if(colnames(meta)[1] != "characteristics"){
+    if(length(grep("characteristics", colnames(meta))) != 0){
+      meta <- meta[, - which(colnames(meta) == "characteristics")]
     }
-    for(i in 1:cond2){
-      meta[(cond1 + i),1] <- paste0(meta[(cond1 + i),1], "_", i)
+    }
+    colnames(meta)[1] <- "characteristics"
+    meta <- meta %>% dplyr::arrange(characteristics)
+    unique_col <- unique(meta[,1])
+    total <- 0
+    for(i in 1:length(unique_col)){
+      cond <- length(which(meta[,1] == unique_col[i]))
+      for(k in 1:cond){
+        meta[total + k,1] <- paste0(meta[total + k,1], "_", k)
+      }
+      total <- total + cond
     }
   }
   return(meta)
@@ -214,7 +226,6 @@ gene_list_convert_for_enrichment <- function(gene_type,data, Ortholog,org,Specie
       }
       gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
       data <- merge(df, gene_IDs, by="GeneID")
-      print(data)
       return(data)
     }
 }
@@ -358,13 +369,13 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
                         values = genes ,mart = use,filters = filter,
                         attributesL = c("external_gene_name","entrezgene_id"),
                         martL = ortho_mart, uniqueRows=T))
-          if(class(genes2) == "try-error") {
-            genes4 = try(getLDS(attributes = c("ensembl_gene_id"),
-                                values = genes ,mart = use,filters = filter,
-                                attributesL = c("external_gene_name","ensembl_gene_id"),
-                                martL = ortho_mart, uniqueRows=T))
+        if(class(genes2) == "try-error") {
+          genes4 = try(getLDS(attributes = c("ensembl_gene_id"),
+                              values = genes ,mart = use,filters = filter,
+                              attributesL = c("external_gene_name","ensembl_gene_id"),
+                              martL = ortho_mart, uniqueRows=T))
           if(class(genes4) == "try-error") {
-          validate("biomart has encountered an unexpected server error.
+            validate("biomart has encountered an unexpected server error.
                     Please try using a different 'biomart host' or try again later.")
           }else{
             if(Ortholog == "Drosophila melanogaster") org <- org.Dm.eg.db
@@ -373,12 +384,12 @@ no_org_ID <- function(count=NULL,gene_list=NULL,Species,Ortholog,Biomart_archive
             gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                             keytype = "ENSEMBL",
                                             columns = c("ENSEMBL","ENTREZID"))
-        colnames(gene_IDs) <- c("Gene.stable.ID.1","ENTREZID")
-        gene_IDs <- gene_IDs %>% distinct(Gene.stable.ID.1, .keep_all = T)
-        genes3 <- merge(genes4, gene_IDs, by="Gene.stable.ID.1")
-        genes2 <- genes3[,-1]
-            }
+            colnames(gene_IDs) <- c("Gene.stable.ID.1","ENTREZID")
+            gene_IDs <- gene_IDs %>% distinct(Gene.stable.ID.1, .keep_all = T)
+            genes3 <- merge(genes4, gene_IDs, by="Gene.stable.ID.1")
+            genes2 <- genes3[,-1]
           }
+        }
         colnames(genes) <- colname1
         colnames(genes2) <- colname
         gene3<-merge(genes,genes2,by=colname1,all=T)
@@ -1186,6 +1197,7 @@ enrich_for_table <- function(data, H_t2g, Gene_set){
     colnames(data)[1] <- "gs_name"
     H_t2g <- H_t2g %>% distinct(gs_name, .keep_all = T)
     data2 <- left_join(data, H_t2g, by="gs_name")  %>% as.data.frame()
+    data2$Group <- gsub("\n"," ", data2$Group)
     if(Gene_set == "DoRothEA regulon (activator)" || Gene_set == "DoRothEA regulon (repressor)"){
       data3 <- data.frame(Group = data2$Group, Gene_set_name = data2$gs_name, Confidence = data2$confidence,
                           Count = data2$Count, GeneRatio = data2$GeneRatio, BgRatio = data2$BgRatio, pvalue = data2$pvalue, 
@@ -1592,7 +1604,6 @@ enrich_gene_list <- function(data, Gene_set, H_t2g, org,org_code=NULL){
         for (name in unique(data$Group)) {
           sum <- length(data$ENTREZID[data$Group == name])
           em <- enricher(data$ENTREZID[data$Group == name], TERM2GENE=H_t2g2, pvalueCutoff = 0.05)
-          print(em)
           if (length(as.data.frame(em)$ID) != 0) {
             if(length(colnames(as.data.frame(em))) == 9){
               cnet1 <- setReadable(em, org, 'ENTREZID')
@@ -1636,12 +1647,13 @@ enrich_gene_list_xenopus <- function(data, Gene_set, org,org_code=NULL){
 }
 
 
-enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL){
+enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL,group_order=NULL){
       if(is.null(data) || is.null(enrich_gene_list)){
         return(NULL)
       }else{
           df <- data.frame(matrix(rep(NA, 10), nrow=1))[numeric(0), ]
           colnames(df) <- c("ID", "Description", "GeneRatio", "BgRatio", "pvalue", "p.adjust", " qvalue", "geneID", "Count", "Group")
+          cluster_list <- c()
           for (name in names(enrich_gene_list)) {
             sum <- length(data$ENTREZID[data$Group == name])
             em <- enrich_gene_list[[name]]
@@ -1649,6 +1661,8 @@ enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL)
               if(length(colnames(as.data.frame(em))) == 9){
                 cnet1 <- as.data.frame(em)
                 cnet1$Group <- paste(name, "\n","(",sum, ")",sep = "")
+                cluster_list <- c(cluster_list, paste(name, "\n","(",sum, ")",sep = ""))
+                if(!is.null(group_order)) group_order[which(group_order == name)] <- paste(name, "\n","(",sum, ")",sep = "")
                 cnet1 <- cnet1[sort(cnet1$pvalue, decreasing = F, index=T)$ix,]
                 if (length(cnet1$pvalue) > showCategory){
                   cnet1 <- cnet1[1:showCategory,]
@@ -1657,32 +1671,47 @@ enrich_genelist <- function(data, enrich_gene_list, showCategory=5,section=NULL)
               }
             }
           }
+          if(!is.null(group_order)) group_order <- group_order[group_order %in% cluster_list]
           if ((length(df$Description) == 0) || length(which(!is.na(unique(df$qvalue)))) == 0) {
             p1 <- NULL
           } else{
             if(!is.null(section)){
             if(section == "enrichmentviewer"){
               df$Group <- gsub("_", " ", df$Group)
+              if(!is.null(group_order)) group_order <- gsub("_", " ", group_order)
               for(i in 1:length(df$Group)){
                 df$Group[i] <- paste(strwrap(df$Group[i], width = 15),collapse = "\n")
               }
+              for(i in 1:length(unique(df$Group))){
+                if(!is.null(group_order)) group_order[i] <- paste(strwrap(group_order[i], width = 15),collapse = "\n")
+              }
               df$Group <- gsub(" \\(", "\n\\(", df$Group)
+              if(!is.null(group_order)) group_order <- gsub(" \\(", "\n\\(", group_order)
             }
             if(section == "venn"){
               df$Group <- gsub(":", ": ", df$Group)
+              if(!is.null(group_order)) group_order <- gsub(":", ": ", group_order)
               for(i in 1:length(df$Group)){
                 df$Group[i] <- paste(strwrap(df$Group[i], width = 15),collapse = "\n")
               }
+              for(i in 1:length(unique(df$Group))){
+                if(!is.null(group_order)) group_order[i] <- paste(strwrap(group_order[i], width = 15),collapse = "\n")
+              }
               df$Group <- gsub(" \\(", "\n\\(", df$Group)
+              if(!is.null(group_order)) group_order <- gsub(" \\(", "\n\\(", group_order)
             }
+            }
+            if(!is.null(group_order)) {
+              df$Group <- factor(df$Group, levels=group_order)
+              df <- df %>% dplyr::arrange(Group) 
             }
             df$GeneRatio <- parse_ratio(df$GeneRatio)
             df <- dplyr::filter(df, !is.na(qvalue))
             df$Description <- gsub("_", " ", df$Description)
             df <- dplyr::mutate(df, x = paste0(Group, 1/(-log10(eval(parse(text = "qvalue"))))))
             df$x <- gsub(":","", df$x)
-            df <- dplyr::arrange(df, x)
-            idx <- order(df[["x"]], decreasing = FALSE)
+            df <- dplyr::arrange(df, Group, x)
+            idx <- order(df[["Group"]], df[["x"]], decreasing = FALSE)
             df$Description <- factor(df$Description,
                                      levels=rev(unique(df$Description[idx])))
             p1 <- as.grob(ggplot(df, aes(x = Group,y= Description,color=qvalue,size=GeneRatio))+
@@ -1810,12 +1839,9 @@ MotifAnalysis <- function(data, Species, org,x){
       }
       colnames(gene_IDs) <- c("SYMBOL","gene_id")
     }
-    print(head(gene_IDs))
-    print(head(x))
     y <- subset(x, gene_id %in% gene_IDs$gene_id)
     if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
     seq <- getSeq(genome, y)
-    print(seq)
     se <- calcBinnedMotifEnrR(seqs = seq,
                               pwmL = pwms,
                               background = "genome",
@@ -1893,10 +1919,15 @@ MotifRegion <- function(data, target_motif, Species, x){
   return(res2)
 }
 
-Motifplot <- function(df2, showCategory=5,padj){
+Motifplot <- function(df2, showCategory=5,padj,data,group_order){
   df <- data.frame(matrix(rep(NA, 11), nrow=1))[numeric(0), ]
+  data <- data.frame(GeneID = data[,1], Group = data[,2])
   for(name in names(df2)){
     res <- df2[[name]]
+    print(name)
+    data2 <- dplyr::filter(data, Group == name)
+    my.symbols <- data2$GeneID
+    if(!is.null(group_order)) group_order[which(group_order == name)] <- paste(name, "\n(", length(my.symbols),")",sep = "")
     res <- dplyr::filter(res, X1 > -log10(padj))
     res <- res %>% dplyr::arrange(-X1.1)
     if(length(rownames(res)) > showCategory){
@@ -1911,11 +1942,16 @@ Motifplot <- function(df2, showCategory=5,padj){
     return(NULL)
   }else{
     df$Group <- gsub("_", " ", df$Group)
+    print(unique(df$Group))
+    
+    if(!is.null(group_order)) group_order <- gsub("_", " ", group_order)
+    print(group_order)
+    if(!is.null(group_order)) df$Group <- factor(df$Group,levels=group_order)
   df$padj <- 10^(-df$negLog10Padj)
   df <- dplyr::mutate(df, x = paste0(Group, 1/-log10(eval(parse(text = "padj")))))
   df$x <- gsub(":","", df$x)
   df <- dplyr::arrange(df, x)
-  idx <- order(df[["x"]], decreasing = FALSE)
+  idx <- order(df[["Group"]], df[["x"]], decreasing = FALSE)
   df$motif.name <- factor(df$motif.name,
                           levels=rev(unique(df$motif.name[idx])))
   d <- ggplot(df, aes(x = Group,y= motif.name,color=padj,size=log2enr))+
@@ -1970,7 +2006,8 @@ GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL){
     indexes <- which(rownames(data.z) %in% GOI)
     labels <- rownames(data.z)[indexes]
     ht <- ht + rowAnnotation(
-      link = anno_mark(at = indexes, labels = labels,which="row"),
+      link = anno_mark(at = indexes, labels = labels,which="row",link_width = unit(1, "cm"),
+                       labels_gp = gpar(fontface = "italic")),
       width = unit(1, "cm") + max_text_width(labels)
     )
   }
@@ -2034,3 +2071,56 @@ gene_type <- function(my.symbols,org,Species){
   return(type)
 }
 
+consensus_kmeans = function(mat, centers, km_repeats) {
+  partition_list = lapply(seq_len(km_repeats), function(i) {
+    as.cl_hard_partition(kmeans(mat, centers))
+  })
+  partition_list = cl_ensemble(list = partition_list)
+  partition_consensus = cl_consensus(partition_list)
+  as.vector(cl_class_ids(partition_consensus)) 
+}
+
+corr_plot_pair <- function(data,corr_color,GOI_x,GOI_y){
+  p1 <- NULL
+  p2 <- NULL
+  if(corr_color == ""){
+    p1 <- ggplot(data, aes(x=log10(.data[[GOI_x]]+1),y=log10(.data[[GOI_y]]+1))) +
+      geom_smooth(method=lm, se=FALSE, color='#2C3E50',linetype="dashed",size=0.5)
+  }else if(corr_color == "sample_name"){
+    label <- gsub("\\_.+$", "", rownames(data))
+    p1 <- ggplot(data, aes(x=log10(.data[[GOI_x]]+1),y=log10(.data[[GOI_y]]+1), col=label)) +
+      geom_smooth(method=lm, se=FALSE, color='#2C3E50',linetype="dashed",size=0.5)
+  }else {
+    p2 <- ggplot(data, aes(x=log10(.data[[GOI_x]]+1),y=log10(.data[[GOI_y]]+1), col=log10(.data[[corr_color]]))) +
+      geom_smooth(method=lm, se=FALSE, color='#2C3E50',linetype="dashed",size=0.5)
+  }
+  if(!is.null(p1)){
+    p <- p1 +
+      geom_point()+ 
+      theme_bw()+ 
+      xlab(paste(strwrap(paste0("log10(", GOI_x," + 1)"), width = 30),collapse = "\n"))+
+      ylab(paste(strwrap(paste0("log10(", GOI_y," + 1)"), width = 30),collapse = "\n"))+
+      theme(legend.position = "top" , legend.title = element_blank(),
+            axis.text.x= ggplot2::element_text(size = 12),
+            axis.text.y= ggplot2::element_text(size = 12),
+            text = ggplot2::element_text(size = 15),
+            title = ggplot2::element_text(size = 15),
+            plot.title = element_text(size = 15))
+  }
+  if(!is.null(p2)){
+    p <- p2 +
+      geom_point()+
+      scale_color_continuous(low="blue", high="red")+ 
+      theme_bw()+
+      ggtitle(paste(strwrap(paste0("color = log10(", corr_color," + 1)"), width = 30),collapse = "\n"))+ 
+      xlab(paste(strwrap(paste0("log10(", GOI_x," + 1)"), width = 30),collapse = "\n"))+
+      ylab(paste(strwrap(paste0("log10(", GOI_y," + 1)"), width = 30),collapse = "\n"))+
+      theme(legend.title = element_blank(),
+            axis.text.x= ggplot2::element_text(size = 12),
+            axis.text.y= ggplot2::element_text(size = 12),
+            text = ggplot2::element_text(size = 15),
+            title = ggplot2::element_text(size = 15),
+            plot.title = element_text(size = 15))
+  }
+  return(p)
+}

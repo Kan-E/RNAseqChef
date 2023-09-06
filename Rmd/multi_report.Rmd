@@ -1,5 +1,5 @@
 ---
-title: "Multi DEG with RNAseqChef v1.0.8"
+title: "Multi DEG with RNAseqChef v1.0.9"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -211,7 +211,7 @@ kmeans pattern count: `r paste0("kmeans clustering_",as.character(params$input$s
 
 selected_boxplot: `r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/GOI_boxplot.pdf")`
 ```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
-if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$multi_pattern2_count_rows_selected)){
+if(!is.null(params$multi_kmeans_box) && length(params$input$selectFC2) == 2 && !is.null(params$input$multi_kmeans_count_table_rows_selected)){
 try(magick::image_read_pdf(paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]),"/GOI_boxplot.pdf")))
 }else print("Not performed")
 ```

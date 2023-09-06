@@ -86,6 +86,7 @@ COPY dds.rds /srv/shiny-server/RNAseqChef/
 COPY Rmd /srv/shiny-server/RNAseqChef/Rmd/
 COPY navAppend.js /srv/shiny-server/RNAseqChef/
 COPY shiny-server.conf /etc/shiny-server/
+COPY data  /srv/shiny-server/RNAseqChef/data/
 RUN chown -R shiny:shiny /srv/shiny-server
 EXPOSE 3838
 CMD exec shiny-server >> /var/log/shiny-server.log 2>&1

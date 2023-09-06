@@ -39,12 +39,13 @@ pkgs <- c("shiny","DT","readxl","rstatix","multcomp","tidyverse","ggpubr","venn"
 "TxDb.Mmusculus.UCSC.mm10.knownGene","TxDb.Hsapiens.UCSC.hg19.knownGene",
 "BSgenome.Mmusculus.UCSC.mm10","BSgenome.Hsapiens.UCSC.hg19","TFBSTools", "org.Bt.eg.db",
 "org.Dr.eg.db","org.Cf.eg.db","org.Gg.eg.db","org.Mmu.eg.db","org.Pt.eg.db","org.Sc.sgd.db",
-"org.At.tair.db","colorspace","magick","pdftools")
+"org.At.tair.db","colorspace","magick","pdftools","clue")
 options(repos = BiocManager::repositories())
 for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
 }
 devtools::install_github("YuLab-SMU/clusterProfiler.dplyr")
+devtools::install_github('VPetukhov/ggrastr')
 ```
 
 You may now run RNAseqChef with just one command in R:<br>

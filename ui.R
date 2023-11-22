@@ -1511,7 +1511,7 @@ shinyUI(
                                            "<br>The first column is", strong("gene name"), ".<br>", 
                                            "The second and subsequent columns do not affect the analysis.<br>", 
                                            "File names are used as", strong("group names"),".<br><br>",
-                                           img(src="input_format_enrich.png", width = 250,height = 400)), 
+                                           img(src="input_format_enrich.png", width = 400,height = 250)), 
                              placement = "right",options = list(container = "body")),
                    fluidRow(
                      column(6, selectInput("Species4", "Species", species_list, selected = "not selected")),

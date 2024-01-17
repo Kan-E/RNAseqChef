@@ -1044,7 +1044,7 @@ shinyServer(function(input, output, session) {
   pair_GOIheatmap <- reactive({
     count <- deg_norm_count()
     if(gene_type1() != "SYMBOL"){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
+      if(length(grep("SYMBOL", colnames(count))) != 0){
         count <- count[, - which(colnames(count) == "SYMBOL")]
       }
     }
@@ -1158,7 +1158,7 @@ shinyServer(function(input, output, session) {
   pair_GOIbox <- reactive({
     count <- deg_norm_count()
     if(gene_type1() != "SYMBOL"){
-      if(length(grep("SYMBOL", colnames(data))) != 0){
+      if(length(grep("SYMBOL", colnames(count))) != 0){
         count <- count[, - which(colnames(count) == "SYMBOL")]
       }
     }

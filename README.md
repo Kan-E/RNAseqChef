@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7095217.svg)](https://doi.org/10.5281/zenodo.7095217)
 
 # RNAseqChef
-RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application ([https://imeg-ku.shinyapps.io/RNAseqChef/](https://imeg-ku.shinyapps.io/RNAseqChef/)) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>
+RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application ([https://imeg-ku.shinyapps.io/RNAseqChef/](https://imeg-ku.shinyapps.io/RNAseqChef/), [mirror 1](https://imeg-ku.shinyapps.io/RNAseqChef_mirror1/), [mirror 2](https://imeg-ku.shinyapps.io/RNAseqChef_mirror2/)) for automated, systematic, and integrated RNA-seq differential expression analysis. RNAseqChef is designed for wet-bench scientists with little computational programming skill to dissect multiple RNA-seq datasets quickly. <br>
 
 # Manual
 Manual：           [https://github.com/Kan-E/RNAseqChef/wiki](https://github.com/Kan-E/RNAseqChef/wiki) <br>
@@ -12,11 +12,11 @@ Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https:
 - Download Docker
 - Run the following commands once to get the docker image of RNAseqChef<br>
 ```
-docker pull omicschef/rnaseqchef:v1.0.9
+docker pull omicschef/rnaseqchef:v1.1.0
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```
-docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.0.9
+docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.1.0
 ```
 Please access http://localhost:3838 in your browser.
 

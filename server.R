@@ -334,8 +334,8 @@ shinyServer(function(input, output, session) {
     if(length(unique(collist)) == 2){
       if (input$DEG_method == "DESeq2") {
         withProgress(message = "DESeq2",{
-          group <- data.frame(con = factor(collist))
-          dds<- DESeqDataSetFromMatrix(countData = round(count),colData = group, design = ~ con)
+            group <- data.frame(con = factor(collist))
+            dds<- DESeqDataSetFromMatrix(countData = round(count),colData = group, design = ~ con)
           dds$con <- factor(dds$con, levels = unique(collist))
           dds <- DESeq(dds)
           incProgress(1)
@@ -365,66 +365,92 @@ shinyServer(function(input, output, session) {
       file_name <- gsub("\\..+$", "", input$file1)
       collist <- gsub("\\_.+$", "", colnames(count))
       if(length(unique(collist)) == 2){
-      if (input$DEG_method == "DESeq2") {
-        dds <- dds()
-        contrast <- c("con", unique(collist))
-        res <- results(dds,  contrast = contrast)
-        if(input$FDR_method == "IHW") {
-          ihw_res <- ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
-          res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
-        }
-        if(input$FDR_method == "Qvalue") {
+        if (input$DEG_method == "DESeq2") {
+          dds <- dds()
+          contrast <- c("con", unique(collist))
           res <- results(dds,  contrast = contrast)
-          qvalue <- qvalue::qvalue(res$pvalue)
-          res$padj <- qvalue$qvalues
+          if(input$FDR_method == "IHW") {
+            ihw_res <- IHW::ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
+            res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
+          }
+          if(input$FDR_method == "Qvalue") {
+            res <- results(dds,  contrast = contrast)
+            qvalue <- qvalue::qvalue(res$pvalue)
+            res$padj <- qvalue$qvalues
+          }
         }
-      }
-      if(input$DEG_method == "edgeR"){
-        dds <- dds()
-        group <- factor(collist)
-        result <- exactTest(dds, pair = c(unique(group)[2],unique(group)[1]))
-        res <- as.data.frame(topTags(result, n = nrow(count)))
-        qvalue <- qvalue::qvalue(res$PValue)
-        res$padj <- qvalue$qvalues
-        ihw_res <- try(ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
+        if(input$DEG_method == "edgeR"){
+          dds <- dds()
+          group <- factor(collist)
+          result <- exactTest(dds, pair = c(unique(group)[2],unique(group)[1]))
+          res <- as.data.frame(topTags(result, n = nrow(count)))
+          qvalue <- qvalue::qvalue(res$PValue)
+          res$padj <- qvalue$qvalues
+          ihw_res <- try(IHW::ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
           if(class(ihw_res) == "try-error"){
             res$ihw_padj <- NA
-        }else{
-        ihw_res_df <- IHW::as.data.frame(ihw_res)
-        res$ihw_padj <- ihw_res_df$adj_pvalue
-        }
-        if(input$FDR_method == "BH"){label <- c("log2FoldChange", "log2CPM", "PValue","padj", "Qvalue", "IHW_FDR")}
-        if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
-        if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}
-        colnames(res) <- label
-      }
-      if(input$DEG_method == "EBSeq"){
-        withProgress(message = "EBSeq",{
-          count <- data.matrix(count)
-          vec <- c()
-          for (i in 1:length(unique(collist))) {
-            num <- length(collist[collist == unique(collist)[i]])
-            vec <- c(vec, num)
+          }else{
+            ihw_res_df <- IHW::as.data.frame(ihw_res)
+            res$ihw_padj <- ihw_res_df$adj_pvalue
           }
-          ngvector <- NULL
-          conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
-          Sizes <- MedianNorm(count)
-          NormMat <- GetNormalizedMat(count, Sizes)
-          EBOut <- NULL
-          EBOut <- EBTest(Data = count, NgVector = ngvector, Conditions = conditions, sizeFactors = Sizes, maxround = 5)
-          stopifnot(!is.null(EBOut))
-          PP <- as.data.frame(GetPPMat(EBOut))
-          fc_res <- PostFC(EBOut)
-          results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
-          colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
-          res <- results[order(results[,"PPDE"], decreasing = TRUE),]
-          incProgress(1)
-        })
-      }
-      res <- as.data.frame(res)
-      print(gene_type1())
-      if(input$Species != "not selected") res <- ensembl2symbol(gene_type=gene_type1(),data = res, input$Species,Ortholog=ortholog1(),org = org1())
-      return(res)
+          if(input$FDR_method == "BH"){label <- c("log2FoldChange", "log2CPM", "PValue","padj", "Qvalue", "IHW_FDR")}
+          if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
+          if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}
+          colnames(res) <- label
+        }
+        if(input$DEG_method == "limma"){
+          
+            collist <- gsub(" ", ".", collist)
+
+            
+            group <- factor(collist)
+            count <- log(count + 1,2)
+            eset = new("ExpressionSet", exprs=as.matrix(count))
+
+              design <- model.matrix(~0+collist)
+              colnames(design) <- unique(collist)
+              fit <- lmFit(eset, design)
+              comparisons <-  paste(unique(collist)[1],"-",unique(collist)[2],sep="")
+              cont.matrix <- makeContrasts(contrasts=comparisons, levels=design)
+              fit <- contrasts.fit(fit, cont.matrix)
+              if(input$limma_trend == TRUE) fit2 <- eBayes(fit,trend = TRUE,robust = input$regression_mode)
+              if(input$limma_trend == FALSE) fit2 <- eBayes(fit,trend = FALSE,robust = input$regression_mode)
+              res =topTable(fit2, number = 1e12)
+            if(input$cutoff_limma == "fdr"){
+              colnames(res) <- c("log2FoldChange","baseMean","t","pval","padj","B")
+            }else{
+              colnames(res) <- c("log2FoldChange","baseMean","t","padj","padj2","B")
+            }
+            res$baseMean <- 2^res$baseMean
+        
+        }
+        if(input$DEG_method == "EBSeq"){
+          withProgress(message = "EBSeq",{
+            count <- data.matrix(count)
+            vec <- c()
+            for (i in 1:length(unique(collist))) {
+              num <- length(collist[collist == unique(collist)[i]])
+              vec <- c(vec, num)
+            }
+            ngvector <- NULL
+            conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
+            Sizes <- MedianNorm(count)
+            NormMat <- GetNormalizedMat(count, Sizes)
+            EBOut <- NULL
+            EBOut <- EBTest(Data = count, NgVector = ngvector, Conditions = conditions, sizeFactors = Sizes, maxround = 5)
+            stopifnot(!is.null(EBOut))
+            PP <- as.data.frame(GetPPMat(EBOut))
+            fc_res <- PostFC(EBOut)
+            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
+            colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
+            res <- results[order(results[,"PPDE"], decreasing = TRUE),]
+            incProgress(1)
+          })
+        }
+        res <- as.data.frame(res)
+        print(gene_type1())
+        if(input$Species != "not selected") res <- ensembl2symbol(gene_type=gene_type1(),data = res, input$Species,Ortholog=ortholog1(),org = org1())
+        return(res)
       }
     }
   })
@@ -452,6 +478,9 @@ shinyServer(function(input, output, session) {
           if (input$DEG_method == "edgeR") {
             dds <- dds()
             normalized_counts <- t(t(dds$pseudo.counts)*(dds$samples$norm.factors))
+          }
+          if (input$DEG_method == "limma") {
+            normalized_counts <- count
           }
           if(input$DEG_method == "EBSeq"){
             count <- data.matrix(count)
@@ -497,8 +526,19 @@ shinyServer(function(input, output, session) {
   output$D_Row_count_matrix <- DT::renderDataTable({
     d_row_count_matrix()
   })
+  deg_result_limma <- reactive({
+    if (!is.null(deg_result()) && input$DEG_method == "limma") {
+      res <- deg_result()
+      colnames(res) <- c("log2FoldChange","baseMean","t","pval","padj","B")
+      return(res)
+    }
+  })
   output$DEG_result <- DT::renderDataTable({
-    deg_result()
+    if (input$DEG_method == "limma") {
+      deg_result_limma()
+    }else{
+      deg_result()
+    }
   })
   output$download_pair_d_row_count = downloadHandler(
     filename = function() {
@@ -795,7 +835,7 @@ shinyServer(function(input, output, session) {
       if(is.null(data2)){
         ht <- NULL
       }else{
-        data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
+        data.z <- genefilter::genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
         ht <- as.grob(GOIheatmap(data.z,show_row_names = FALSE))
       }
       p <- plot_grid(m1, ht, rel_widths = c(2, 1))
@@ -1048,19 +1088,25 @@ shinyServer(function(input, output, session) {
         count <- count[, - which(colnames(count) == "SYMBOL")]
       }
     }
+    print(head(count))
     collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
       num <- length(collist[collist == unique(collist)[i]])
       vec <- c(vec, num)
     }
+    print(collist)
+    print(vec)
     Cond_1 <- vec[1]
     Cond_2 <- vec[2]
     data2 <- pair_GOI_count()
     if(is.null(data2)){
       ht <- NULL
     }else{
-      data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
+      print(head(data2))
+      print(Cond_1)
+      print(Cond_2)
+      data.z <- genefilter::genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
       ht <- GOIheatmap(data.z)
     }
     return(ht)
@@ -1154,7 +1200,6 @@ shinyServer(function(input, output, session) {
     }
     return(data2)
   })
-  
   pair_GOIbox <- reactive({
     count <- deg_norm_count()
     if(gene_type1() != "SYMBOL"){
@@ -1175,7 +1220,9 @@ shinyServer(function(input, output, session) {
       p <- NULL
     }else{
       data3 <- data2[,8:(7 + Cond_1 + Cond_2)]
-      p <- GOIboxplot(data = data3) + scale_fill_manual(values=c("gray", "#ff8082"))
+        pair= NULL
+        plottype="Boxplot"
+      p <- GOIboxplot(data = data3, pair=pair,plottype = plottype) + scale_fill_manual(values=c("gray", "#ff8082"))
     }
     return(p)
   })
@@ -1207,23 +1254,41 @@ shinyServer(function(input, output, session) {
             count <- count[, - which(colnames(count) == "SYMBOL")]
           }
         }
-        if(gene_type1() != "SYMBOL"){
-          if(input$Species != "not selected"){
-            Unique_ID <- input$GOI
-            label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
-            data2 <- merge(data, label_data, by="Unique_ID")
-            rownames(data2) <- data2$Unique_ID
-            data2 <- data2[, - which(colnames(data2) == "Row.names")]
+        if(dim(brush_info())[1] == 0){
+          if(gene_type1() != "SYMBOL"){
+            if(input$Species != "not selected"){
+              Unique_ID <- input$GOI
+              label_data <- as.data.frame(Unique_ID, row.names = Unique_ID)
+              data2 <- merge(data, label_data, by="Unique_ID")
+              rownames(data2) <- data2$Unique_ID
+              data2 <- data2[, - which(colnames(data2) == "Row.names")]
+            }else{
+              Row.names <- input$GOI
+              label_data <- as.data.frame(Row.names, row.names = Row.names)
+              data2 <- merge(data, label_data, by="Row.names")
+              rownames(data2) <- data2$Row.names}
           }else{
             Row.names <- input$GOI
             label_data <- as.data.frame(Row.names, row.names = Row.names)
             data2 <- merge(data, label_data, by="Row.names")
-            rownames(data2) <- data2$Row.names}
+            rownames(data2) <- data2$Row.names
+          }
         }else{
-          Row.names <- input$GOI
-          label_data <- as.data.frame(Row.names, row.names = Row.names)
-          data2 <- merge(data, label_data, by="Row.names")
-          rownames(data2) <- data2$Row.names
+          data2<-brush_info()
+          if(input$GOI_plot_select == "Volcano plot"){
+            data2 <- data2[, - which(colnames(data2) == "minusLog10padj")]
+          }else{
+            data2 <- data2[, - which(colnames(data2) == "log2baseMean")]
+          }
+          if(gene_type1() != "SYMBOL"){
+            if(input$Species != "not selected"){
+              rownames(data2) <- data2$Unique_ID
+            }else{
+              rownames(data2) <- data2$Row.names
+            }
+          }else{
+            rownames(data2) <- data2$Row.names
+          }
         }
         rowlist <- rownames(data2)
         if(input$pair_pdf_height == 0){
@@ -1254,7 +1319,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 9
         }else pdf_width <- input$pair_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
-        print(PCAplot(data = deg_norm_count()))
+        print(PCAplot(data = deg_norm_count(),legend = input$PCA_legend))
         dev.off()
         incProgress(1)
       })
@@ -1265,7 +1330,7 @@ shinyServer(function(input, output, session) {
     if(is.null(d_row_count_matrix())){
       return(NULL)
     }else{
-      print(PCAplot(data = deg_norm_count()))
+      print(PCAplot(data = deg_norm_count(),legend = input$PCA_legend))
     }
   })
   
@@ -1305,7 +1370,7 @@ shinyServer(function(input, output, session) {
         write.table(data_degcount_up(), up, quote = F, row.names = T, col.names=NA, sep = "\t")
         write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
         pdf(PCA, height = 3.5, width = 9)
-        print(PCAplot(data = deg_norm_count()))
+        print(PCAplot(data = deg_norm_count(),legend = input$PCA_legend))
         dev.off()
         pdf(MAplot, height = 4, width = 7)
         print(ma_heatmap_plot())
@@ -1434,7 +1499,7 @@ shinyServer(function(input, output, session) {
       }
       if(length(data$Description) != 0) {
         data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-        data$GeneRatio <- parse_ratio(data$GeneRatio)
+        data$GeneRatio <- DOSE::parse_ratio(data$GeneRatio)
         return(data)
       }else return(NULL)
     }else{return(NULL)}
@@ -1447,8 +1512,8 @@ shinyServer(function(input, output, session) {
         if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
           H_t2g <- Hallmark_set()
           H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-          em_up <- try(enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
-          em_down <- try(enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
+          em_up <- try(clusterProfiler::enricher(dplyr::filter(data3, group == "Up")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
+          em_down <- try(clusterProfiler::enricher(dplyr::filter(data3, group == "Down")$ENTREZID, TERM2GENE=H_t2g2, pvalueCutoff = 0.05))
         }else{
           if(input$Gene_set == "KEGG"){
             em_up <- try(enrichKEGG(dplyr::filter(data3, group == "Up")$ENTREZID, organism = org_code(input$Species, Ortholog= input$Ortholog), pvalueCutoff = 0.05,keyType = "ncbi-geneid")) 
@@ -1474,7 +1539,7 @@ shinyServer(function(input, output, session) {
           if (length(as.data.frame(df[[name]])$ID) == 0) {
             df[[name]] <- NULL
           } else{
-            df[[name]] <- try(setReadable(df[[name]], org1(), 'ENTREZID'))
+            df[[name]] <- try(clusterProfiler::setReadable(df[[name]], org1(), 'ENTREZID'))
             if(length(class(df[[name]])) == 1){
               if(class(df[[name]]) == "try-error") df[[name]] <- NULL
             }
@@ -1501,7 +1566,7 @@ shinyServer(function(input, output, session) {
         if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
           H_t2g <- Hallmark_set()
           H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-          em3 <- try(GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+          em3 <- try(clusterProfiler::GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                           minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
         }else{
           if(input$Gene_set == "KEGG"){
@@ -1527,7 +1592,7 @@ shinyServer(function(input, output, session) {
         if (length(as.data.frame(em3)$ID) == 0) {
           em4 <- NA
         } else{
-          em4 <- setReadable(em3, org1(), 'ENTREZID')
+          em4 <- clusterProfiler::setReadable(em3, org1(), 'ENTREZID')
         }
         return(em4)
         incProgress(1)
@@ -1561,7 +1626,7 @@ shinyServer(function(input, output, session) {
         }
         if(length(data$Description) != 0){
           data["Description"] <- lapply(data["Description"], gsub, pattern="HALLMARK_", replacement = "")
-          data$GeneRatio <- parse_ratio(data$GeneRatio)
+          data$GeneRatio <- DOSE::parse_ratio(data$GeneRatio)
           if ((length(data$Description) == 0) || length(which(!is.na(unique(data$qvalue))))==0) {
             p1 <- NULL
           } else{
@@ -1576,7 +1641,7 @@ shinyServer(function(input, output, session) {
                             geom_point() +
                             scale_color_continuous(low="red", high="blue",
                                                    guide=guide_colorbar(reverse=TRUE)) +
-                            scale_size(range=c(1, 6))+ theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) + 
+                            scale_size(range=c(1, 6))+ DOSE::theme_dose(font.size=12)+ylab(NULL)+xlab(NULL) + 
                             scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top"))
           }}else p1 <- NULL
       }
@@ -1585,9 +1650,9 @@ shinyServer(function(input, output, session) {
         p4 <- NULL
       } else{
         if (length(as.data.frame(em3)$ID) >= 5){
-          p4 <- gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
+          p4 <- enrichplot::gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
         }else{
-          p4 <- gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
+          p4 <- enrichplot::gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
         }
       }
       p <- plot_grid(p1, print(p4), nrow = 1)
@@ -1614,7 +1679,7 @@ shinyServer(function(input, output, session) {
         if(length(as.data.frame(df[[name]])$ID) == 0){
           cnet1 <- NULL
         } else {
-          cnet1 <- setReadable(df[[name]], org1(), 'ENTREZID')
+          cnet1 <- clusterProfiler::setReadable(df[[name]], org1(), 'ENTREZID')
         }
         if (length(as.data.frame(cnet1)$ID) == 0) {
           p2 <- NULL
@@ -1623,7 +1688,7 @@ shinyServer(function(input, output, session) {
           if(name == "Down") genes <- downgene
           geneList <- genes$log2FoldChange
           names(geneList) = as.character(genes$ENTREZID)
-          p2 <- try(as.grob(cnetplot(cnet1, foldChange=geneList,
+          p2 <- try(as.grob(clusterProfiler::cnetplot(cnet1, foldChange=geneList,
                                      cex_label_gene = 0.7, cex_label_category = 0.75,
                                      cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
           if(length(class(p2)) == 1){
@@ -1810,7 +1875,7 @@ shinyServer(function(input, output, session) {
           contrast <- c("con", unique(collist))
           res <- results(dds,  contrast = contrast)
           if(input$FDR_method == "IHW") {
-            ihw_res <- ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
+            ihw_res <- IHW::ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
             res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
           }
           if(input$FDR_method == "Qvalue") {
@@ -1826,7 +1891,7 @@ shinyServer(function(input, output, session) {
           res <- as.data.frame(topTags(result, n = nrow(count)))
           qvalue <- qvalue::qvalue(res$PValue)
           res$padj <- qvalue$qvalues
-          ihw_res <- try(ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
+          ihw_res <- try(IHW::ihw(PValue ~ 2^logCPM,  data=res, alpha = 0.1))
           if(class(ihw_res) == "try-error"){
             res$ihw_padj <- NA
           }else{
@@ -1837,6 +1902,25 @@ shinyServer(function(input, output, session) {
           if(input$FDR_method == "Qvalue"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "padj", "IHW_FDR")}
           if(input$FDR_method == "IHW"){label <- c("log2FoldChange", "log2CPM", "PValue","BH_FDR", "Qvalue", "padj")}
           colnames(res) <- label
+        }
+        if(input$DEG_method == "limma"){
+          withProgress(message = "limma",{
+            group <- factor(collist)
+            count <- log(count + 1,2)
+            eset = new("ExpressionSet", exprs=as.matrix(count))
+            design <- model.matrix(~0+collist)
+            colnames(design) <- unique(collist)
+            fit <- lmFit(eset, design)
+            comparisons <-  paste(unique(collist)[1],"-",unique(collist)[2],sep="")
+            cont.matrix <- makeContrasts(contrasts=comparisons, levels=design)
+            fit <- contrasts.fit(fit, cont.matrix)
+            if(input$limma_trend == TRUE) fit2 <- eBayes(fit,trend = TRUE,robust = input$regression_mode)
+            if(input$limma_trend == FALSE) fit2 <- eBayes(fit,trend = FALSE,robust = input$regression_mode)
+            res =topTable(fit2, number = 1e12)
+            colnames(res) <- c("log2FoldChange","baseMean","t","pval","padj","B")
+            
+            res$baseMean <- 2^res$baseMean
+          })
         }
         if(input$DEG_method == "EBSeq"){
           withProgress(message = paste("DEG analysis of", name),{
@@ -1870,7 +1954,13 @@ shinyServer(function(input, output, session) {
     return(count_list)
   })
   
-  
+  deg_result_batch_limma <- reactive({
+    if (!is.null(deg_result()) && input$DEG_method == "limma") {
+      res <- deg_result()
+      colnames(res) <- c("log2FoldChange","baseMean","t","pval","padj","B")
+      return(res)
+    }
+  })
   
   deg_norm_count_batch <- reactive({
     if(!is.null(norm_count_matrix())){
@@ -1920,6 +2010,9 @@ shinyServer(function(input, output, session) {
             dds <- calcNormFactors(dds, method = "TMM")
             normalized_counts <- cpm(dds)
           }
+        }
+        if(input$DEG_method == "limma"){
+          normalized_counts <- count
         }
         if(input$DEG_method == "EBSeq"){
           count <- data.matrix(count)
@@ -2021,8 +2114,11 @@ shinyServer(function(input, output, session) {
           Row.names <- NULL
           log2FoldChange <- NULL
           value <- NULL
+          print(head(data))
+          print(head(count))
           data <- merge(data,count, by=0)
           Type <- input$DEG_method
+          print(head(data))
           data <- dplyr::filter(data, apply(data[,8:(7 + Cond_1 + Cond_2)],1,mean) > input$basemean)
           
           if(input$Species != "not selected"){
@@ -2142,6 +2238,7 @@ shinyServer(function(input, output, session) {
           Cond_2 <- vec[2]
           data2 <- as.data.frame(data_degcount2_batch()[[name]])
           colnames(data2) <- sub(paste0(name,"."), "", colnames(data2))
+          print(head(data2))
           up_all <- dplyr::filter(data2, log2FoldChange > 0)
           rownames(up_all) <- up_all$Row.names
           up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
@@ -2245,7 +2342,7 @@ shinyServer(function(input, output, session) {
           if(is.null(data2)){
             ht <- NULL
           }else{
-            data.z <- genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
+            data.z <- genefilter::genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
             ht <- as.grob(Heatmap(data.z, name = "z-score",column_order = colnames(data.z),
                                   clustering_method_columns = 'ward.D2',use_raster = TRUE,
                                   show_row_names = F, show_row_dend = F,column_names_side = "top"))
@@ -2263,7 +2360,7 @@ shinyServer(function(input, output, session) {
     pca_list <- list()
     for (name in names(data1)) {
       data <- data1[[name]]
-      p2 <- PCAplot(data = data)
+      p2 <- PCAplot(data = data,legend = input$PCA_legend)
       pca_list[[name]] <- p2
     }
     return(pca_list)
@@ -2285,7 +2382,11 @@ shinyServer(function(input, output, session) {
         dir.create("MAplot",showWarnings = FALSE)
         dir.create("clustering",showWarnings = FALSE)
         files <- batch_files()
-        deg_r <- deg_result_batch()
+        if (input$DEG_method == "limma") {
+          deg_r <- deg_result_batch_limma()
+        }else{
+          deg_r <- deg_result_batch()
+        }
         norm_c <- deg_norm_count_batch()
         up_c <- data_degcount_up_batch()
         down_c <- data_degcount_down_batch()
@@ -2453,9 +2554,9 @@ shinyServer(function(input, output, session) {
     if(is.null(multi_d_row_count_matrix())){
       return(NULL)
     }else{
-      withProgress(message = "Prepare a DEG result",{
         count <- multi_d_row_count_matrix()
         meta <- multi_metadata()
+          withProgress(message = "Prepare a DEG result",{
         dds <- multi_dds()
         df <- list()
         for(i in 1:choose(n=length(unique(dds$meta)),k=2)){
@@ -2473,7 +2574,7 @@ shinyServer(function(input, output, session) {
           fc_matrix <- merge(fc_matrix, matrix, by="gene")
         }
         if(input$FDR_method6 == "IHW") {
-          ihw_res <- ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
+          ihw_res <- IHW::ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
           res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
         }
         if(input$FDR_method6 == "Qvalue") {
@@ -2490,7 +2591,7 @@ shinyServer(function(input, output, session) {
         if(input$Species6 != "not selected") res <- ensembl2symbol(gene_type=gene_type6(),Species=input$Species6,
                                                                    Ortholog=ortholog6(),data = res, org = org6())
         return(res)
-      })
+        })
     }
   })
   
@@ -2572,11 +2673,42 @@ shinyServer(function(input, output, session) {
   })
   
   #multi DEG vis---------------------------
+  updateCounter_multi <- reactiveValues(i = 0)
+  
+  observe({
+    input$start_multi
+    isolate({
+      updateCounter_multi$i <- updateCounter_multi$i + 1
+    })
+  })
+  
+  
+  #Restart
+  observeEvent(multi_pattern1(), {
+    isolate(updateCounter_multi$i == 0)
+    updateCounter_multi <<- reactiveValues(i = 0)
+  }) 
+  
   output$multi_DEG_total1 <- renderText({
     if(is.null(multi_pattern1())){
       return(NULL)
     }else{ 
-      print(paste0("The DEG number after the filtration: ", length(multi_pattern1()$gene)))
+      if(length(input$selectFC) == 2 && length(input$selectFC_2) == 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,", |log2(", 
+                     input$selectFC[1],"/", input$selectFC[2],")| > ", log2(input$fc6),", |log2(",
+                     input$selectFC_2[1],"/", input$selectFC_2[2],")| > ", log2(input$fc6),"): ", 
+                     length(multi_pattern1()$gene)))
+      }else if(length(input$selectFC) == 2 && length(input$selectFC_2) != 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,", |log2(", 
+                     input$selectFC[1],"/", input$selectFC[2],")| > ", log2(input$fc6),"): ", 
+                     length(multi_pattern1()$gene)))
+      }else if(length(input$selectFC) != 2 && length(input$selectFC_2) != 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,"): ", 
+                     length(multi_pattern1()$gene)))
+      }
     }
   })
   
@@ -2609,6 +2741,15 @@ shinyServer(function(input, output, session) {
                      options = list(maxItems = 2))
     }
   })
+  output$selectFC_2 <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC_2", "Option: select a pair for fold change cut-off", c(multi_select()),
+                     selected = "", multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
   output$topP <- renderUI({
     if(is.null(multi_deg_result())){
       return(NULL)
@@ -2621,53 +2762,79 @@ shinyServer(function(input, output, session) {
   
   multi_pattern1 <- reactive({
     count <- multi_d_row_count_matrix()
+    if(!is.null(count) && !is.null(input$selectFC)){
+    data <- as.data.frame(multi_deg_norm_count())
+    if(!is.null(data)){
     meta <- multi_metadata()
+    collist <- gsub("\\_.+$", "", colnames(data))
+    if(input$Species6 != "not selected"){
+      if(gene_type6() != "SYMBOL") data <- data[, - which(colnames(data) == "SYMBOL")]
+    }
+    data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
     dds <- multi_dds()
-    if(is.null(dds) || length(input$selectFC) != 2){
-      return(NULL)
-    }else{
+    if(!is.null(dds)){
       withProgress(message = "Fold Change, FDR, and base mean cut-off",{
-        if (input$multi_data_file_type == "Row1"){
-          collist <- gsub("\\_.+$", "", colnames(count))
-          meta <- data.frame(condition = factor(collist))
-        }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+      if (input$multi_data_file_type == "Row1"){
+        collist <- gsub("\\_.+$", "", colnames(count))
+        meta <- data.frame(condition = factor(collist))
+      }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+    if(length(input$selectFC) != 2){
+      res <- results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
+      res <- res %>%
+        as.data.frame() %>%
+        filter(padj < input$fdr6)
+      data2 <- merge(res,data, by=0)
+      res <- data2[,1:7]
+      rownames(res) <- res$Row.names
+    }else{
         res <- results(dds, contrast = c("meta", as.character(input$selectFC[1]),as.character(input$selectFC[2])))
-        
-        data <- as.data.frame(multi_deg_norm_count())
-        collist <- gsub("\\_.+$", "", colnames(data))
-        if(input$Species6 != "not selected"){
-          if(gene_type6() != "SYMBOL") data <- data[, - which(colnames(data) == "SYMBOL")]
-        }
-        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
-        res <- as.data.frame(res)
+        res <- res %>%
+          as.data.frame() %>%
+          filter(padj < input$fdr6) %>%
+          filter(abs(log2FoldChange) > log2(input$fc6))
         data2 <- merge(res,data, by=0)
         res <- data2[,1:7]
         rownames(res) <- res$Row.names
         
-        sig_res_LRT <- res %>% 
-          data.frame() %>%
-          rownames_to_column(var="gene") %>%
-          as_tibble() %>%
-          filter(padj < input$fdr6) %>%
-          filter(abs(log2FoldChange) > log2(input$fc6))
-        return(sig_res_LRT)
+        if(length(input$selectFC_2) == 2){
+          res2 <- results(dds, contrast = c("meta", as.character(input$selectFC_2[1]),as.character(input$selectFC_2[2])))
+          res2 <- res2 %>%
+            as.data.frame() %>%
+            dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
+            dplyr::filter(padj < input$fdr6) %>%
+            dplyr::select(-padj)
+          res <- res[,-1]
+          data2 <- merge(res,res2, by=0)
+          res <- data2[,1:7]
+          rownames(res) <- res$Row.names
+        }
+        
+    }
+      sig_res_LRT <- res %>% 
+        data.frame() %>%
+        rownames_to_column(var="gene") %>%
+        as_tibble()
       })
+      return(sig_res_LRT)
+    }
+    }
     }
   })
   
   multi_pattern1_2 <- reactive({
     sig_res_LRT <- multi_pattern1()
-    dds <- multi_dds()
-    if(length(sig_res_LRT$gene) == 0){
+    if(length(sig_res_LRT$gene) == 0 || is.null(input$topP) || input$start_multi == 0 || updateCounter_multi$i == 0){
       return(NULL)
     }else{
       withProgress(message = "Select most significant genes",{
         clustering_sig_genes <- sig_res_LRT %>%
           arrange(padj) %>%
           head(n=input$topP)
+          dds <- multi_dds()
         rld <- rlogTransformation(dds)
         rld_mat <- assay(rld)
         cluster_rlog <- rld_mat[clustering_sig_genes$gene, ]
+        print(head(cluster_rlog))
         return(cluster_rlog)
       })
     }
@@ -2678,7 +2845,7 @@ shinyServer(function(input, output, session) {
     count <- multi_d_row_count_matrix()
     meta <- multi_metadata()
     cluster_rlog <- multi_pattern1_2()
-    if(is.null(cluster_rlog)|| length(input$selectFC) != 2){
+    if(is.null(cluster_rlog)){
       return(NULL)
     }else{
       withProgress(message = "Performing a clustering analysis",{
@@ -2727,12 +2894,12 @@ shinyServer(function(input, output, session) {
         colnames(table)[3] <- "expression"
         table <- na.omit(table)
         if (input$multi_data_file_type == "Row1"){
-          p <- degPlotCluster(table, time = "condition", process = TRUE)+ 
+          p <- degPlotCluster(table, time = "condition", process = TRUE, min_genes = 0)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
             theme_bw(base_size = 15)+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
         else{
-          p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
+          p <- degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE, min_genes = 0)+ 
             scale_color_brewer(palette = "Set1", direction=-1)+
             theme_bw(base_size = 15)+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
         }
@@ -2742,7 +2909,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$multi_boxplot <- renderPlot({
-    if(is.null(multi_boxplot_reactive())|| length(input$selectFC) != 2){
+    if(is.null(multi_boxplot_reactive())){
       return(NULL)
     }else{
       print(multi_boxplot_reactive())
@@ -2872,7 +3039,7 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(is.null(multi_boxplot_reactive)|| length(input$selectFC) != 2){
+        if(is.null(multi_boxplot_reactive)){
           return(NULL)
         }else{
           clusters <- multi_pattern2()$df
@@ -2908,7 +3075,7 @@ shinyServer(function(input, output, session) {
   
   
   #Restart
-  defaultvalues_kmeans_multi <- observeEvent(pre_multi_kmeans(), {
+  observeEvent(pre_multi_kmeans(), {
     isolate(updateCounter_kmeans_multi$i == 0)
     updateCounter_kmeans_multi <<- reactiveValues(i = 0)
   }) 
@@ -2920,6 +3087,17 @@ shinyServer(function(input, output, session) {
       selectizeInput("selectFC2", "Select a pair for fold change cut-off", c(multi_select()),
                      selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
+    }
+  })
+  output$selectFC2_2 <- renderUI({
+    if(is.null(multi_deg_result())){
+      return(NULL)
+    }else{
+      if(length(input$selectFC2) == 2){
+      selectizeInput("selectFC2_2", "Option: select a pair for fold change cut-off", c(multi_select()),
+                     selected = "", multiple = TRUE, 
+                     options = list(maxItems = 2))
+      }
     }
   })
   output$topP2 <- renderUI({
@@ -2945,51 +3123,92 @@ shinyServer(function(input, output, session) {
   })
   
   output$multi_DEG_total2 <- renderText({
-    if(is.null(multi_deg_count())){
+    if(is.null(multi_deg_count1())){
       return(NULL)
     }else{ 
-      print(paste0("The DEG number after the filtration: ", length(rownames(multi_deg_count1()))))
+      if(length(input$selectFC2) == 2 && length(input$selectFC2_2) == 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,", |log2(", 
+                     input$selectFC2[1],"/", input$selectFC2[2],")| > ", log2(input$fc6),", |log2(",
+                     input$selectFC2_2[1],"/", input$selectFC2_2[2],")| > ", log2(input$fc6),"): ", 
+                     length(rownames(multi_deg_count1()))))
+      }else if(length(input$selectFC2) == 2 && length(input$selectFC2_2) != 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,", |log2(", 
+                     input$selectFC2[1],"/", input$selectFC2[2],")| > ", log2(input$fc6),"): ", 
+                     length(rownames(multi_deg_count1()))))
+      }else if(length(input$selectFC2) != 2 && length(input$selectFC2_2) != 2){
+        print(paste0("The number of genes after the filtration (fdr < ", input$fdr6,", 
+                     basemean > ",input$basemean6,"): ", 
+                     length(rownames(multi_deg_count1()))))
+      }
     }
   })
   
   multi_deg_count1 <- reactive({
-    data <- as.data.frame(multi_deg_norm_count())
     count <- multi_d_row_count_matrix()
-    meta <- multi_metadata()
-    dds <- multi_dds()
-    if(is.null(dds) || length(input$selectFC2) != 2){
-      return(NULL)
-    }else{
-      if (input$multi_data_file_type == "Row1"){
-        collist <- gsub("\\_.+$", "", colnames(count))
-        meta <- data.frame(condition = factor(collist))
-      }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
-      res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
-      
-      collist <- gsub("\\_.+$", "", colnames(data))
-      if(input$Species6 != "not selected"){
-        if(gene_type6() != "SYMBOL") data <- data[, - which(colnames(data) == "SYMBOL")]
+    if(!is.null(count)){
+      data <- as.data.frame(multi_deg_norm_count())
+      meta <- multi_metadata()
+      if(!is.null(data)){
+        collist <- gsub("\\_.+$", "", colnames(data))
+        if(input$Species6 != "not selected"){
+          if(gene_type6() != "SYMBOL") data <- data[, - which(colnames(data) == "SYMBOL")]
+        }
+        data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
+        
+          dds <- multi_dds()
+          collist <- gsub("\\_.+$", "", colnames(count))
+          if (input$multi_data_file_type == "Row1"){
+            meta <- data.frame(condition = factor(collist))
+          }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
+          if(length(input$selectFC2) != 2){
+            res <- results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
+            res <- res %>%
+              as.data.frame() %>%
+              dplyr::filter(padj < input$fdr6)
+            data2 <- merge(res,data, by=0)
+            res <- data2[,1:7]
+            rownames(res) <- res$Row.names
+          }else{
+            res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
+            print(head(res))
+            res <- res %>%
+              as.data.frame() %>%
+              dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
+              dplyr::filter(padj < input$fdr6)
+            data2 <- merge(res,data, by=0)
+            res <- data2[,1:7]
+            rownames(res) <- res$Row.names
+            
+            
+            if(length(input$selectFC2_2) == 2){
+              res2 <- results(dds, contrast = c("meta", as.character(input$selectFC2_2[1]),as.character(input$selectFC2_2[2])))
+              print(head(res2))
+              res2 <- res2 %>%
+                as.data.frame() %>%
+                dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
+                dplyr::filter(padj < input$fdr6) %>%
+                dplyr::select(-padj)
+              res <- res[,-1]
+              data2 <- merge(res,res2, by=0)
+              res <- data2[,1:7]
+              rownames(res) <- res$Row.names
+            }
+          }
+        sig_res_LRT <- res %>% 
+          data.frame() %>%
+          rownames_to_column(var="gene") %>%
+          as_tibble()
+        return(sig_res_LRT) 
       }
-      data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
-      res <- as.data.frame(res)
-      data2 <- merge(res,data, by=0)
-      res <- data2[,1:7]
-      rownames(res) <- res$Row.names
-      
-      sig_res_LRT <- res %>% 
-        data.frame() %>%
-        rownames_to_column(var="gene") %>%
-        as_tibble() %>%
-        filter(padj < input$fdr6) %>%
-        filter(abs(log2FoldChange) > log2(input$fc6))
-      return(sig_res_LRT)
     }
   })
   
   multi_deg_count <- reactive({
     data <- as.data.frame(multi_deg_norm_count())
     sig_res_LRT <- multi_deg_count1()
-    if(is.null(dds) || length(input$selectFC2) != 2){
+    if(length(sig_res_LRT$gene) == 0 || is.null(input$topP2)){
       return(NULL)
     }else{
       sig_res_LRT <- sig_res_LRT %>%
@@ -3003,11 +3222,11 @@ shinyServer(function(input, output, session) {
         if(gene_type6() != "SYMBOL") data <- data[, - which(colnames(data) == "SYMBOL")]
       }
       collist <- gsub("\\_.+$", "", colnames(data))
-      data <- dplyr::filter(data, apply(data,1,mean) > input$basemean6)
       data2 <- merge(data, sig_res_LRT,by=0)
       rownames(data2) <- data2$Row.names
       data2<- data2[,-1]
       data2 <- data2[,1:length(collist)]
+      print(dim(data2))
       return(data2)
     }
   })
@@ -3018,7 +3237,7 @@ shinyServer(function(input, output, session) {
       if(is.null(data)){
         return(NULL)
       }else{
-        data.z <- genescale(data, axis = 1, method = "Z")
+        data.z <- genefilter::genescale(data, axis = 1, method = "Z")
         data.z <- na.omit(data.z)
         if(input$Species6 != "not selected") {
           if(gene_type6() != "SYMBOL"){
@@ -3041,6 +3260,16 @@ shinyServer(function(input, output, session) {
         set.seed(123)
         cl = consensus_kmeans(data.z, input$multi_kmeans_number, 100)
         names(cl) <- rownames(data.z)
+        if(length(unique(cl)) != input$multi_kmeans_number){
+          set.seed(123)
+          cl = consensus_kmeans(data.z, input$multi_kmeans_number-1, 100)
+          names(cl) <- rownames(data.z)
+          if(length(unique(cl)) != input$multi_kmeans_number-1){
+            set.seed(123)
+            cl = consensus_kmeans(data.z, input$multi_kmeans_number-2, 100)
+            names(cl) <- rownames(data.z)
+          }
+        }
         incProgress(1)
       })
       return(cl)
@@ -3059,7 +3288,7 @@ shinyServer(function(input, output, session) {
       rownames(data2)<-data2[,1]
       data2 <- data2[,-1]
       df <- data.frame(matrix(rep(NA, 1), nrow=1))[numeric(0), ]
-      for(i in 1:input$multi_kmeans_number){
+      for(i in 1:length(unique(pre_multi_kmeans()))){
         data3 <- data2 %>% dplyr::filter(cluster == i)
         data4 <- apply(data3[,-1],2,sum)
         df <- rbind(df,data4)
@@ -3208,12 +3437,12 @@ shinyServer(function(input, output, session) {
         table$cluster = as.integer(table$cluster)
         table<-na.omit(table)
         if (input$multi_data_file_type == "Row1"){
-          p <- try(degPlotCluster(table, time = "condition", process = TRUE)+ 
+          p <- try(degPlotCluster(table, time = "condition", process = TRUE, min_genes = 0)+ 
                      scale_color_brewer(palette = "Set1", direction=-1)+
                      theme_bw(base_size = 15)+ theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 90, hjust = 1)))
         }
         else{
-          p <- try(degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE)+ 
+          p <- try(degPlotCluster(table, time = "condition", color=colnames(meta)[2], process = TRUE, min_genes = 0)+ 
                      scale_color_brewer(palette = "Set1", direction=-1)+
                      theme_bw(base_size = 15)+ theme(legend.position = "top")+ theme(axis.text.x = element_text(angle = 90, hjust = 1)))
         }
@@ -3469,7 +3698,7 @@ shinyServer(function(input, output, session) {
         if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
           H_t2g <- multi_Hallmark_set()
           H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
-          em3 <- try(GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
+          em3 <- try(clusterProfiler::GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                           minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
         }else{
           if(input$Gene_set6 == "KEGG"){
@@ -3495,7 +3724,7 @@ shinyServer(function(input, output, session) {
         if (length(as.data.frame(em3)$ID) == 0) {
           em4 <- NA
         } else{
-          em4 <- setReadable(em3, org6(), 'ENTREZID')
+          em4 <- clusterProfiler::setReadable(em3, org6(), 'ENTREZID')
         }
         return(em4)
         incProgress(1)
@@ -3512,9 +3741,9 @@ shinyServer(function(input, output, session) {
         p4 <- NULL
       } else{
         if (length(as.data.frame(em3)$ID) >= 5){
-          p4 <- gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
+          p4 <- enrichplot::gseaplot2(em3, 1:5, pvalue_table = F,base_size = 14)
         }else{
-          p4 <- gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
+          p4 <- enrichplot::gseaplot2(em3, 1:length(em3$ID), pvalue_table = F,base_size = 14)
         }
       }
       return(p4)
@@ -4145,7 +4374,7 @@ shinyServer(function(input, output, session) {
   #Multi PCA ------------------------------------------------------------------------------
   multi_pca_plot <- reactive({
     data <- multi_deg_norm_count()
-    PCAplot(data)
+    PCAplot(data,legend = input$PCA_legend_multi)
   })
   
   output$download_multi_PCA = downloadHandler(
@@ -4201,7 +4430,7 @@ shinyServer(function(input, output, session) {
       if(is.null(data)){
         return(NULL)
       }else{
-        p<- try(umap_plot(data = data, n_neighbors = input$multi_n_neighbors))
+        p<- try(umap_plot(data = data, n_neighbors = input$multi_n_neighbors,lab=input$multi_umap_label))
         return(p)
       }
     }
@@ -4857,7 +5086,7 @@ shinyServer(function(input, output, session) {
     if(is.null(deg_norm_count2())){
       return(NULL)
     }else{
-      print(PCAplot(data = deg_norm_count2()))
+      print(PCAplot(data = deg_norm_count2(),legend = input$PCA_legend_cond3))
     }
   })
   output$PCA3_data <- DT::renderDataTable({
@@ -4881,7 +5110,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 9
         }else pdf_width <- input$cond3_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
-        print(PCAplot(data = deg_norm_count2()))
+        print(PCAplot(data = deg_norm_count2(),legend = input$PCA_legend_cond3))
         dev.off()
       })
     }
@@ -5121,7 +5350,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data)){
       ht <- NULL
     }else{
-      data.z <- genescale(data, axis=1, method="Z")
+      data.z <- genefilter::genescale(data, axis=1, method="Z")
       data.z <- na.omit(data.z)
       ht <- GOIheatmap(data.z)
     }
@@ -5418,7 +5647,7 @@ shinyServer(function(input, output, session) {
         write.table(data_3degcount2_3(), result3, row.names = F, sep = "\t", quote = F)
         write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
         pdf(PCA, height = 3.5, width = 9)
-        print(PCAplot(data = deg_norm_count2()))
+        print(PCAplot(data = deg_norm_count2(),legend = input$PCA_legend_cond3))
         dev.off()
         pdf(scatter, height = 6, width = 10)
         print(cond3_scatter1_plot()) 
@@ -5695,7 +5924,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 9
         }else pdf_width <- input$norm_pdf_width
         pdf(file, height = pdf_height, width = pdf_width)
-        print(PCAplot(data = d_norm_count_matrix_cutofff()))
+        print(PCAplot(data = d_norm_count_matrix_cutofff(),legend = input$PCA_legend_norm))
         dev.off()
       })
     }
@@ -5706,7 +5935,7 @@ shinyServer(function(input, output, session) {
       if(is.null(d_norm_count_matrix_cutofff())){
         return(NULL)
       }else{
-        print(PCAplot(data = d_norm_count_matrix_cutofff()))
+        print(PCAplot(data = d_norm_count_matrix_cutofff(),legend = input$PCA_legend_norm))
       }
     })
   })
@@ -5739,7 +5968,7 @@ shinyServer(function(input, output, session) {
       if(is.null(data)){
         return(NULL)
       }else{
-        p<- try(umap_plot(data = data, n_neighbors = input$norm_n_neighbors))
+        p<- try(umap_plot(data = data, n_neighbors = input$norm_n_neighbors,lab=input$norm_umap_label))
         return(p)
       }
     }
@@ -5800,7 +6029,7 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      selectizeInput("selectFC_normGOI", "Select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
+      selectizeInput("selectFC_normGOI", "Option: select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
                      selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
     }
@@ -5857,8 +6086,8 @@ shinyServer(function(input, output, session) {
         data2 <- data %>% dplyr::filter(abs(Log2FoldChange) > log2(input$fc3))
         data2 <- data2[, - which(colnames(data2) == "Log2FoldChange")]
       }else data2 <- NULL
-      return(data2)
-    }
+    }else data2 <- d_norm_count_cutoff_uniqueID()
+    return(data2)
   })
   
   output$GOI3 <- renderUI({
@@ -5922,7 +6151,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data)){
       ht <- NULL
     }else{
-      data.z <- genescale(data, axis=1, method="Z")
+      data.z <- genefilter::genescale(data, axis=1, method="Z")
       data.z <- na.omit(data.z)
       ht <- GOIheatmap(data.z, type = input$GOI3_type, GOI = input$GOI3)
     }
@@ -6565,7 +6794,16 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff())){
       return(NULL)
     }else{
-      selectizeInput("selectFC_norm", "Select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
+      selectizeInput("selectFC_norm", "Option 1: select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
+                     selected = "", multiple = TRUE, 
+                     options = list(maxItems = 2))
+    }
+  })
+  output$selectFC_norm2 <- renderUI({
+    if(is.null(d_norm_count_matrix_cutofff())){
+      return(NULL)
+    }else{
+      selectizeInput("selectFC_norm2", "Option 2: select a pair for fold change cut-off", c(unique(unique(gsub("\\_.*","", colnames(d_norm_count_matrix_cutofff()))))),
                      selected = "", multiple = TRUE, 
                      options = list(maxItems = 2))
     }
@@ -6574,10 +6812,26 @@ shinyServer(function(input, output, session) {
     if(is.null(d_norm_count_matrix_cutofff_fc())){
       return(NULL)
     }else{ 
-      print(paste0("The number of genes after the filtration: ", length(rownames(d_norm_count_matrix_cutofff_fc()))))
+      if(length(input$selectFC_norm) == 2 && length(input$selectFC_norm2) == 2){
+      print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,", |log2(", 
+                   input$selectFC_norm[1],"/", input$selectFC_norm[2],")| > ", log2(input$fc3),", |log2(",
+                   input$selectFC_norm2[1],"/", input$selectFC_norm2[2],")| > ", log2(input$fc3),"): ", 
+                   length(rownames(d_norm_count_matrix_cutofff_fc()))))
+      }else if(length(input$selectFC_norm) == 2 && length(input$selectFC_norm2) != 2){
+        print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,", |log2(", 
+                     input$selectFC_norm[1],"/", input$selectFC_norm[2],")| > ", log2(input$fc3),"): ", 
+                     length(rownames(d_norm_count_matrix_cutofff_fc()))))
+      }else if(length(input$selectFC_norm) != 2 && length(input$selectFC_norm2) == 2){
+        print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,", |log2(",
+                     input$selectFC_norm2[1],"/", input$selectFC_norm2[2],")| > ", log2(input$fc3),"): ", 
+                     length(rownames(d_norm_count_matrix_cutofff_fc()))))
+      }else if(length(input$selectFC_norm) != 2 && length(input$selectFC_norm2) != 2){
+        print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,"): ", 
+                     length(rownames(d_norm_count_matrix_cutofff_fc()))))
+      }
     }
   })
-  d_norm_count_matrix_cutofff_fc <- reactive({
+  d_norm_count_matrix_cutofff_fc2 <- reactive({
     data <- d_norm_count_cutoff_uniqueID()
     if(!is.null(gene_ID_norm())){
         rownames(data) <- data$Unique_ID
@@ -6594,11 +6848,30 @@ shinyServer(function(input, output, session) {
         cond2_ave <- data %>% dplyr::select(starts_with(cond2)) %>% rowSums(na.rm=TRUE)/cond2_num
         Log2FoldChange <- log((cond1_ave + 0.01)/(cond2_ave + 0.01),2)
         data$Log2FoldChange <- Log2FoldChange
+        print(dplyr::filter(data, abs(Log2FoldChange) <= log2(input$fc3)))
         data2 <- data %>% dplyr::filter(abs(Log2FoldChange) > log2(input$fc3))
         data2 <- data2[, - which(colnames(data2) == "Log2FoldChange")]
       }else data2 <- NULL
-      return(data2)
-    }
+    }else data2 <- data
+    return(data2)
+  })
+  d_norm_count_matrix_cutofff_fc <- reactive({
+    data <- d_norm_count_matrix_cutofff_fc2()
+    if(length(input$selectFC_norm2) == 2){
+      if(dim(data)[1] != 0){
+        cond1 <- input$selectFC_norm2[1]
+        cond2 <- input$selectFC_norm2[2]
+        cond1_num <- data %>% dplyr::select(.,starts_with(cond1)) %>% colnames() %>% length()
+        cond2_num <- data %>% dplyr::select(.,starts_with(cond2)) %>% colnames() %>% length()
+        cond1_ave <- data %>% dplyr::select(starts_with(cond1)) %>% rowSums(na.rm=TRUE)/cond1_num
+        cond2_ave <- data %>% dplyr::select(starts_with(cond2)) %>% rowSums(na.rm=TRUE)/cond2_num
+        Log2FoldChange <- log((cond1_ave + 0.01)/(cond2_ave + 0.01),2)
+        data$Log2FoldChange <- Log2FoldChange
+        data2 <- data %>% dplyr::filter(abs(Log2FoldChange) > log2(input$fc3))
+        data2 <- data2[, - which(colnames(data2) == "Log2FoldChange")]
+      }else data2 <- NULL
+    }else data2 <- data
+    return(data2)
   })
   output$norm_kmeans_num <- renderUI({
     if(is.null(d_norm_count_matrix_cutofff())){
@@ -6634,7 +6907,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data)){
       return(NULL)
     }else{
-      data.z <- genescale(data, axis = 1, method = "Z")
+      data.z <- genefilter::genescale(data, axis = 1, method = "Z")
       data.z <- na.omit(data.z)
       return(data.z)
     }
@@ -6649,6 +6922,16 @@ shinyServer(function(input, output, session) {
         set.seed(123)
         cl = consensus_kmeans(data.z, input$norm_kmeans_number, 100)
         names(cl) <- rownames(data.z)
+        if(length(unique(cl)) != input$norm_kmeans_number){
+          set.seed(123)
+          cl = consensus_kmeans(data.z, input$norm_kmeans_number-1, 100)
+          names(cl) <- rownames(data.z)
+          if(length(unique(cl)) != input$norm_kmeans_number-1){
+            set.seed(123)
+            cl = consensus_kmeans(data.z, input$norm_kmeans_number-2, 100)
+            names(cl) <- rownames(data.z)
+          }
+        }
         incProgress(1)
       })
       return(cl)
@@ -6657,7 +6940,6 @@ shinyServer(function(input, output, session) {
   pre_norm_kmeans_order <- reactive({
     data.z <- norm_data_z()
     cl = pre_norm_kmeans()
-    print(unique(cl))
     if(is.null(cl) || length(unique(cl)) == 1){
       return(NULL)
     }else{
@@ -6667,10 +6949,12 @@ shinyServer(function(input, output, session) {
       rownames(data2)<-data2[,1]
       data2 <- data2[,-1]
       df <- data.frame(matrix(rep(NA, 1), nrow=1))[numeric(0), ]
-      for(i in 1:input$norm_kmeans_number){
+      for(i in 1:length(unique(pre_norm_kmeans()))){
         data3 <- data2 %>% dplyr::filter(cluster == i)
+        if(dim(data3)[1] != 0){
         data4 <- apply(data3[,-1],2,sum)
         df <- rbind(df,data4)
+        }
       }
       colnames(df) <- colnames(data2[,-1])
       order <- hclust(dist(df), "average")$order
@@ -7110,7 +7394,7 @@ shinyServer(function(input, output, session) {
           matrix <- as.data.frame(files[name])
           matrix_2 <- matrix
           if(input$pre_zscoring == "TRUE"){
-            matrix_z <- genescale(matrix_2, axis = 1, method = "Z")
+            matrix_z <- genefilter::genescale(matrix_2, axis = 1, method = "Z")
             matrix_z <- na.omit(matrix_z)
             matrix_z <- merge(matrix, matrix_z, by = 0)[,-2:-(1 + length(colnames(matrix)))]
             matrix_z_list[name] <- list(matrix_z)
@@ -7145,7 +7429,7 @@ shinyServer(function(input, output, session) {
           }
         }
         if(input$pre_zscoring != "TRUE"){
-          base <- genescale(base, axis = 1, method = "Z")
+          base <- genefilter::genescale(base, axis = 1, method = "Z")
           base_z <- na.omit(base)
         }
         colnames(base_z) <- gsub("\\.y$", "", colnames(base_z))
@@ -7282,7 +7566,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  venn_enrich_input1 <- reactive({
+  pre_venn_enrich_input1 <- reactive({
     if(is.null(input$venn_whichGroup1)){
       return(NULL)
     }else{
@@ -7298,6 +7582,8 @@ shinyServer(function(input, output, session) {
       return(clusterCount)
     }
   })
+  
+  venn_enrich_input1 <- debounce(pre_venn_enrich_input1,1000)
   
   output$Gene_set9 <- renderUI({
     if(input$Species7 != "Xenopus laevis" && input$Ortholog7 != "Arabidopsis thaliana" && input$Species7 != "Arabidopsis thaliana"){
@@ -7480,7 +7766,7 @@ shinyServer(function(input, output, session) {
     if(!is.null(input$enrich_data_file[, 1])){
       for(nr in 1:length(input$enrich_data_file[, 1])){
         if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "xlsx") {
-          df <- try(as.data.frame(read_xlsx(input$enrich_data_file[[nr, 'datapath']])))
+          df <- try(as.data.frame(readxl::read_xlsx(input$enrich_data_file[[nr, 'datapath']])))
         }
         if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "csv") df <- read.csv(input$enrich_data_file[[nr, 'datapath']], header=TRUE, sep = ",",quote = "")
         if(tools::file_ext(input$enrich_data_file[[nr, 'datapath']]) == "txt" || 
@@ -7593,7 +7879,7 @@ shinyServer(function(input, output, session) {
           }
           for (name in unique(data3$Group)) {
             if(input$Species4 != "Xenopus laevis" && input$Ortholog4 != "Arabidopsis thaliana" && input$Species4 != "Arabidopsis thaliana"){
-              em <- enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g2, qvalueCutoff = 0.05)
+              em <- clusterProfiler::enricher(data3$ENTREZID[data3$Group == name], TERM2GENE=H_t2g2, qvalueCutoff = 0.05)
             }else{
               if(input$Gene_set3 == "KEGG"){
                 em <- enrichKEGG(data3$ENTREZID[data3$Group == name], organism = org_code(input$Species4, Ortholog= input$Ortholog4), pvalueCutoff = 0.05,keyType = "ncbi-geneid")
@@ -7611,7 +7897,7 @@ shinyServer(function(input, output, session) {
             print(em)
             if (length(as.data.frame(em)$ID) != 0) {
               if(length(colnames(as.data.frame(em))) == 9){
-                cnet1 <- as.data.frame(setReadable(em, org4(), 'ENTREZID'))
+                cnet1 <- as.data.frame(clusterProfiler::setReadable(em, org4(), 'ENTREZID'))
                 cnet1$Group <- name
                 df <- rbind(df, cnet1)
               }
@@ -7619,7 +7905,7 @@ shinyServer(function(input, output, session) {
           }
           if(length(df$ID) !=0){
             df["Description"] <- lapply(df["Description"], gsub, pattern="HALLMARK_", replacement = "")
-            df$GeneRatio <- parse_ratio(df$GeneRatio)
+            df$GeneRatio <- DOSE::parse_ratio(df$GeneRatio)
             return(df)
           }else return(NULL)
         })
@@ -8069,7 +8355,21 @@ shinyServer(function(input, output, session) {
                   value = max)
     }
   })
-  
+  DEGlist_volcano <- reactive({
+    if(!is.null(input$deg_xrange) && !is.null(input$deg_yrange)){
+      data <- as.data.frame(DEG_uniqueID())
+      data$color <- "NS"
+      data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4] <- "down"
+      data$color[data$log2FoldChange > log2(input$fc4) & data$padj < input$fdr4] <- "up"
+      return(data)
+    }
+  })
+  output$uplist_volcano <- renderDataTable({
+    DEGlist_volcano() %>% dplyr::filter(color == "up")
+  })
+  output$downlist_volcano <- renderDataTable({
+    DEGlist_volcano() %>% dplyr::filter(color == "down")
+  })
   deg_volcano <- reactive({
     if(!is.null(input$deg_xrange) && !is.null(input$deg_yrange)){
       data <- as.data.frame(DEG_uniqueID())
@@ -8093,7 +8393,7 @@ shinyServer(function(input, output, session) {
       data$Row.names <- rownames(data)
       data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4] <- "down"
       data$color[data$log2FoldChange > log2(input$fc4) & data$padj < input$fdr4] <- "up"
-      data$padj[data$padj == 0] <- 10^(-300)
+      data$padj[data$padj <= 10^(-300)] <- 10^(-300)
       if(!is.null(label_data)) {
         Color <- c("blue","green","darkgray","red")
         if(length(data$color[data$log2FoldChange < -log2(input$fc4) & data$padj < input$fdr4]) == 0) Color <- c("green","darkgray","red")
@@ -8242,7 +8542,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data)){
       ht <- NULL
     }else{
-      data.z <- genescale(data, axis=1, method="Z")
+      data.z <- genefilter::genescale(data, axis=1, method="Z")
       data.z <- na.omit(data.z)
       ht <- GOIheatmap(data.z)
     }
@@ -8330,7 +8630,24 @@ shinyServer(function(input, output, session) {
       })
     }
   )
-  
+  output$download_uplist_volcano = downloadHandler(
+    filename = function() {
+      paste0(download_DEG_dir(), "_up.txt")
+    },
+    content = function(file){
+      table <- DEGlist_volcano() %>% dplyr::filter(color == "up")
+      write.table(table, file, row.names = T,col.names = NA, sep = "\t", quote = F)
+      }
+  )
+  output$download_downlist_volcano = downloadHandler(
+    filename = function() {
+      paste0(download_DEG_dir(), "_down.txt")
+    },
+    content = function(file){
+      table <- DEGlist_volcano() %>% dplyr::filter(color == "down")
+      write.table(table, file, row.names = T,col.names = NA, sep = "\t", quote = F)
+    }
+  )
   #msigdbr-----------------
   msigdbr_list <- reactive({
     if(input$msigdbr_Species == ""){

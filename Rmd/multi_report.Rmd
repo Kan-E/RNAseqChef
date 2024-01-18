@@ -1,5 +1,5 @@
 ---
-title: "Multi DEG with RNAseqChef v1.0.9"
+title: "Multi DEG with RNAseqChef v1.1.0"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -110,6 +110,8 @@ try(magick::image_read_pdf("./Clustering/umap.pdf"))
 
  - Pair for fold change cut-off: 
 **`r paste0(as.character(params$input$selectFC[1]),"_vs_",as.character(params$input$selectFC[2]))`**
+ - Option: Pair for fold change cut-off: 
+**`r paste0(as.character(params$input$selectFC_2[1]),"_vs_",as.character(params$input$selectFC_2[2]))`**
  - The DEG number after the filtration: **`r length(params$multi_pattern1$gene)`**
  - Tested gene number:
 ```{r echo = FALSE, results='asis'}
@@ -176,7 +178,8 @@ knitr::kable(table)
 ## k-means clustering
 
  - Pair for fold change cut-off: 
-**`r paste0("kmeans clustering_",as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]))`**
+**`r paste0(as.character(params$input$selectFC2[1]),"_vs_",as.character(params$input$selectFC2[2]))`**
+ - Option: Pair for fold change cut-off: **`r paste0(as.character(params$input$selectFC2_2[1]),"_vs_",as.character(params$input$selectFC2_2[2]))`**
  - The DEG number after the filtration: **`r length(rownames(params$multi_deg_count1))`**
  - Tested gene number: 
 ```{r echo = FALSE, results='asis'}

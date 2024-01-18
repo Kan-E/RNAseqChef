@@ -43,11 +43,10 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.0.9, 2023/9/6)"),
-                        "Add new function 'Correlation analysis' in Normalized count analysis.",br(),
-                        "Enhance usability.",br(),
-                        "Improve the reproducibility of k-means clustering",br(),
-                        "Fix bug.",br(),
+                        h4("Current version (v1.1.0, 2024/1/18)"),
+                        "Enhance the visualization of the clustering analysis (PCA, MDS, and UMAP).", br(),
+                        "Implement a feature to enable the selection of a second pair for fold change cut-off in Multi DEG and Normalized count analysis.", br(),
+                        "Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -266,12 +265,13 @@ shinyUI(
                      ),
                      tabPanel("Result overview",
                               fluidRow(
-                                column(12, downloadButton("download_pair_PCA", "Download clustering analysis"),
+                                column(6, downloadButton("download_pair_PCA", "Download clustering analysis"),
                                        textOutput("not_cond2"),
                                        tags$head(tags$style("#not_cond2{color: red;
                                  font-size: 20px;
             font-style: bold;
-            }")))
+            }"))),
+                                column(6, selectInput("PCA_legend","Label",c("Label","Legend"),selected = "Label"))
                               ),
                               plotOutput("PCA"),
                               fluidRow(
@@ -548,12 +548,13 @@ shinyUI(
                      ),
                      tabPanel("Result overview",
                               fluidRow(
-                                column(12, downloadButton("download_3cond_PCA", "Download clustering analysis"),
+                                column(6, downloadButton("download_3cond_PCA", "Download clustering analysis"),
                                        textOutput("not_cond3"),
                                        tags$head(tags$style("#not_cond3{color: red;
                                  font-size: 20px;
             font-style: bold;
-            }")))
+            }"))),
+                                column(6, selectInput("PCA_legend_cond3","Label",c("Label","Legend"),selected = "Label"))
                               ),
                               plotOutput("PCA2"),
                               fluidRow(
@@ -811,7 +812,8 @@ shinyUI(
                      ),
                      tabPanel("Result overview",
                               fluidRow(
-                                column(4, downloadButton("download_multi_PCA", "Download clustering analysis"))
+                                column(4, downloadButton("download_multi_PCA", "Download clustering analysis")),
+                                column(6, selectInput("PCA_legend_multi","Label",c("Label","Legend"),selected = "Label"))
                               ),
                               plotOutput("multi_PCA"),
                               fluidRow(
@@ -821,7 +823,8 @@ shinyUI(
                                        tags$head(tags$style("#multi_umap_error{color: red;
                                  font-size: 20px;
             font-style: bold;
-            }")))
+            }"))),
+                                column(6, selectInput("multi_umap_label","Label",c("Label","None"),selected = "Label"))
                                 ),
                               div(
                                 plotOutput("multi_umap", height = "100%"),
@@ -852,16 +855,29 @@ shinyUI(
                               )),
                      tabPanel("Divisive clustering",
                               fluidRow(
-                                column(4, downloadButton("download_multi_boxplot", "Download boxplots"))
+                                column(6, htmlOutput("selectFC")),
+                                column(6, htmlOutput("selectFC_2")),
                               ),
-                              fluidRow(
-                                column(3, htmlOutput("selectFC")),
-                                column(3, textOutput("multi_DEG_total1"),
-                                       tags$head(tags$style("#multi_DEG_total1{color: red;
+                              textOutput("multi_DEG_total1"),
+                              tags$head(tags$style("#multi_DEG_total1{color: red;
                                  font-size: 20px;
                                  font-style: bold;
-                                 }"))),
-                                column(6, htmlOutput("topP")),
+                                 }")),
+                              htmlOutput("topP"),
+                              fluidRow(
+                                column(3, actionButton("start_multi", "Start"),
+                                       tags$head(tags$style("#start_multi{color: red;
+                                 font-size: 20px;
+                                 font-style: bold;
+                                 }"),
+                                                 tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                                 ))),
+                              ),
+                              fluidRow(
+                                column(4, downloadButton("download_multi_boxplot", "Download boxplots"))
                               ),
                               div(
                                 plotOutput("multi_boxplot", height = "100%"),
@@ -924,12 +940,15 @@ shinyUI(
                      ),
                      tabPanel("k-means clustering",
                               fluidRow(
-                                column(3, htmlOutput("selectFC2")),
-                                column(3, textOutput("multi_DEG_total2"),
-                                       tags$head(tags$style("#multi_DEG_total2{color: red;
+                                column(6, htmlOutput("selectFC2")),
+                                column(6, htmlOutput("selectFC2_2"))
+                              ),
+                              textOutput("multi_DEG_total2"),
+                              tags$head(tags$style("#multi_DEG_total2{color: red;
                                  font-size: 20px;
                                  font-style: bold;
-                                 }"))),
+                                 }")),
+                              fluidRow(
                                 column(6, htmlOutput("topP2"))
                               ),
                               fluidRow(
@@ -1332,7 +1351,8 @@ shinyUI(
                      ),
                      tabPanel("Clustering",
                               fluidRow(
-                                column(3, downloadButton("download_norm_PCA", "Download Clustering"))
+                                column(3, downloadButton("download_norm_PCA", "Download Clustering")),
+                                column(6, selectInput("PCA_legend_norm","Label",c("Label","Legend"),selected = "Label"))
                               ),
                               plotOutput("norm_PCA"),
                               fluidRow(
@@ -1342,7 +1362,8 @@ shinyUI(
                                        tags$head(tags$style("#norm_umap_error{color: red;
                                  font-size: 20px;
             font-style: bold;
-            }")))
+            }"))),
+                                column(6, selectInput("norm_umap_label","Label",c("Label","None"),selected = "Label"))
                               ),
                               div(
                                 plotOutput("norm_umap", height = "100%"),
@@ -1437,13 +1458,16 @@ shinyUI(
                      ),
                      tabPanel("k-means clustering",
                               fluidRow(
-                                column(4, htmlOutput("selectFC_norm"),
-                                       textOutput("filtered_region"),
-                                       tags$head(tags$style("#filtered_region{color: red;
+                                column(4, htmlOutput("selectFC_norm")),
+                                column(4, htmlOutput("selectFC_norm2"))
+                                ),
+                              textOutput("filtered_region"),
+                              tags$head(tags$style("#filtered_region{color: red;
                                  font-size: 20px;
                                  font-style: bold;
                                  }")),
-                                       htmlOutput("norm_kmeans_num"),
+                              fluidRow(
+                                column(4, htmlOutput("norm_kmeans_num"),
                                        htmlOutput("kmeans_cv"),
                                        actionButton("kmeans_start", "Start"),
                                        tags$head(tags$style("#kmeans_start{color: red;
@@ -1756,7 +1780,20 @@ shinyUI(
                                          ),
                                          fluidRow(
                                            column(4, downloadButton("download_deg_GOIbox", "Download boxplot"))
-                                         ))
+                                         ),
+                                         bsCollapse(id="DEGlist_volcano_collapse_panel",open="up_panel",multiple = FALSE,
+                                                    bsCollapsePanel(title="up (red) list:",
+                                                                    value="up_panel",
+                                                                    downloadButton("download_uplist_volcano", "Download"),
+                                                                    dataTableOutput('uplist_volcano')
+                                                    ),
+                                                    bsCollapsePanel(title="down (blue) list:",
+                                                                    value="down_panel",
+                                                                    downloadButton("download_downlist_volcano", "Download"),
+                                                                    dataTableOutput('downlist_volcano')
+                                                    )
+                                         )
+                                         )
                               )
                             )
                           ) #sidebarLayout
@@ -1940,6 +1977,10 @@ shinyUI(
                                    strong("2. bug when using ENSEMBL ID as gene names."),br(),
                                    strong("   - Some table data formatting was skewed."),br(),
                                    strong("   - 'Option: Select a normalized count file' in Pair-wise DEG and 3 conditions DEG was not work."),br(),
+                                   h4("v1.1.0, 2024/1/18"),
+                                   strong("Enhance the visualization of the clustering analysis (PCA, MDS, and UMAP)."), br(),
+                                   strong("Implement a feature to enable the selection of a second pair for fold change cut-off in Multi DEG and Normalized count analysis."), br(),
+                                   strong("Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer."),br(),
                             )
                           )
                  )

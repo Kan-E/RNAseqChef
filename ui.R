@@ -44,7 +44,7 @@ shinyUI(
                  column(12,
                         br(),
                         h4("Current version (v1.1.1, 2024/3/13)"),
-                        "Update the EBSeq R package to version 2.0.0 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1.",br(),
+                        "Update the EBSeq R package to version 2 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -1857,6 +1857,7 @@ shinyUI(
                                    "- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
                                    "- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
   differential expression analysis of RNA-seq data. R package version 1.30.0.",br(),
+                                   "- Ma X, Leng N (2019). _EBSeq: An R package for gene and isoform differential expression analysis of RNA-seq data_. R package version 1.99.0.",br(),
                                    "- Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for
   RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)",br(),
                                    "- Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential

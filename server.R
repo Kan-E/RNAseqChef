@@ -4699,7 +4699,7 @@ shinyServer(function(input, output, session) {
       return(dds)
     }else{
       if(input$EBSeq_mode == TRUE) time <- "a few" else time <- "5 - 10"
-      withProgress(message = "EBSeq multiple comparison test takes ",time," minutes",{
+      withProgress(message = paste0("EBSeq multiple comparison test takes ",time," minutes"),{
         count <- d_row_count_matrix2()
         collist <- gsub("\\_.+$", "", colnames(count))
         if(length(unique(collist)) == 3){

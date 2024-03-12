@@ -439,8 +439,8 @@ shinyUI(
                                               placement = "right",options = list(container = "body")),
                    ),
                    radioButtons("EBSeq_mode","EBSeq",
-                                c('v2 (fast-mode)'=TRUE,
-                                  'v1 (classical mode)'=FALSE),
+                                c('v2 (recommend)'=TRUE,
+                                  'v1 (<= RNAseqChef v.1.1.0)'=FALSE),
                                 selected = TRUE),
                    fluidRow(
                      column(6, selectInput("Species2", "Species", species_list, selected = "not selected")),

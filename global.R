@@ -697,8 +697,8 @@ data_3degcount1 <- function(gene_type,data,result_Condm, result_FDR, specific, f
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern4"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern4"
+      Pattern2 <- "pattern5"
     }
     if(specific == 2) {
       specific = collist[2]
@@ -706,8 +706,8 @@ data_3degcount1 <- function(gene_type,data,result_Condm, result_FDR, specific, f
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern3"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern3"
+      Pattern2 <- "pattern5"
     }
     if(specific == 3) {
       specific = collist[3]
@@ -715,36 +715,38 @@ data_3degcount1 <- function(gene_type,data,result_Condm, result_FDR, specific, f
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
       result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
-      Pattern1 <- "Pattern2"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern2"
+      Pattern2 <- "pattern5"
     }
+    print("FDR")
+    print(head(result_FDR))
     result_FDR$FDR <- 1 - result_FDR$PPDE
     result <- merge(result_Condm, result_FDR, by=0)
     data$Row.names <- rownames(data)
     data2 <- merge(data, result, by="Row.names")
-      data3 <- data2[,- which(colnames(data2) == "Pattern1")]
-      data3 <- data3[,- which(colnames(data3) == "Pattern2")]
-      data3 <- data3[,- which(colnames(data3) == "Pattern3")]
-      data3 <- data3[,- which(colnames(data3) == "Pattern4")]
-      data3 <- data3[,- which(colnames(data3) == "Pattern5")]
+      data3 <- data2[,- which(colnames(data2) == "pattern1")]
+      data3 <- data3[,- which(colnames(data3) == "pattern2")]
+      data3 <- data3[,- which(colnames(data3) == "pattern3")]
+      data3 <- data3[,- which(colnames(data3) == "pattern4")]
+      data3 <- data3[,- which(colnames(data3) == "pattern5")]
       data3 <- data3[,- which(colnames(data3) == "C1")]
       data3 <- data3[,- which(colnames(data3) == "C2")]
       data3 <- data3[,- which(colnames(data3) == "C3")]
       data3 <- data3[,- which(colnames(data3) == "PPDE")]
       Pattern <- rep("cannot_be_classified", nrow(data3))
-      Pattern[which(data3$MAP == "Pattern1")] = paste(collist[1], "=", collist[2], "=", collist[3])
-      Pattern[which(data3$MAP == "Pattern2" & data3$FC_y > 0)] = paste(collist[1], "=", collist[2], ">", collist[3])
-      Pattern[which(data3$MAP == "Pattern2" & data3$FC_y < 0)] = paste(collist[1], "=", collist[2], "<", collist[3])
-      Pattern[which(data3$MAP == "Pattern3" & data3$FC_x > 0)] = paste(collist[1], "=", collist[3], ">", collist[2])
-      Pattern[which(data3$MAP == "Pattern3" & data3$FC_x < 0)] = paste(collist[1], "=", collist[3], "<", collist[2])
-      Pattern[which(data3$MAP == "Pattern4" & data3$FC_x > 0 & (data3$FC_y > 0))] = paste(collist[1], ">", collist[2], "=", collist[3])
-      Pattern[which(data3$MAP == "Pattern4" & data3$FC_x < 0 & (data3$FC_y < 0))] = paste(collist[1], "<", collist[2], "=", collist[3])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], ">", collist[2], ">", collist[3])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], ">", collist[3], ">", collist[2])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], "<", collist[3], "<", collist[2])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], "<", collist[2], "<", collist[3])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x > 0 & (data3$FC_y < 0))] = paste(collist[2], "<", collist[1], "<", collist[3])
-      Pattern[which(data3$MAP == "Pattern5" & data3$FC_x < 0 & (data3$FC_y > 0))] = paste(collist[3], "<", collist[1], "<", collist[2])
+      Pattern[which(data3$MAP == "pattern1")] = paste(collist[1], "=", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "pattern2" & data3$FC_y > 0)] = paste(collist[1], "=", collist[2], ">", collist[3])
+      Pattern[which(data3$MAP == "pattern2" & data3$FC_y < 0)] = paste(collist[1], "=", collist[2], "<", collist[3])
+      Pattern[which(data3$MAP == "pattern3" & data3$FC_x > 0)] = paste(collist[1], "=", collist[3], ">", collist[2])
+      Pattern[which(data3$MAP == "pattern3" & data3$FC_x < 0)] = paste(collist[1], "=", collist[3], "<", collist[2])
+      Pattern[which(data3$MAP == "pattern4" & data3$FC_x > 0 & (data3$FC_y > 0))] = paste(collist[1], ">", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "pattern4" & data3$FC_x < 0 & (data3$FC_y < 0))] = paste(collist[1], "<", collist[2], "=", collist[3])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], ">", collist[2], ">", collist[3])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x > 0 & (data3$FC_y > 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], ">", collist[3], ">", collist[2])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) > 0))] = paste(collist[1], "<", collist[3], "<", collist[2])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x < 0 & (data3$FC_y < 0) & ((data3$FC_x - data3$FC_y) < 0))] = paste(collist[1], "<", collist[2], "<", collist[3])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x > 0 & (data3$FC_y < 0))] = paste(collist[2], "<", collist[1], "<", collist[3])
+      Pattern[which(data3$MAP == "pattern5" & data3$FC_x < 0 & (data3$FC_y > 0))] = paste(collist[3], "<", collist[1], "<", collist[2])
       data3$Pattern <- Pattern
       if(!is.null(result_list)){
       data3 <- dplyr::select(data3, Row.names, Pattern, FDR, FC_x, FC_y, everything())
@@ -852,8 +854,8 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern4"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern4"
+      Pattern2 <- "pattern5"
     }
     if(specific == 2) {
       specific = collist[2]
@@ -861,8 +863,8 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern3"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern3"
+      Pattern2 <- "pattern5"
     }
     if(specific == 3) {
       specific = collist[3]
@@ -870,8 +872,8 @@ cond3_scatter_plot <- function(gene_type,data, data4, result_Condm, result_FDR, 
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
       result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
-      Pattern1 <- "Pattern2"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern2"
+      Pattern2 <- "pattern5"
     }
     result_FDR$FDR <- 1 - result_FDR$PPDE
     result <- merge(result_Condm, result_FDR, by=0)
@@ -1043,8 +1045,8 @@ cond3_scatter_range <- function(gene_type,data, data4, result_Condm, result_FDR,
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[1]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C1 + 0.01)/(result_Condm$C2 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C1 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern4"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern4"
+      Pattern2 <- "pattern5"
     }
     if(specific == 2) {
       specific = collist[2]
@@ -1052,8 +1054,8 @@ cond3_scatter_range <- function(gene_type,data, data4, result_Condm, result_FDR,
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[2]) ,"/"), paste0(collist[3], ")"))
       result_Condm$FC_x <- log2((result_Condm$C2 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C2 + 0.01)/(result_Condm$C3 + 0.01))
-      Pattern1 <- "Pattern3"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern3"
+      Pattern2 <- "pattern5"
     }
     if(specific == 3) {
       specific = collist[3]
@@ -1061,8 +1063,8 @@ cond3_scatter_range <- function(gene_type,data, data4, result_Condm, result_FDR,
       FC_ylab <- paste0(paste0(paste0("Log2(", collist[3]) ,"/"), paste0(collist[2], ")"))
       result_Condm$FC_x <- log2((result_Condm$C3 + 0.01)/(result_Condm$C1 + 0.01))
       result_Condm$FC_y <- log2((result_Condm$C3 + 0.01)/(result_Condm$C2 + 0.01))
-      Pattern1 <- "Pattern2"
-      Pattern2 <- "Pattern5"
+      Pattern1 <- "pattern2"
+      Pattern2 <- "pattern5"
     }
     result_FDR$FDR <- 1 - result_FDR$PPDE
     result <- merge(result_Condm, result_FDR, by=0)
@@ -1075,6 +1077,19 @@ cond3_scatter_range <- function(gene_type,data, data4, result_Condm, result_FDR,
     data3 <- data.frame(Row.names = result$Row.names, FC_x = result$FC_x,
                         FC_y = result$FC_y, padj = result$FDR, sig = sig, FC_xy = result$FC_x * result$FC_y)
     return(data3)
+  }
+}
+v1_GetMultiFC<-function(EBMultiOut, collist,count,SmallNum = 0.01,EBSeq_mode=F){
+  if(EBSeq_mode==F){
+    norm_count <- as.data.frame(EBMultiOut$DataNorm)
+    colnames(norm_count) <- colnames(count)
+    for(name in unique(collist)){
+      cond <- norm_count %>% dplyr::select(starts_with(name))
+      cond_ave <- apply(cond,1,mean)
+      if(name == unique(collist)[1]) df <- data.frame(cond_ave) else df <- data.frame(df, cond_ave)
+    }
+  colnames(df) <- c("C1","C2","C3")
+  return(df)
   }
 }
 enrichment3_1 <- function(data3, data4, cnet_list2){

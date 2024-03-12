@@ -441,7 +441,7 @@ shinyServer(function(input, output, session) {
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
             fc_res <- PostFC(EBOut)
-            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
+            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,EBOut$Mean[rownames(PP),1], EBOut$Mean[rownames(PP),2])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
             incProgress(1)
@@ -1938,7 +1938,7 @@ shinyServer(function(input, output, session) {
             EBOut <- EBTest(Data = count, NgVector = ngvector, Conditions = conditions, sizeFactors = Sizes, maxround = 5)
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
-            fc_res <- PostFC(EBOut)
+            fc_res <- modified_PostFC(EBOut)
             results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
@@ -4713,10 +4713,13 @@ shinyServer(function(input, output, session) {
           Sizes <- MedianNorm(count)
           NormMat <- GetNormalizedMat(count, Sizes)
           patterns <- GetPatterns(conditions)
+          rownames(patterns) <- tolower(rownames(patterns))
           eename <- rownames(patterns)[which(rowSums(patterns) == length(unique(collist)))]
           stopifnot(length(eename) == 1)
           MultiOut <- NULL
-          MultiOut <- EBMultiTest(Data = count, NgVector = ngvector, Conditions = conditions, AllParti = patterns, sizeFactors = Sizes, maxround = 5)
+          MultiOut <- EBMultiTest(Data = count, NgVector = ngvector, fast=input$EBSeq_mode,
+                                  Conditions = conditions, AllParti = patterns,
+                                  sizeFactors = Sizes, maxround = 5)
           stopifnot(!is.null(MultiOut))
           return(MultiOut)
         }
@@ -4742,19 +4745,20 @@ shinyServer(function(input, output, session) {
         conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
         Sizes <- MedianNorm(count)
         patterns <- GetPatterns(conditions)
+        rownames(patterns) <- tolower(rownames(patterns))
         eename <- rownames(patterns)[which(rowSums(patterns) == length(unique(collist)))]
         MultiOut <- MultiOut()
         MultiPP <- GetMultiPP(MultiOut)
         PP <- as.data.frame(MultiPP$PP)
+        colnames(PP) <- tolower(colnames(PP))
         pos <- which(names(PP) == eename)
         probs <- rowSums(PP[,-pos])
         results <- cbind(PP, MultiPP$MAP[rownames(PP)], probs)
         colnames(results) <- c(colnames(PP), "MAP", "PPDE")
         ord <- order(results[,"PPDE"], decreasing = TRUE)
         results <- results[ord,]
-        MultiFC <- GetMultiFC(MultiOut)
         res <- as.data.frame(results)
-        
+        print(head(res))
         if(input$Species2 != "not selected"){
           if(gene_type2() != "SYMBOL"){
             gene_IDs  <- gene_ID()
@@ -4785,17 +4789,18 @@ shinyServer(function(input, output, session) {
         conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
         Sizes <- MedianNorm(count)
         patterns <- GetPatterns(conditions)
+        rownames(patterns) <- tolower(rownames(patterns))
         eename <- rownames(patterns)[which(rowSums(patterns) == length(unique(collist)))]
         MultiOut <- MultiOut()
         MultiPP <- GetMultiPP(MultiOut)
         PP <- as.data.frame(MultiPP$PP)
+        colnames(PP) <- tolower(colnames(PP))
         pos <- which(names(PP) == eename)
         probs <- rowSums(PP[,-pos])
         results <- cbind(PP, MultiPP$MAP[rownames(PP)], probs)
         colnames(results) <- c(colnames(PP), "MAP", "PPDE")
         ord <- order(results[,"PPDE"], decreasing = TRUE)
         results <- results[ord,]
-        MultiFC <- GetMultiFC(MultiOut)
         res <- MultiPP$Pattern
         return(as.data.frame(res))
       }
@@ -4818,18 +4823,27 @@ shinyServer(function(input, output, session) {
         conditions <- as.factor(rep(paste("C", 1:length(unique(collist)), sep=""), times = vec))
         Sizes <- MedianNorm(count)
         patterns <- GetPatterns(conditions)
+        rownames(patterns) <- tolower(rownames(patterns))
         eename <- rownames(patterns)[which(rowSums(patterns) == length(unique(collist)))]
         MultiOut <- MultiOut()
         MultiPP <- GetMultiPP(MultiOut)
         PP <- as.data.frame(MultiPP$PP)
+        colnames(PP) <- tolower(colnames(PP))
         pos <- which(names(PP) == eename)
         probs <- rowSums(PP[,-pos])
         results <- cbind(PP, MultiPP$MAP[rownames(PP)], probs)
         colnames(results) <- c(colnames(PP), "MAP", "PPDE")
         ord <- order(results[,"PPDE"], decreasing = TRUE)
         results <- results[ord,]
-        MultiFC <- GetMultiFC(MultiOut)
-        res <- MultiFC$CondMeans[ord,]
+        if(input$EBSeq_mode == TRUE) {
+          MultiFC <- GetMultiFC(MultiOut)
+          res <- MultiFC$CondMeans[ord,]
+          rownames(res) <- rownames(results)
+          }else {
+            res <- v1_GetMultiFC(MultiOut,collist=collist,count=d_row_count_matrix2(),
+                                     EBSeq_mode = input$EBSeq_mode)
+            res <- res[rownames(results),]
+          }
         return(as.data.frame(res))
       }
     }
@@ -4860,6 +4874,7 @@ shinyServer(function(input, output, session) {
         if(input$Species2 != "not selected"){
           if(gene_type2() != "SYMBOL"){
             gene_IDs  <- gene_ID()
+            print(gene_IDs)
             normalized_counts$Row.names <- rownames(normalized_counts)
             data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
             data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
@@ -8773,5 +8788,5 @@ shinyServer(function(input, output, session) {
   observeEvent(input$dorothea_target_set, ({
     updateCollapse(session,id =  "dorothea_collapse_panel", open="dorothea_tf_panel")
   }))
-  
+
 })

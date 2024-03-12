@@ -43,10 +43,8 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.1.0, 2024/1/18)"),
-                        "Enhance the visualization of the clustering analysis (PCA, MDS, and UMAP).", br(),
-                        "Implement a feature to enable the selection of a second pair for fold change cut-off in Multi DEG and Normalized count analysis.", br(),
-                        "Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer.",br(),
+                        h4("Current version (v1.1.1, 2024/3/13)"),
+                        "Update the EBSeq R package to version 2.0.0 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -440,6 +438,10 @@ shinyUI(
                                                             ), 
                                               placement = "right",options = list(container = "body")),
                    ),
+                   radioButtons("EBSeq_mode","EBSeq",
+                                c('v2 (fast-mode)'=TRUE,
+                                  'v1 (classical mode)'=FALSE),
+                                selected = TRUE),
                    fluidRow(
                      column(6, selectInput("Species2", "Species", species_list, selected = "not selected")),
                      conditionalPanel(condition=c("input.Species2 != 'not selected' && input.Species2 != 'Homo sapiens' &&
@@ -1981,6 +1983,8 @@ shinyUI(
                                    strong("Enhance the visualization of the clustering analysis (PCA, MDS, and UMAP)."), br(),
                                    strong("Implement a feature to enable the selection of a second pair for fold change cut-off in Multi DEG and Normalized count analysis."), br(),
                                    strong("Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer."),br(),
+                                   h4("v1.1.1, 2024/3/14"),
+                                   strong("Update the EBSeq R package to version 2.0.0 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1."),br(),
                             )
                           )
                  )

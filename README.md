@@ -75,7 +75,7 @@ Shiny framework
 EBSeq (for ebseq)
 - Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
   differential expression analysis of RNA-seq data. R package version 1.30.0.
-- Ma X, Leng N (2019). EBSeq: An R package for gene and isoform differential expression analysis of RNA-seq data. R package version 1.99.0."
+- Ma X, Leng N (2019). EBSeq: An R package for gene and isoform differential expression analysis of RNA-seq data. R package version 1.99.0.
   
 DESeq2 (for deseq2)
 - Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for

@@ -349,7 +349,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">RNAseqChef</h1>
-<h4 class="date">24/01/18 11:32</h4>
+<h4 class="date">24/03/13 16:04</h4>
 
 </div>
 
@@ -389,10 +389,10 @@ type-dependent action of sulforaphane. <em>JBC</em>, 299(6), 104810
 <li>Run the following commands once to get the docker image of
 RNAseqChef<br></li>
 </ul>
-<pre><code>docker pull omicschef/rnaseqchef:v1.1.0</code></pre>
+<pre><code>docker pull omicschef/rnaseqchef:v1.1.1</code></pre>
 <p>You may now run RNAseqChef with just one command in the command
 line:</p>
-<pre><code>docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.1.0</code></pre>
+<pre><code>docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.1.1</code></pre>
 <p>Please access <a href="http://localhost:3838" class="uri">http://localhost:3838</a> in your browser.</p>
 </div>
 <div id="method-2-r-environment-setup-is-required" class="section level2">
@@ -408,7 +408,7 @@ XQuartz and Xcode)</li>
 install.packages(&quot;https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz&quot;,repos = NULL, type = &quot;source&quot;)
 
 pkgs &lt;- c(&quot;shiny&quot;,&quot;DT&quot;,&quot;readxl&quot;,&quot;rstatix&quot;,&quot;multcomp&quot;,&quot;tidyverse&quot;,&quot;ggpubr&quot;,&quot;venn&quot;,&quot;ggrepel&quot;,
-&quot;ggdendro&quot;,&quot;ggplotify&quot;,&quot;gridExtra&quot;,&quot;cowplot&quot;,&quot;DESeq2&quot;,&quot;EBSeq&quot;,&quot;ggnewscale&quot;,&quot;edgeR&quot;,&quot;IHW&quot;,
+&quot;ggdendro&quot;,&quot;ggplotify&quot;,&quot;gridExtra&quot;,&quot;cowplot&quot;,&quot;DESeq2&quot;,&quot;ggnewscale&quot;,&quot;edgeR&quot;,&quot;IHW&quot;,
 &quot;qvalue&quot;,&quot;org.Hs.eg.db&quot;,&quot;org.Mm.eg.db&quot;,&quot;org.Rn.eg.db&quot;,&quot;org.Xl.eg.db&quot;,&quot;org.Dm.eg.db&quot;,
 &quot;org.Ce.eg.db&quot;,&quot;AnnotationDbi&quot;,&quot;clusterProfiler&quot;,&quot;enrichplot&quot;,&quot;DOSE&quot;,&quot;msigdbr&quot;,&quot;genefilter&quot;,
 &quot;ComplexHeatmap&quot;,&quot;shinyBS&quot;,&quot;plotly&quot;,&quot;shinyjs&quot;,&quot;DEGreport&quot;,&quot;devtools&quot;,&quot;dorothea&quot;,&quot;umap&quot;, &quot;biomaRt&quot;,
@@ -421,7 +421,8 @@ for(pkg in pkgs) if (!require(pkg, character.only = T)){
     BiocManager::install(pkg, update = F)
 }
 devtools::install_github(&quot;YuLab-SMU/clusterProfiler.dplyr&quot;)
-devtools::install_github(&#39;VPetukhov/ggrastr&#39;)</code></pre>
+devtools::install_github(&#39;VPetukhov/ggrastr&#39;)
+devtools::install_github(&quot;wiscstatman/EBSeq&quot;)</code></pre>
 <p>You may now run RNAseqChef with just one command in R:<br></p>
 <pre><code>shiny::runGitHub(&quot;RNAseqChef&quot;, &quot;Kan-E&quot;)</code></pre>
 </div>
@@ -444,6 +445,9 @@ JavaScript Library ‘DataTables’. R package version 0.23. <a href="https://CR
 <li>Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for
 gene and isoform differential expression analysis of RNA-seq data. R
 package version 1.30.0.</li>
+<li>Ma X, Leng N (2019). EBSeq: An R package for gene and isoform
+differential expression analysis of RNA-seq data. R package version
+1.99.0.</li>
 </ul>
 <p>DESeq2 (for deseq2)</p>
 <ul>

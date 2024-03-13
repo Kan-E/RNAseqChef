@@ -12,11 +12,11 @@ Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https:
 - Download Docker
 - Run the following commands once to get the docker image of RNAseqChef<br>
 ```
-docker pull omicschef/rnaseqchef:v1.1.0
+docker pull omicschef/rnaseqchef:v1.1.1
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```
-docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.1.0
+docker run --rm -p 3838:3838 omicschef/rnaseqchef:v1.1.1
 ```
 Please access http://localhost:3838 in your browser.
 
@@ -31,7 +31,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 install.packages("https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz",repos = NULL, type = "source")
 
 pkgs <- c("shiny","DT","readxl","rstatix","multcomp","tidyverse","ggpubr","venn","ggrepel",
-"ggdendro","ggplotify","gridExtra","cowplot","DESeq2","EBSeq","ggnewscale","edgeR","IHW",
+"ggdendro","ggplotify","gridExtra","cowplot","DESeq2","ggnewscale","edgeR","IHW",
 "qvalue","org.Hs.eg.db","org.Mm.eg.db","org.Rn.eg.db","org.Xl.eg.db","org.Dm.eg.db",
 "org.Ce.eg.db","AnnotationDbi","clusterProfiler","enrichplot","DOSE","msigdbr","genefilter",
 "ComplexHeatmap","shinyBS","plotly","shinyjs","DEGreport","devtools","dorothea","umap", "biomaRt",
@@ -46,6 +46,8 @@ for(pkg in pkgs) if (!require(pkg, character.only = T)){
 }
 devtools::install_github("YuLab-SMU/clusterProfiler.dplyr")
 devtools::install_github('VPetukhov/ggrastr')
+devtools::install_github("wiscstatman/EBSeq")
+
 ```
 
 You may now run RNAseqChef with just one command in R:<br>
@@ -73,6 +75,7 @@ Shiny framework
 EBSeq (for ebseq)
 - Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
   differential expression analysis of RNA-seq data. R package version 1.30.0.
+- Ma X, Leng N (2019). EBSeq: An R package for gene and isoform differential expression analysis of RNA-seq data. R package version 1.99.0."
   
 DESeq2 (for deseq2)
 - Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for

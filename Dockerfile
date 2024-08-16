@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     git \
     libmagick++-dev \
     libpoppler-dev \
-    libpoppler-cpp-dev
+    libpoppler-cpp-dev \
+    libglpk-dev
 RUN R -e "install.packages('BiocManager')" && \
     R -e "BiocManager::install('shiny', update = F)" && \
     R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz',repos = NULL, type = 'source')" && \

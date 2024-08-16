@@ -441,7 +441,7 @@ shinyServer(function(input, output, session) {
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
             fc_res <- PostFC(EBOut)
-            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
+            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,EBOut$Mean[rownames(PP),1], EBOut$Mean[rownames(PP),2])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
             incProgress(1)
@@ -1941,7 +1941,7 @@ shinyServer(function(input, output, session) {
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
             fc_res <- PostFC(EBOut)
-            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
+            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,EBOut$Mean[rownames(PP),1], EBOut$Mean[rownames(PP),2])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
             incProgress(1)

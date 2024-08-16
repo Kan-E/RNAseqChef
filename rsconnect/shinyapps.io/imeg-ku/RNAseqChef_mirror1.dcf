@@ -1,14 +1,14 @@
-name: RNAseqChef
-title: RNAseqChef
+name: RNAseqChef_mirror1
+title: RNAseqChef_mirror1
 username:
 account: imeg-ku
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 6280698
-bundleId: 8367195
-url: https://imeg-ku.shinyapps.io/RNAseqChef/
-when: 1710328614.84262
-lastSyncTime: 1710328614.84265
+appId: 10956003
+bundleId: 8362858
+url: https://imeg-ku.shinyapps.io/RNAseqChef_mirror1/
+when: 1710244166.63037
+lastSyncTime: 1710244166.6304
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: Dockerfile|Dockerfile_arm|docs/_config.yml|docs/index.html|LICENSE.md|README.md|shiny-server.conf|data|manual_figure

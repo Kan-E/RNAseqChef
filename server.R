@@ -368,13 +368,13 @@ shinyServer(function(input, output, session) {
         if (input$DEG_method == "DESeq2") {
           dds <- dds()
           contrast <- c("con", unique(collist))
-          res <- results(dds,  contrast = contrast)
+          res <- DESeq2::results(dds,  contrast = contrast)
           if(input$FDR_method == "IHW") {
             ihw_res <- IHW::ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
             res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
           }
           if(input$FDR_method == "Qvalue") {
-            res <- results(dds,  contrast = contrast)
+            res <- DESeq2::results(dds,  contrast = contrast)
             qvalue <- qvalue::qvalue(res$pvalue)
             res$padj <- qvalue$qvalues
           }
@@ -441,7 +441,7 @@ shinyServer(function(input, output, session) {
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
             fc_res <- PostFC(EBOut)
-            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,EBOut$Mean[rownames(PP),1], EBOut$Mean[rownames(PP),2])
+            results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
             incProgress(1)
@@ -622,8 +622,6 @@ shinyServer(function(input, output, session) {
       Type <- input$DEG_method
       data <- dplyr::filter(data, apply(data[,8:(7 + Cond_1 + Cond_2)],1,mean) > input$basemean)
       
-      if(input$Species != "not selected"){
-      }
       if (Type == "EBSeq"){
         data$padj <- data$PPEE
         data$log2FoldChange <- -1 * log2(data$PostFC)
@@ -657,9 +655,6 @@ shinyServer(function(input, output, session) {
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data <- merge(data, gene_IDs, by="Row.names")
           data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = "\n- ")
-          genenames <- as.vector(data$SYMBOL)
-        }else{
-          genenames=NULL
         }
       }else{
         if(input$Species != "not selected"){
@@ -675,7 +670,6 @@ shinyServer(function(input, output, session) {
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
           data <- merge(data, gene_IDs, by="Row.names")
         }
-        genenames <- as.vector(data$Row.names)
       }
       return(data)
     }
@@ -920,7 +914,7 @@ shinyServer(function(input, output, session) {
       }else{
         max <- ceiling(max(log(data$baseMean,2)))
         sliderInput("xrange","X_axis range:",min = 0,
-                    max=max+1, step = 0.5, value = max)
+                    max=max+1, step = 0.5, value = c(0,max))
       }
     }
   })
@@ -931,7 +925,6 @@ shinyServer(function(input, output, session) {
         data$padj[data$padj == 0] <- 10^(-300)
         data <- na.omit(data)
         max <- ceiling(max(-log10(data$padj)))
-        print(max)
         sliderInput("yrange","Y_axis range:",min = 0, max= max+1, step = 1,
                     value = max)
       }else{
@@ -1003,7 +996,7 @@ shinyServer(function(input, output, session) {
         v <- try(ggplot(data, aes(x = log2baseMean, y = log2FoldChange)) +
                    geom_hline(yintercept = c(-log2(input$fc), 0 ,log2(input$fc)), linetype = c(2,1,2), color = c("black", "black","black")) +
                    xlab("log2 mean expression") + ylab("log2 fold change") +
-                   xlim(c(0, input$xrange))+
+                   xlim(c(input$xrange))+
                    ylim(c(input$yrange)))
       }
       if(length(v) == 1) if(class(v) == "try-error") validate("")
@@ -1088,24 +1081,18 @@ shinyServer(function(input, output, session) {
         count <- count[, - which(colnames(count) == "SYMBOL")]
       }
     }
-    print(head(count))
     collist <- factor(gsub("\\_.+$", "", colnames(count)))
     vec <- c()
     for (i in 1:length(unique(collist))) {
       num <- length(collist[collist == unique(collist)[i]])
       vec <- c(vec, num)
     }
-    print(collist)
-    print(vec)
     Cond_1 <- vec[1]
     Cond_2 <- vec[2]
     data2 <- pair_GOI_count()
     if(is.null(data2)){
       ht <- NULL
     }else{
-      print(head(data2))
-      print(Cond_1)
-      print(Cond_2)
       data.z <- genefilter::genescale(data2[,8:(7 + Cond_1 + Cond_2)], axis=1, method="Z")
       ht <- GOIheatmap(data.z)
     }
@@ -1546,7 +1533,6 @@ shinyServer(function(input, output, session) {
           }
         }
         incProgress(1)
-        print(df)
         return(df)
       })
     }else{return(NULL)}
@@ -1566,9 +1552,11 @@ shinyServer(function(input, output, session) {
         if(input$Species != "Xenopus laevis" && input$Ortholog != "Arabidopsis thaliana" && input$Species != "Arabidopsis thaliana"){
           H_t2g <- Hallmark_set()
           H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+          set.seed(123)
           em3 <- try(clusterProfiler::GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                           minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
         }else{
+          set.seed(123)
           if(input$Gene_set == "KEGG"){
             em3 <- try(gseKEGG(geneList, organism = org_code(input$Species, Ortholog= input$Ortholog),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                                minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F,keyType = "ncbi-geneid"))
@@ -1684,13 +1672,25 @@ shinyServer(function(input, output, session) {
         if (length(as.data.frame(cnet1)$ID) == 0) {
           p2 <- NULL
         } else{
-          if(name == "Up") genes <- upgene
-          if(name == "Down") genes <- downgene
+          if(name == "Up") {
+            genes <- upgene
+            color <- c("white", "red")
+            limits <- c(0,NA)
+          }
+          if(name == "Down") {
+            genes <- downgene
+            color <- c("blue","white")
+            limits <- c(NA,0)
+          }
           geneList <- genes$log2FoldChange
           names(geneList) = as.character(genes$ENTREZID)
           p2 <- try(as.grob(clusterProfiler::cnetplot(cnet1, foldChange=geneList,
                                      cex_label_gene = 0.7, cex_label_category = 0.75,
-                                     cex_category = 0.75, colorEdge = TRUE)+ guides(edge_color = "none")))
+                                     cex_category = 0.75, colorEdge = TRUE)+ 
+                              guides(edge_color = "none") + scale_color_gradientn(name = "log2FC",
+                                                                                  colours = color,
+                                                                                  limits= limits)
+                            ))
           if(length(class(p2)) == 1){
             if(class(p2) == "try-error") p2 <- NULL
           }
@@ -1873,13 +1873,13 @@ shinyServer(function(input, output, session) {
         if (input$DEG_method == "DESeq2") {
           dds <- dds_batch()[[name]]
           contrast <- c("con", unique(collist))
-          res <- results(dds,  contrast = contrast)
+          res <- DESeq2::results(dds,  contrast = contrast)
           if(input$FDR_method == "IHW") {
             ihw_res <- IHW::ihw(pvalue ~ baseMean,  data=as.data.frame(res), alpha = 0.1)
             res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
           }
           if(input$FDR_method == "Qvalue") {
-            res <- results(dds,  contrast = contrast)
+            res <- DESeq2::results(dds,  contrast = contrast)
             qvalue <- qvalue::qvalue(res$pvalue)
             res$padj <- qvalue$qvalues
           }
@@ -1905,11 +1905,13 @@ shinyServer(function(input, output, session) {
         }
         if(input$DEG_method == "limma"){
           withProgress(message = "limma",{
+            collist <- gsub(" ", ".", collist)
+            collist <- gsub("\\+", ".", collist)
             group <- factor(collist)
             count <- log(count + 1,2)
             eset = new("ExpressionSet", exprs=as.matrix(count))
             design <- model.matrix(~0+collist)
-            colnames(design) <- unique(collist)
+            colnames(design) <- gsub("^collist","",colnames(design))
             fit <- lmFit(eset, design)
             comparisons <-  paste(unique(collist)[1],"-",unique(collist)[2],sep="")
             cont.matrix <- makeContrasts(contrasts=comparisons, levels=design)
@@ -1938,7 +1940,7 @@ shinyServer(function(input, output, session) {
             EBOut <- EBTest(Data = count, NgVector = ngvector, Conditions = conditions, sizeFactors = Sizes, maxround = 5)
             stopifnot(!is.null(EBOut))
             PP <- as.data.frame(GetPPMat(EBOut))
-            fc_res <- modified_PostFC(EBOut)
+            fc_res <- PostFC(EBOut)
             results <- cbind(PP, fc_res$PostFC, fc_res$RealFC,unlist(EBOut$C1Mean)[rownames(PP)], unlist(EBOut$C2Mean)[rownames(PP)])
             colnames(results) <- c("PPEE", "PPDE", "PostFC", "RealFC","C1Mean","C2Mean")
             res <- results[order(results[,"PPDE"], decreasing = TRUE),]
@@ -2114,11 +2116,8 @@ shinyServer(function(input, output, session) {
           Row.names <- NULL
           log2FoldChange <- NULL
           value <- NULL
-          print(head(data))
-          print(head(count))
           data <- merge(data,count, by=0)
           Type <- input$DEG_method
-          print(head(data))
           data <- dplyr::filter(data, apply(data[,8:(7 + Cond_1 + Cond_2)],1,mean) > input$basemean)
           
           if(input$Species != "not selected"){
@@ -2156,9 +2155,6 @@ shinyServer(function(input, output, session) {
               gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
               data <- merge(data, gene_IDs, by="Row.names")
               data$Unique_ID <- paste(data$SYMBOL,data$Row.names, sep = "\n- ")
-              genenames <- as.vector(data$SYMBOL)
-            }else{
-              genenames=NULL
             }
           }else{
             if(input$Species != "not selected"){
@@ -2174,7 +2170,6 @@ shinyServer(function(input, output, session) {
               gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
               data <- merge(data, gene_IDs, by="Row.names")
             }
-            genenames <- as.vector(data$Row.names)
           }
           deglist[name] <- list(data)
         }
@@ -2238,7 +2233,6 @@ shinyServer(function(input, output, session) {
           Cond_2 <- vec[2]
           data2 <- as.data.frame(data_degcount2_batch()[[name]])
           colnames(data2) <- sub(paste0(name,"."), "", colnames(data2))
-          print(head(data2))
           up_all <- dplyr::filter(data2, log2FoldChange > 0)
           rownames(up_all) <- up_all$Row.names
           up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
@@ -2560,7 +2554,7 @@ shinyServer(function(input, output, session) {
         dds <- multi_dds()
         df <- list()
         for(i in 1:choose(n=length(unique(dds$meta)),k=2)){
-          res <- results(dds, contrast = c("meta", as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[1,i]]),as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[2,i]])))
+          res <- DESeq2::results(dds, contrast = c("meta", as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[1,i]]),as.character(unique(dds$meta)[combn(x=length(unique(dds$meta)),m=2)[2,i]])))
           foldchange <- data.frame(gene = rownames(res), log2FC = res$log2FoldChange)
           df[res@elementMetadata@listData[["description"]][2]] <- list(foldchange)
         }
@@ -2578,7 +2572,7 @@ shinyServer(function(input, output, session) {
           res$padj <- IHW::as.data.frame(ihw_res)$adj_pvalue
         }
         if(input$FDR_method6 == "Qvalue") {
-          res <- results(dds)
+          res <- DESeq2::results(dds)
           qvalue <- qvalue::qvalue(res$pvalue)
           res$padj <- qvalue$qvalues
         }
@@ -2779,7 +2773,7 @@ shinyServer(function(input, output, session) {
         meta <- data.frame(condition = factor(collist))
       }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
     if(length(input$selectFC) != 2){
-      res <- results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
+      res <- DESeq2::results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
       res <- res %>%
         as.data.frame() %>%
         filter(padj < input$fdr6)
@@ -2787,7 +2781,7 @@ shinyServer(function(input, output, session) {
       res <- data2[,1:7]
       rownames(res) <- res$Row.names
     }else{
-        res <- results(dds, contrast = c("meta", as.character(input$selectFC[1]),as.character(input$selectFC[2])))
+        res <- DESeq2::results(dds, contrast = c("meta", as.character(input$selectFC[1]),as.character(input$selectFC[2])))
         res <- res %>%
           as.data.frame() %>%
           filter(padj < input$fdr6) %>%
@@ -2797,7 +2791,7 @@ shinyServer(function(input, output, session) {
         rownames(res) <- res$Row.names
         
         if(length(input$selectFC_2) == 2){
-          res2 <- results(dds, contrast = c("meta", as.character(input$selectFC_2[1]),as.character(input$selectFC_2[2])))
+          res2 <- DESeq2::results(dds, contrast = c("meta", as.character(input$selectFC_2[1]),as.character(input$selectFC_2[2])))
           res2 <- res2 %>%
             as.data.frame() %>%
             dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
@@ -2834,7 +2828,6 @@ shinyServer(function(input, output, session) {
         rld <- rlogTransformation(dds)
         rld_mat <- assay(rld)
         cluster_rlog <- rld_mat[clustering_sig_genes$gene, ]
-        print(head(cluster_rlog))
         return(cluster_rlog)
       })
     }
@@ -3163,7 +3156,7 @@ shinyServer(function(input, output, session) {
             meta <- data.frame(condition = factor(collist))
           }else meta <- data.frame(condition=factor(meta[,1]), type=factor(meta[,2]))
           if(length(input$selectFC2) != 2){
-            res <- results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
+            res <- DESeq2::results(dds, contrast = c("meta", as.character(multi_select()[1]),as.character(multi_select()[2])))
             res <- res %>%
               as.data.frame() %>%
               dplyr::filter(padj < input$fdr6)
@@ -3171,8 +3164,7 @@ shinyServer(function(input, output, session) {
             res <- data2[,1:7]
             rownames(res) <- res$Row.names
           }else{
-            res <- results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
-            print(head(res))
+            res <- DESeq2::results(dds, contrast = c("meta", as.character(input$selectFC2[1]),as.character(input$selectFC2[2])))
             res <- res %>%
               as.data.frame() %>%
               dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
@@ -3183,8 +3175,7 @@ shinyServer(function(input, output, session) {
             
             
             if(length(input$selectFC2_2) == 2){
-              res2 <- results(dds, contrast = c("meta", as.character(input$selectFC2_2[1]),as.character(input$selectFC2_2[2])))
-              print(head(res2))
+              res2 <- DESeq2::results(dds, contrast = c("meta", as.character(input$selectFC2_2[1]),as.character(input$selectFC2_2[2])))
               res2 <- res2 %>%
                 as.data.frame() %>%
                 dplyr::filter(abs(log2FoldChange) > log2(input$fc6)) %>%
@@ -3226,7 +3217,6 @@ shinyServer(function(input, output, session) {
       rownames(data2) <- data2$Row.names
       data2<- data2[,-1]
       data2 <- data2[,1:length(collist)]
-      print(dim(data2))
       return(data2)
     }
   })
@@ -3698,9 +3688,11 @@ shinyServer(function(input, output, session) {
         if(input$Species6 != "Xenopus laevis" && input$Ortholog6 != "Arabidopsis thaliana" && input$Species6 != "Arabidopsis thaliana"){
           H_t2g <- multi_Hallmark_set()
           H_t2g2 <- H_t2g %>% dplyr::select(gs_name, entrez_gene)
+          set.seed(123)
           em3 <- try(clusterProfiler::GSEA(geneList, TERM2GENE = H_t2g2,pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                           minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F))
         }else{
+          set.seed(123)
           if(input$Gene_set6 == "KEGG"){
             em3 <- try(gseKEGG(geneList, organism = org_code(input$Species6, Ortholog= input$Ortholog6),pvalueCutoff = 0.05,exponent = 1, eps = 0, pAdjustMethod = "BH",
                                minGSSize = 50, maxGSSize = 500,by = "fgsea",verbose = F,keyType = "ncbi-geneid"))
@@ -4759,7 +4751,7 @@ shinyServer(function(input, output, session) {
         ord <- order(results[,"PPDE"], decreasing = TRUE)
         results <- results[ord,]
         res <- as.data.frame(results)
-        print(head(res))
+        
         if(input$Species2 != "not selected"){
           if(gene_type2() != "SYMBOL"){
             gene_IDs  <- gene_ID()
@@ -4875,7 +4867,6 @@ shinyServer(function(input, output, session) {
         if(input$Species2 != "not selected"){
           if(gene_type2() != "SYMBOL"){
             gene_IDs  <- gene_ID()
-            print(gene_IDs)
             normalized_counts$Row.names <- rownames(normalized_counts)
             data2 <- merge(normalized_counts, gene_IDs, by="Row.names")
             data2$Unique_ID <- paste(data2$SYMBOL,data2$Row.names, sep = "\n- ")
@@ -5320,7 +5311,6 @@ shinyServer(function(input, output, session) {
           data3 <- merge(data3, data, by="Row.names")
         }
       }
-      print(head(data3))
       return(brushedPoints(data3, input$plot1_brush_cond3,xvar = "FC_x",yvar="FC_y"))
     }
   })
@@ -5762,6 +5752,27 @@ shinyServer(function(input, output, session) {
   observeEvent(d_norm_count_matrix(), ({
     updateCollapse(session,id =  "norm_input_collapse_panel", open="D_norm_count_matrix_panel")
   }))
+  
+  observeEvent(input$Species3, ({
+    if(input$Species3 == "not selected"){
+      updateSelectInput(session, "gene_set_forFilter","Select a gene set for gene extraction","")
+    }else  if(input$Species3 != "Xenopus laevis" && input$Ortholog3 != "Arabidopsis thaliana" && input$Species3 != "Arabidopsis thaliana"){
+        updateSelectInput(session, "gene_set_forFilter","Select a gene set for gene extraction",gene_set_list) 
+    }else {
+      updateSelectInput(session, "gene_set_forFilter","Select a gene set for gene extraction",c("KEGG", "GO biological process", 
+                                                        "GO cellular component","GO molecular function")) 
+    }
+  }))
+  observeEvent(input$gene_set_forFilter, ({
+    if(is.null(input$gene_set_forFilter)){
+      updateSelectInput(session, "gene_set_forFilter2","","")
+    }else{
+      list <- unique(GeneList_for_enrichment(Species = input$Species3, Ortholog = input$Ortholog3,
+                                      Gene_set=input$gene_set_forFilter, org = org3(), 
+                                      Biomart_archive=input$Biomart_archive3,gene_type=gene_type3())$gs_name)
+      updateSelectInput(session, "gene_set_forFilter2","",list)
+    }
+  }))
   d_norm_count_matrix <- reactive({
     count <- pre_d_norm_count_matrix()
     order <- input$sample_order_norm
@@ -5797,12 +5808,42 @@ shinyServer(function(input, output, session) {
     }
   })
   gene_list <- reactive({
+    df <- NULL
+    if(input$norm_filter == "custom"){
     data <- input$file10$datapath
     if(is.null(input$file10) && input$goButton3 == 0) return(NULL)
     if(is.null(input$file10) && input$goButton3 > 0 )  data = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt"
     df <- read_df(tmp = data)
     gene <-c(rownames(df))
     df <- as.data.frame(gene, row.names = gene)
+    }else if(input$norm_filter == "Gene set" && input$Species3 != "not selected"){
+      if(is.null(input$gene_set_forFilter) || is.null(input$gene_set_forFilter2)) validate("")
+      genes <- GeneList_for_enrichment(Species = input$Species3, Ortholog = input$Ortholog3,
+                                       Gene_set=input$gene_set_forFilter, org = org3(), 
+                                       Biomart_archive=input$Biomart_archive3,gene_type=gene_type3())
+      genes <- try(dplyr::filter(genes, gs_name == input$gene_set_forFilter2))
+      if(length(genes) == 1) if(class(genes)=="try-error") validate("")
+      my.symbols <- as.character(genes$entrez_gene)
+      if(gene_type3() == "non-model organism"){
+        gene_IDs <-  try(dplyr::filter(ortholog3(), ENTREZID %in% my.symbols))
+        if(length(gene_IDs) == 1) if(class(gene_IDs)=="try-error") validate("")
+        df <- data.frame(gene = gene_IDs$ENSEMBL, row.names = gene_IDs$ENSEMBL)
+      }else if(gene_type3() == "isoform"){
+        gene_IDs <-  try(dplyr::filter(isoform3(), ENTREZID %in% my.symbols))
+        if(length(gene_IDs) == 1) if(class(gene_IDs)=="try-error") validate("")
+        df <- data.frame(gene = gene_IDs$Transcript_ID, row.names = gene_IDs$Transcript_ID)
+      }else{
+      if(gene_type3() == "SYMBOL") columns <- c("ENTREZID","SYMBOL") else columns <- c("ENTREZID","ENSEMBL")
+      gene_IDs <- AnnotationDbi::select(org3(), keys = my.symbols,
+                                        keytype = "ENTREZID",
+                                        columns = columns)
+      colnames(gene_IDs) <- c("entrezid","GeneID")
+      gene_IDs <- na.omit(gene_IDs)
+      gene_IDs <- gene_IDs %>% distinct(GeneID, .keep_all = T)
+      df <- data.frame(gene = gene_IDs$GeneID, row.names = gene_IDs$GeneID)
+      if(dim(df)[1] == 0) validate("No filtered genes.")
+      }
+    }
     return(df)
   })
   pre_d_norm_count_matrix <- reactive({
@@ -5813,12 +5854,15 @@ shinyServer(function(input, output, session) {
         if(is.null(row)) {
           return(NULL)
         }else{
+          if(input$norm_filter != "not selected" && input$Species3 != "not selected"){
+            if(is.null(input$gene_set_forFilter) || is.null(input$gene_set_forFilter2)) validate("")
           if(!is.null(gene_list)){
             row <- merge(row,gene_list, by=0)
             if(dim(row)[1] == 0) validate("No filtered genes.")
             rownames(row) <- row$Row.names
             row <- row[,-1]
             row <- row[, - which(colnames(row) == "gene")]
+            }
           }
           return(anno_rep(row))
         }
@@ -5838,11 +5882,13 @@ shinyServer(function(input, output, session) {
           data3 <- apply(data2_t, 2, as.numeric)
           rownames(data3) <- rownames(data2_t)
           row <- data3
+          if(input$norm_filter != "not selected" && input$Species3 != "not selected"){
           if(!is.null(gene_list)){
             row <- merge(row,gene_list, by=0)
             rownames(row) <- row$Row.names
             row <- row[,-1]
             row <- row[, - which(colnames(row) == "gene")]
+          }
           }
           return(row)
         }
@@ -6038,7 +6084,14 @@ shinyServer(function(input, output, session) {
     if(is.null(GOI_list3())){
       return(NULL)
     }else{ 
-      print(paste0("The number of genes after the filtration: ", length(GOI_list3())))
+      if(length(input$selectFC_normGOI) == 2){
+        print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,", |log2(", 
+                     input$selectFC_normGOI[1],"/", input$selectFC_normGOI[2],")| > ", log2(input$fc3),"): ", 
+                     length(GOI_list3())))
+      }else{
+        print(paste0("The number of genes after the filtration (basemean > ", input$basemean3,"): ", 
+                     length(GOI_list3())))
+      }
     }
   })
   output$selectFC_normGOI <- renderUI({
@@ -6195,12 +6248,34 @@ shinyServer(function(input, output, session) {
         if(length(collist) == 2){
           selectInput("statistics","statistics",choices = c("not_selected","Welch's t-test","Wilcoxon test"),selected="not_selected",multiple = F)
         }else{
-          selectInput("statistics","statistics",choices = c("not_selected","TukeyHSD","Dunnet's test","Wilcoxon test"),selected="not_selected", multiple = F)
+          selectInput("statistics","statistics",choices = c("not_selected","TukeyHSD","Dunnet's test","Dunn's test"),selected="not_selected", multiple = F)
         }
       }}
   })
-  output$PlotType <- renderUI({
-    selectInput('PlotType', 'PlotType', c("Boxplot", "Barplot", "Errorplot"))
+  output$Color_rev_norm <- renderUI({
+    if(input$PlotType != "Errorplot"){
+    if(is.null(input$Color_norm)) validate("")
+    if(input$Color_norm != "default") {
+    radioButtons('Color_rev_norm', 'Color reverse', 
+                 choiceNames = c("OFF","ON"),choiceValues = c("OFF","ON"),
+                 selected = "OFF")
+    }}
+  })
+  output$Color_norm <- renderUI({
+    if(input$PlotType != "Errorplot"){
+    radioButtons('Color_norm', 'Color palette', 
+                 choiceNames = GOI_color_palette, 
+                 choiceValues = GOI_color_palette,
+                 selected = "default")
+    }
+  })
+  output$Color_design_norm <- renderUI({
+    if(input$PlotType != "Errorplot"){
+    radioButtons('Color_design_norm', 'graph design', 
+                 choiceNames = c("new","<=v1.1.0"), 
+                 choiceValues = c("new","<=v1.1.0"),
+                 selected = "new")
+    }
   })
   
   statistical_analysis_goi <- reactive({
@@ -6208,7 +6283,8 @@ shinyServer(function(input, output, session) {
     if(is.null(data) || is.null(input$statistics)){
       p <- NULL
     }else{
-      p <- GOIboxplot(data = data,statistical_test =input$statistics,plottype=input$PlotType)
+      p <- GOIboxplot(data = data,statistical_test =input$statistics,color_design=input$Color_design_norm,
+                      plottype=input$PlotType,color = input$Color_norm,rev=input$Color_rev_norm,ymin=input$norm_ymin)
     }
     return(p)
   })

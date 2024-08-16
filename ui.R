@@ -43,8 +43,11 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.1.1, 2024/3/13)"),
-                        "Update the EBSeq R package to version 2 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1.",br(),
+                        h4("Current version (v1.1.2, 2024/8/19)"),
+                        "Add a function for gene extraction using public gene sets in the Normalized count analysis.",br(),
+                        "Improve the graph design of boxplot, barplot, and violinplot.",br(),
+                        "Fix bugs regarding errors caused by using ENSEMBL IDs that include a decimal point.",br(),
+                        "Fix bugs regarding EBSeq in the Pair-wise DEG",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -1286,12 +1289,25 @@ shinyUI(
                                placement = "right",options = list(container = "body"))),
                      column(12, selectInput("Biomart_archive3", "Biomart host", ensembl_archive)))
                      ),
-                   h4("Filter option 1:"),
-                   fileInput("file10",
-                             label = "Select a gene list file for gene extraction",
-                             accept = c("txt", "csv", "xlsx"),
-                             multiple = FALSE,
-                             width = "80%"),
+                   fluidRow(
+                     column(6, h4("Filter option 1:"),
+                            radioButtons("norm_filter","Gene set filter",
+                                c("not selected"="not selected","Gene set"="Gene set","cusom"="custom"))),
+                   conditionalPanel(condition="input.norm_filter=='Gene set'",
+                                    column(6,selectInput("gene_set_forFilter","Select a gene set for gene extraction",choices = ""),
+                                           selectInput("gene_set_forFilter2","",choices = ""))
+                                    
+                                    
+                                    
+                   ),
+                   conditionalPanel(condition="input.norm_filter=='custom'",
+                                    column(6,fileInput("file10",
+                                              label = "Select a gene list file for gene extraction",
+                                              accept = c("txt", "csv", "xlsx"),
+                                              multiple = FALSE,
+                                              width = "80%"))
+                   )
+                   ),
                    h4("Filter option 2:"),
                    fluidRow(
                      column(4, numericInput("fc3", "Fold Change", min   = 1, max   = NA, value = 1)),
@@ -1405,15 +1421,22 @@ shinyUI(
                                 column(8, plotOutput("norm_GOIheatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("statistics")),
-                                column(4, htmlOutput("PlotType")),
-                                column(4, downloadButton("download_norm_GOIbox", "Download boxplot"))
+                                column(3, radioButtons('PlotType', 'PlotType', c("Boxplot"="Boxplot", 
+                                                                                 "Barplot"="Barplot",
+                                                                                 "Violin plot"="Violin plot",
+                                                                                 "Errorplot"="Errorplot"),selected = "Boxplot")),
+                                column(3, htmlOutput("Color_design_norm")),
+                                column(3, htmlOutput("Color_norm")),
+                                column(3, htmlOutput("Color_rev_norm"))
                               ),
+                              numericInput("norm_ymin","min value of y-axis",value = 0),
+                              htmlOutput("statistics"),
+                              downloadButton("download_norm_GOIbox", "Download boxplot"),
                               div(
                                 plotOutput("norm_GOIboxplot", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
                               ),
-                              column(4, downloadButton("download_statisics", "Download table")),
+                              downloadButton("download_statisics", "Download table"),
                               dataTableOutput("statistical_table")
                      ),
                      tabPanel("Correlation analysis",
@@ -1850,6 +1873,54 @@ shinyUI(
                             )
                           ) #sidebarLayout
                  ),
+                 tabPanel("Publications",
+                          fluidRow(
+                            column(12,
+                            h2("Publications using RNAseqChef:"),
+                            tags$ol(
+                              tags$li(HTML("Yasumura Y, Teshima T, Nagashima T, Michishita M, Taira Y, Suzuki R and Matsumoto H 
+                                            Effective enhancement of the immunomodulatory capacity of canine adipose-derived mesenchymal stromal cells on colitis by priming with colon tissue from mice with colitis. <b>Front. Vet. Sci.</b> 
+                                           (2024) <a href='https://doi.org/10.3389/fvets.2024.1437648'>https://doi.org/10.3389/fvets.2024.1437648</a>")),
+                              tags$li(HTML("Etoh K., Araki H., Koga T., Hino Y., Kuribayashi K., Hino S., & Nakao M. 
+                                           Citrate metabolism controls the senescent microenvironment via the remodeling of pro-inflammatory enhancers. <b>Cell Reports</b> 
+                                           (2024) <a href='https://doi.org/10.1016/j.celrep.2024.114496'>https://doi.org/10.1016/j.celrep.2024.114496</a>")),
+                              tags$li(HTML("Irawan A., & Bionaz M. Liver Transcriptomic Profiles of Ruminant Species Fed Spent Hemp Biomass Containing Cannabinoids. <b>Genes</b>
+                                           (2024) <a href='https://doi.org/10.3390/genes15070963'>https://doi.org/10.3390/genes15070963</a>")),
+                              tags$li(HTML("Carels N. (2024). Assessing RNA-Seq Workflow Methodologies Using Shannon Entropy. <b>Biology</b>
+                                           (2024) <a href='https://doi.org/10.3390/biology13070482'>https://doi.org/10.3390/biology13070482</a>")),
+                              tags$li(HTML("Toya H., Okamatsu-Ogura Y., Yokoi S., Kurihara M., Mito M., Iwasaki S., Hirose T., Nakagawa S. 
+                                           The essential role of architectural noncoding RNA Neat1 in cold-induced beige adipocyte differentiation in mice. <b>RNA</b> 
+                                           (2024) <a href='https://doi.org/10.1261/rna.079972.124'>https://doi.org/10.1261/rna.079972.124</a>")),
+                              tags$li(HTML("Nagai L.A.E., Lee S., & Nakato R. Protocol for identifying differentially expressed genes using the RumBall RNA-seq analysis platform. <b>STAR protocols</b>
+                                           (2024) <a href='https://doi.org/10.1016/j.xpro.2024.102926'>https://doi.org/10.1016/j.xpro.2024.102926</a>")),
+                              tags$li(HTML("Habib T.N., Altonsy M.O., Ghanem S.A., Salama M.S., & Hosny M.A.
+                                            Optimizing combination therapy in prostate cancer: mechanistic insights into the synergistic effects of Paclitaxel and Sulforaphane-induced apoptosis. <b>BMC Molecular and Cell Biology</b>
+                                           (2024) <a href='https://doi.org/10.1186/s12860-024-00501-z'>https://doi.org/10.1186/s12860-024-00501-z</a>")),
+                              tags$li(HTML("Ohguchi H, Ohguchi Y, Kubota S, Etoh K, Hamashima A, Usuki A, Yokomizo-Nakano T, Bai J, Masuda T, Kawano Y, Harada T, Nakao M, Minami T, Hideshima T, Araki K, Sashida G.,
+                               Multiple myeloma-associated DIS3 gene is essential for hematopoiesis but loss of DIS3 is insufficient for myelomagenesis.
+                                      <b>Blood neoplasia</b> (2024) <a href='https://doi.org/10.1016/j.bneo.2024.100005'>https://doi.org/10.1016/j.bneo.2024.100005</a>")), 
+                              tags$li(HTML("Fukuda M, Fujita Y, Hino Y, Nakao M, Shirahige K, Yamashita T,
+                               Inhibition of HDAC8 Reduces the Proliferation of Adult Neural Stem Cells in the Subventricular Zone.
+                                      <b>Int. J. Mol. Sci.</b> (2024) <a href='https://doi.org/10.3390/ijms25052540'>https://doi.org/10.3390/ijms25052540</a>")), 
+                              tags$li(HTML("Mine K, Nagafuchi S, Akazawa S, Abiru N, Mori H, Kurisaki H, Shimoda K, Yoshikai Y, Takahashi H, Anzai K., 
+                              TYK2 signaling promotes the development of autoreactive CD8+ cytotoxic T lymphocytes and type 1 diabetes. 
+                                      <b>Nat Commun.</b> (2024) <a href='https://doi.org/10.1038/s41467-024-45573-9'>https://doi.org/10.1038/s41467-024-45573-9</a>")), 
+                              tags$li(HTML("Kodera K, Hishida R, Sakai A, Nyuzuki H, Matsui N, Yamanaka T, Saitoh A, Matsui H., 
+                              GPATCH4 contributes to nucleolus morphology and its dysfunction impairs cell viability. 
+                                      <b>Biochem Biophys Res Commun.</b> (2024) <a href='https://doi.org/10.1016/j.bbrc.2023.149384.'>https://doi.org/10.1016/j.bbrc.2023.149384.</a>")), 
+                              tags$li(HTML("L. Mwalilino, M. Yamane, K. Ishiguro, S. Usuki, M. Endoh, H. Niwa, 
+                              The role of Zfp352 in the regulation of transient expression of 2‐cell specific genes in mouse embryonic stem cells. 
+                                      <b>Genes to Cells</b> (2023) <a href='https://doi.org/10.1111/gtc.13070'>https://doi.org/10.1111/gtc.13070</a>")), 
+                              tags$li(HTML("Horie M, Takagane K, Itoh G, Kuriyama S, Yanagihara K, Yashiro M, Umakoshi M, Goto A, Arita J, Tanaka M., 
+                              Exosomes secreted by ST3GAL5 high cancer cells promote peritoneal dissemination by establishing a pre‐metastatic microenvironment. 
+                                      <b>Mol Oncol</b> (2023) <a href='https://doi.org/10.1002/1878-0261.13524'>https://doi.org/10.1002/1878-0261.13524</a>")),
+                              tags$li(HTML("Mine K, Nagafuchi S, Akazawa S, Abiru N, Mori H, Kurisaki H, Yoshikai Y, Takahashi H, Anzai K., 
+                              Tyk2-mediated signaling promotes the development of autoreactive CD8 + CTLs and 1 autoimmune type 1 diabetes 2 3 Affiliations, 
+                                           <b>bioRxiv</b> (2023) <a href='https://doi.org/10.1101/2023.07.14.548984'>https://doi.org/10.1101/2023.07.14.548984</a>")), 
+                            )
+                            )
+                          )
+                 ),
                  tabPanel("Reference",
                           fluidRow(
                             column(12,
@@ -1986,6 +2057,13 @@ shinyUI(
                                    strong("Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer."),br(),
                                    h4("v1.1.1, 2024/3/14"),
                                    strong("Update the EBSeq R package to version 2.0.0 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1."),br(),
+                                   h4("v1.1.2, 2024/8/19"),
+                                   strong("Add a function for gene extraction using public gene sets in the Normalized count analysis. You can select pathways of interest."),br(),
+                                   img(src="pathway extraction norm.png", width = 800,height = 1000),br(),br(),br(),
+                                   strong("Improve the graph design of boxplots, barplots, and violinplots. You can select the plot types and colors in the GOI profile of the Normalized count analysis."),br(),
+                                   img(src="color norm.png", width = 800,height = 600),br(),br(),br(),
+                                   strong("Fix bugs regarding errors caused by using ENSEMBL IDs that include a decimal point."),br(),
+                                   strong("Fix bugs regarding EBSeq in the Pair-wise DEG"),br(),
                             )
                           )
                  )

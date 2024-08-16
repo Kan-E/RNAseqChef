@@ -1,3 +1,5 @@
+#unique idの\tを除く (write.table前)
+
 library(shiny)
 library(shinyBS, verbose = FALSE)
 library('shinyjs', verbose = FALSE)
@@ -133,6 +135,7 @@ read_df <- function(tmp, Species=NULL){
       df <- df[rownames(df) != "",]
     }
     }
+    if(sum(!str_detect(rownames(df),"\\.")) == 0) rownames(df) <- gsub("\\..+$", "",rownames(df))
     return(df)
     }
   }
@@ -156,6 +159,7 @@ read_gene_list <- function(tmp){
     }else{
       df <- data.frame(Gene = rownames(df), Group = df[,1])
     }
+    if(sum(!str_detect(df$Gene,"\\.")) == 0) df$Gene <- gsub("\\..+$", "",df$Gene)
     return(df)
   }
 }
@@ -562,7 +566,8 @@ PCAplot <- function(data,legend=NULL){
   }
   rho <- cor(data,method="spearman")
   d <- dist(1-rho)
-  mds <- as.data.frame(cmdscale(d))
+  mds <- try(as.data.frame(cmdscale(d)))
+  if(class(mds) != "try-error"){
   g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
                         col = gsub("\\_.+$", "", label), label = label2)) +
     geom_point()+
@@ -571,6 +576,7 @@ PCAplot <- function(data,legend=NULL){
     xlab("dim 1") + ylab("dim 2") +
     theme(legend.position=legend_position, aspect.ratio=1)+ 
     guides(color=guide_legend(title=""))
+  }else g2 <- NULL
   if(!is.null(legend)){
     if(legend == "Label") g2 <- g2 + geom_text_repel(show.legend = NULL)
   }
@@ -1266,7 +1272,7 @@ enrich_for_table <- function(data, H_t2g, Gene_set){
     }
   }
 }
-GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene_list,Biomart_archive){
+GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene_list,Biomart_archive,gene_type=NULL){
   if(Species != "not selected" || is.null(Gene_set) || is.null(org)){
     if(Species %in% orgDb_list == TRUE) species <- Species else species <- Ortholog
     H_t2g <- NULL
@@ -1283,6 +1289,10 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
         H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="KEGG_", replacement = "")
         H_t2g$gs_name <- H_t2g$gs_name %>% str_to_lower() %>% str_to_title()
       }
+    if(Gene_set == "Position"){
+      H_t2g <- msigdbr::msigdbr(species = species, category = "C1") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description) 
+    }
       if(Gene_set == "Transcription factor targets"){
         H_t2g <- msigdbr::msigdbr(species = species, category = "C3")
         H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
@@ -1340,6 +1350,7 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
           H_t2g <- gene_list_convert_for_enrichment(data= Custom_gene_list, Species = Species)
           H_t2g <- data.frame(gs_name = H_t2g$Group, entrez_gene = H_t2g$ENTREZID)
           H_t2g$gs_name <- gsub(":", "_", H_t2g$gs_name)
+          H_t2g <- H_t2g %>% dplyr::filter(!is.na(entrez_gene))
         }else H_t2g <- NULL
       }
       H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="Tnf", replacement = "TNF")
@@ -1381,11 +1392,12 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
         H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="PID_", replacement = "")
         H_t2g["gs_name"] <- lapply(H_t2g["gs_name"], gsub, pattern="PATHWAY", replacement = "pathway")
       }
-      print(head(H_t2g))
       return(H_t2g)
   }else return(NULL)
 }
-GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",pair=NULL,ssGSEA=FALSE){
+GOI_color_palette<-c("default","Set1","Set2","Set3","Paired","Dark2","Accent","Spectral")
+GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0,
+                       pair=NULL,ssGSEA=FALSE,color_design="new",color="default",rev="OFF"){
   print("GOIboxplot start")
   collist <- gsub("\\_.+$", "", colnames(data))
   collist <- unique(collist)
@@ -1416,20 +1428,18 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",pair=NULL,s
         add_xy_position(scales = "free", step.increase = 0.2)
     }
     if(statistical_test == "Wilcoxon test"){
-      if(length(collist) >= 3){
-        stat.test <- data %>% 
-          group_by(Row.names) %>% 
-          pairwise_wilcox_test(value ~ sample) %>% 
-          add_significance() %>% 
-          add_xy_position(scales = "free", step.increase = 0.2)
-      }
-      if(length(collist) == 2){
       stat.test <- data %>% 
         group_by(Row.names) %>% 
         wilcox_test(value ~ sample) %>% 
         add_significance() %>% 
         add_xy_position(scales = "free", step.increase = 0.2)
-      }
+    }
+    if(statistical_test == "Dunn's test"){
+        stat.test <- data %>% 
+          group_by(Row.names) %>% 
+          dunn_test(value ~ sample) %>% 
+          add_significance() %>% 
+          add_xy_position(scales = "free", step.increase = 0.2)
     }
     if(statistical_test == "Dunnet's test"){
       for (name2 in rowlist){
@@ -1496,22 +1506,41 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",pair=NULL,s
     p <- NULL
   }else{
     if(ssGSEA == FALSE) {
-      ylim = c(0, NA)
+      if(is.na(ymin)) ylim <- NULL else ylim = c(ymin, NA)
       ylab = "Normalized_count"
     }else {
-      ylim = c(NA, NA)
+      ylim = NULL
       ylab = "ssGSEA score"
     }
     if (plottype == "Boxplot"){
-  p <- ggpubr::ggboxplot(data, x = "sample", y = "value",
-                         fill = "sample", scales = "free",
-                         add = "jitter",
-                         xlab = FALSE, ylab = ylab, ylim = ylim)
+      if(color_design=="new"){
+      p <- ggplot(data, aes(x=sample,y=value))+
+        geom_boxplot(aes(group=sample,colour=sample,fill=after_scale(alpha(colour,0.5))))+
+        geom_jitter(alpha=1)+
+        xlab(NULL)+ylab(ylab)+theme_classic()
+      }else{
+      p<- ggpubr::ggboxplot(data, x = "sample", y = "value",
+                            fill = "sample", scales = "free",
+                            add = "jitter",add.params = list(alpha=1),
+                            xlab = FALSE, ylab = ylab)
+      }
     }
     if (plottype == "Barplot"){
+      if(color_design=="new"){
+        data2 <- 
+          data %>% 
+          group_by(sample, Row.names) %>% 
+          summarise(mean = mean(value), sd = sd(value), n = n(), se = sd / sqrt(n))
+        p <- ggplot(data, aes(x=sample,y=value,colour=sample,fill=after_scale(alpha(colour,0.5))))+
+          geom_bar(stat = "identity",data = data2,aes(x=sample,y=mean))+
+          geom_errorbar(data = data2,aes(x=sample,y=mean,ymin = mean - se, ymax = mean + se,colour=sample), width = 0.3)+
+          geom_jitter(color="black",alpha=1)+
+          xlab(NULL)+ylab(ylab)+theme_classic()
+      }else{
       p <- ggbarplot(data,x = "sample", y = "value", scales = "free",
                      facet.by = "Row.names", fill = "sample",add = c("mean_se", "jitter"),
                      add.params = list(size=0.5), xlab = FALSE)
+      }
     }
     if (plottype == "Errorplot"){
       p <- ggerrorplot(data,x = "sample", y = "value",
@@ -1519,30 +1548,56 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",pair=NULL,s
                        add.params = list(size=0.5), xlab = FALSE, error.plot = "errorbar") + 
         stat_summary(geom = "point", shape = 95,size = 5,col = "black", fun = "mean")
     }
+    if (plottype == "Violin plot"){
+      if(color_design=="new"){
+        p <- ggplot(data, aes(x=sample,y=value))+
+          geom_violin(aes(group=sample,colour=sample,fill=after_scale(alpha(colour,0.5))),trim=FALSE)+
+          geom_boxplot(aes(group=sample), colour="black",fill="white",width = .2)+
+
+          xlab(NULL)+ylab(ylab)+theme_classic()
+      }else{
+      p <- ggviolin(data,x = "sample", y = "value",
+                    facet.by = "Row.names", fill = "sample",add = c("jitter","boxplot"),
+                    add.params = list(size=0.5,fill = "white",alpha=1), xlab = FALSE,alpha = 0.5)
+      }
+    }
     if(!is.null(pair)){
       if(plottype == "Boxplot"){
       p <- ggplot(data, aes(x = sample, y = value)) + geom_boxplot(aes(fill=sample))+
         geom_line(aes(group = pair),alpha = .2) +
         geom_point() + theme_classic() + theme(legend.position = "top")+ 
-        xlab(NULL) + ylim(ylim) + ylab(ylab)
+        xlab(NULL)  + ylab(ylab)
       }
       if(plottype == "without boxplot"){
         p <- ggplot(data, aes(x = sample, y = value,group = pair)) + 
           geom_line() +
           geom_point(aes(color = sample)) + theme_classic() + theme(legend.position = "top")+ 
-          xlab(NULL) + ylim(ylim) + ylab(ylab)+ 
+          xlab(NULL)  + ylab(ylab)+ 
           scale_color_manual(values=c("#00BFC4", "#F8766D"))
       }
+    }
+    if(color!="default"){
+      if(is.null(rev)) validate("")
+      if(rev == "ON") direction=-1 else direction=1
+      if(color_design == "new") p <- p + scale_color_brewer(palette=color,direction = direction) else p <- p + scale_fill_brewer(palette=color,direction = direction)
+    }else{
+      if(length(unique(data$sample)) < 4){
+        if(length(unique(data$sample)) ==2) color <- c("grey40", "brown2")
+        if(length(unique(data$sample)) ==3) color <- c("grey40", "dodgerblue3", "brown2")
+       if(color_design == "new")  p <- p + scale_color_manual(values=color) else  p <- p + scale_fill_manual(values=color)
+      }
+      
     }
   p <- (facet(p, facet.by = "Row.names",
               panel.labs.background = list(fill = "transparent", color = "transparent"),
               scales = "free", short.panel.labs = T, panel.labs.font = list(size=15, face = "italic"))+ 
-          theme(axis.text.x = element_blank(),
+          theme(axis.text.x = element_blank(),legend.position = "top",
                 panel.background = element_rect(fill = "transparent", size = 0.5),
                 title = element_text(size = 10),text = element_text(size = 12),
-                axis.title.y = element_text(size=15),legend.text = element_text(size=15),
-                legend.title = element_blank()))
+                axis.title.y = element_text(size=15),axis.text.y = element_text(size = 15),
+                legend.text = element_text(size=15),legend.title = element_blank()))
   }
+  if(!is.null(ylim)) p <- p + ylim(ylim)
   print("GOIboxplot end")
   if(!is.null(statistical_test) && statistical_test != "not_selected"){
     if(length(rowlist) <= 200) p <- p + stat_pvalue_manual(stat.test,hide.ns = T, size = 5)

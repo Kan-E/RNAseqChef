@@ -1,5 +1,5 @@
 ---
-title: "Pair-wise DEG (batch-mode) with RNAseqChef v1.1.1"
+title: "Pair-wise DEG (batch-mode) with RNAseqChef v1.1.2"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     batch_files: [some object]

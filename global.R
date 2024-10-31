@@ -135,7 +135,7 @@ read_df <- function(tmp, Species=NULL){
       df <- df[rownames(df) != "",]
     }
     }
-    if(sum(!str_detect(rownames(df),"\\.")) == 0) rownames(df) <- gsub("\\..+$", "",rownames(df))
+    if(sum(!str_detect(rownames(df),"\\.")) == 0 & !str_detect(rownames(df)[1],"chr")) rownames(df) <- gsub("\\..+$", "",rownames(df))
     return(df)
     }
   }

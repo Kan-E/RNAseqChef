@@ -5,7 +5,6 @@ Amborella trichopoda	atrichopoda_eg_gene	AMTR1.0	Amborellales	13333	AMTR1.0	GCA_
 Ananas comosus	acomosus_eg_gene	F153	Liliopsida	4615	F153	GCA_902162155.1
 Arabidopsis halleri	ahalleri_eg_gene	Ahal2.2	eudicotyledons	63677	Ahal2.2	GCA_900078215.1
 Arabidopsis lyrata	alyrata_eg_gene	v.1.0	eudicotyledons	81972	v.1.0	GCA_000004255.1
-Arabidopsis thaliana	athaliana_eg_gene	TAIR10	eudicotyledons	3702	TAIR10	GCA_000001735.1
 Arabis alpina	aalpina_eg_gene	A_alpina_V4	eudicotyledons	50452	A_alpina_V4	GCA_000733195.1
 Asparagus officinalis	aofficinalis_eg_gene	Aspof.V1	Liliopsida	4686	Aspof.V1	GCA_001876935.1
 Beta vulgaris	bvulgaris_eg_gene	RefBeet-1.2.2	eudicotyledons	3555	RefBeet-1.2.2	GCA_000511025.2

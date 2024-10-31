@@ -55,7 +55,6 @@ pstriiformis_eg_gene	Puccinia striiformis f. sp. tritici PST-130 str. Race 130	P
 pteres_eg_gene	Pyrenophora teres	PyrTer_1.0
 ptriticina_eg_gene	Puccinia triticina	ASM15152v1
 ptriticirepentis_eg_gene	Pyrenophora tritici-repentis Pt-1C-BFP	ASM14998v1
-scerevisiae_eg_gene	Saccharomyces cerevisiae	R64-1-1
 scryophilus_eg_gene	Schizosaccharomyces cryophilus	SCY4
 sjaponicus_eg_gene	Schizosaccharomyces japonicus	SJ5
 soctosporus_eg_gene	Schizosaccharomyces octosporus	SO6

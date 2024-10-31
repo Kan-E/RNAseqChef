@@ -71,7 +71,6 @@ btuganda1_eg_gene	"Bemisia tabaci (Silverleaf whitefly, Uganda-1) genes (Uganda1
 cbrenneri_eg_gene	Caenorhabditis brenneri (Nematode) genes (C_brenneri-6.0.1b)	C_brenneri-6.0.1b	Caenorhabditis brenneri (Nematode)
 cbriggsae_eg_gene	Caenorhabditis briggsae (Nematode) genes (CB4)	CB4	Caenorhabditis briggsae (Nematode)
 ccgca000347755v4_eg_gene	Ceratitis capitata (Mediterranean fruit fly) genes (Ccap_2.0)	Ccap_2.0	Ceratitis capitata (Mediterranean fruit fly)
-celegans_eg_gene	"Caenorhabditis elegans (Nematode, N2) genes (WBcel235)"	WBcel235	Caenorhabditis elegans
 cfgca000648655v2_eg_gene	"Copidosoma floridanum (Parasitoid wasp, CFLO.00-Male) genes (Cflo_2.0)"	Cflo_2.0	"Copidosoma floridanum (Parasitoid wasp, CFLO.00-Male)"
 cfgca003227725v1rs_eg_gene	"Camponotus floridanus (Florida carpenter ant, SB8) genes (Cflo_v7.5)"	Cflo_v7.5	"Camponotus floridanus (Florida carpenter ant, SB8)"
 cggca020080835v1_eg_gene	"Cotesia glomerata (White butterfly parasite wasp, CgM1) genes (MPM_Cglom_v2.3)"	MPM_Cglom_v2.3	"Cotesia glomerata (White butterfly parasite wasp, CgM1)"
@@ -93,7 +92,6 @@ derecta_eg_gene	"Drosophila erecta (Fruit fly, TSC#14021-0224.01) genes (dere_ca
 dggca004324835v1_eg_gene	"Dendronephthya gigantea (Carnation coral, DGI-Jeju-01) genes (DenGig_1.0)"	DenGig_1.0	"Dendronephthya gigantea (Carnation coral, DGI-Jeju-01)"
 dggca904063045v1_eg_gene	Dimorphilus gyrociliatus (Segmented worms) genes (Dgyrociliatus_assembly)	Dgyrociliatus_assembly	Dimorphilus gyrociliatus (Segmented worms)
 dgrimshawi_eg_gene	"Drosophila grimshawi (Fruit fly, TSC#15287-2541.00) genes (dgri_caf1)"	dgri_caf1	"Drosophila grimshawi (Fruit fly, TSC#15287-2541.00)"
-dmelanogaster_eg_gene	Drosophila melanogaster (Fruit fly) genes (BDGP6.46)	BDGP6.46	Drosophila melanogaster
 dmgca020631705v2_eg_gene	"Daphnia magna (Fresh water planktonic, NIES) genes (ASM2063170v1.1)"	ASM2063170v1.1	"Daphnia magna (Fresh water planktonic, NIES)"
 dmojavensis_eg_gene	"Drosophila mojavensis (Fruit fly, TSC#15081-1352.22) genes (dmoj_caf1)"	dmoj_caf1	"Drosophila mojavensis (Fruit fly, TSC#15081-1352.22)"
 dngca001186385v1_eg_gene	"Diuraphis noxia (Russian wheat aphid, RWA2) genes (Dnoxia_1.0)"	Dnoxia_1.0	"Diuraphis noxia (Russian wheat aphid, RWA2)"

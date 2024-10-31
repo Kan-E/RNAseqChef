@@ -1,5 +1,5 @@
 ---
-title: "Pair-wise DEG with RNAseqChef v1.1.2"
+title: "Pair-wise DEG with RNAseqChef v1.1.3"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]

@@ -46,6 +46,7 @@ library(pdftools)
 library(magick)
 library(clue)
 library(ggrastr) ##devtools::install_github('VPetukhov/ggrastr')
+library(eulerr)
 options(repos = BiocManager::repositories())
 file.copy("Rmd/pair_report.Rmd",file.path(tempdir(),"pair_report.Rmd"), overwrite = TRUE)
 file.copy("Rmd/pair_batch_report.Rmd",file.path(tempdir(),"pair_batch_report.Rmd"), overwrite = TRUE)
@@ -57,7 +58,9 @@ gene_set_list <- c("MSigDB Hallmark", "KEGG", "Reactome", "PID (Pathway Interact
                    "BioCarta","WikiPathways", "GO biological process", 
                    "GO cellular component","GO molecular function", "Human phenotype ontology", 
                    "DoRothEA regulon (activator)", "DoRothEA regulon (repressor)",
-                   "Transcription factor targets", "miRNA target","Position")
+                   "Transcription factor targets", "miRNA target","Position",
+                   "CGP (chemical and genetic pertubations)","ImmuneSigDB","VAX (vaccine response)",
+                   "Cell type signature")
 biomart_data <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model.txt",sep = "\t", row.names = 1,header = T,quote = "")
 biomart_plants <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model_plants.txt",sep = "\t",header = T,quote = "")
 biomart_fungi <- read.table("https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/non-model_fungi.txt",sep = "\t",header = T,quote = "")
@@ -95,12 +98,32 @@ read_df <- function(tmp, Species=NULL){
     }
     if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",", row.names = 1,quote = ""))
     if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t", row.names = 1,quote = ""))
-    if(class(df) == "try-error") {
+    if(class(df) == "try-error" || length(grep("Protein.Ids", colnames(df))) != 0 || length(grep("First.Protein.Description", colnames(df)))) {
       if(tools::file_ext(tmp) == "xlsx") df <- try(as.data.frame(readxl::read_xlsx(tmp)))
       if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",",quote = ""))
       if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t",quote = ""))
       if(class(df) != "try-error") {
-        validate("Error: There are duplicated genes or 'NA' in the uploaded data. Please fix them.")
+        if(dim(df)[2] != 0){
+          if(length(grep("Protein.Ids", colnames(df))) != 0 || length(grep("First.Protein.Description", colnames(df)))){
+            if(class(df) == "try-error") {
+              if(tools::file_ext(tmp) == "xlsx") df <- try(as.data.frame(readxl::read_xlsx(tmp)))
+              if(tools::file_ext(tmp) == "csv") df <- try(read.csv(tmp, header=TRUE, sep = ",",quote = "", na.strings=c("")))
+              if(tools::file_ext(tmp) == "txt" || tools::file_ext(tmp) == "tsv") df <- try(read.table(tmp, header=TRUE, sep = "\t",quote = "", na.strings=c("")))
+            }
+            df <- df %>% distinct(Genes, .keep_all = T)
+            df[is.na(df)] <- 0
+            if(length(grep("Protein.Ids", colnames(df))) != 0) df[df$Genes == "",]$Genes <- gsub("\\_.+$", "", df[df$Genes == "",]$Protein.Ids)
+            rownames(df) <- df$Genes
+            if(length(grep("Protein.Group", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Group")]
+            if(length(grep("Protein.Ids", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Ids")]
+            if(length(grep("Protein.Names", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Names")]
+            if(length(grep("First.Protein.Description", colnames(df))) != 0) df <- df[, - which(colnames(df) == "First.Protein.Description")]
+            if(length(grep("Genes", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Genes")]
+            if(length(grep("Species", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Species")]
+            df <- df[!str_detect(rownames(df), ";"),]
+            df <- df[rownames(df) != "",]
+          }else validate("Error: There are duplicated genes or 'NA' in the uploaded data. Please fix them.")
+        }
       }else{
         validate(paste0("Error: the uploaded data is in an unexpected format. The original error message is as follows:\n",print(df)))
       }
@@ -119,23 +142,7 @@ read_df <- function(tmp, Species=NULL){
     if(length(grep("padj", colnames(df))) == 0 || length(grep("log2FoldChange", colnames(df))) == 0){
     df[is.na(df)] <- 0
     }
-    if(dim(df)[2] != 0){
-      if(length(grep("Protein.Ids", colnames(df))) != 0 || length(grep("First.Protein.Description", colnames(df)))){
-      df <- df %>% distinct(Genes, .keep_all = T)
-      df[df$Genes == "",]$Genes <- gsub("\\_.+$", "", df[df$Genes == "",]$Protein.Ids)
-      rownames(df) <- df$Genes
-      if(length(grep("Protein.Group", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Group")]
-      if(length(grep("Protein.Ids", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Ids")]
-      if(length(grep("Protein.Names", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Protein.Names")]
-      if(length(grep("First.Protein.Description", colnames(df))) != 0) df <- df[, - which(colnames(df) == "First.Protein.Description")]
-      if(length(grep("Genes", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Genes")]
-      if(length(grep("Species", colnames(df))) != 0) df <- df[, - which(colnames(df) == "Species")]
-      df[is.na(df)] <- 0
-      df <- df[!str_detect(rownames(df), ";"),]
-      df <- df[rownames(df) != "",]
-    }
-    }
-    if(sum(!str_detect(rownames(df),"\\.")) == 0 & !str_detect(rownames(df)[1],"chr")) rownames(df) <- gsub("\\..+$", "",rownames(df))
+    if(sum(!str_detect(rownames(df),"\\.")) == 0  & !str_detect(rownames(df)[1],"chr")) rownames(df) <- gsub("\\..+$", "",rownames(df))
     return(df)
     }
   }
@@ -222,9 +229,10 @@ gene_list_convert_for_enrichment <- function(gene_type,data, Ortholog,org,Specie
           gene_IDs <- Ortholog
         }else{
         if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+        if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
         gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                         keytype = key,
-                                        columns = c(key,"SYMBOL", "ENTREZID"))
+                                        columns = c(key,SYMBOL, "ENTREZID"))
         }
         colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
       }else{
@@ -232,9 +240,10 @@ gene_list_convert_for_enrichment <- function(gene_type,data, Ortholog,org,Specie
           gene_IDs <- Ortholog
           gene_IDs <- gene_IDs[,-1]
         }else{
+          if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
         gene_IDs <- AnnotationDbi::select(org, keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("ENTREZID", "SYMBOL"))
+                                          keytype = SYMBOL,
+                                          columns = c("ENTREZID", SYMBOL))
         }
         colnames(gene_IDs) <- c("GeneID","ENTREZID")
       }
@@ -805,9 +814,10 @@ data_3degcount2 <- function(gene_type,data3, Species, Ortholog,org){
           }else{
           my.symbols <- data4$Row.names
           if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+          if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
           gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                           keytype = key,
-                                          columns = c(key,"SYMBOL", "ENTREZID"))
+                                          columns = c(key,SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -820,9 +830,10 @@ data_3degcount2 <- function(gene_type,data3, Species, Ortholog,org){
             gene_IDs <- gene_IDs[,-1]
           }else{
           my.symbols <- data4$Row.names
+          if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
           gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
-                                          keytype = "SYMBOL",
-                                          columns = c("SYMBOL", "ENTREZID"))
+                                          keytype = SYMBOL,
+                                          columns = c(SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -1298,6 +1309,24 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
         H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "TFT:GTRD" | gs_subcat == "TFT:TFT_Legacy") %>%
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
       }
+    if(Gene_set == "CGP (chemical and genetic pertubations)"){
+      H_t2g <- msigdbr(species = species, category = "C2", subcategory = "CGP") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
+    if(Gene_set == "ImmuneSigDB"){
+      H_t2g <- msigdbr(species = species, category = "C7")
+      H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "C7" | gs_subcat == "IMMUNESIGDB") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
+    if(Gene_set == "VAX (vaccine response)"){
+      H_t2g <- msigdbr(species = species, category = "C7")
+      H_t2g <- H_t2g %>% dplyr::filter(gs_subcat == "C7" | gs_subcat == "VAX") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
+    if(Gene_set == "Cell type signature"){
+      H_t2g <- msigdbr(species = species, category = "C8") %>%
+        dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
+    }
       if(Gene_set == "Reactome"){
         H_t2g <- msigdbr::msigdbr(species = species, category = "C2", subcategory = "CP:REACTOME") %>%
           dplyr::select(gs_name, entrez_gene, gs_id, gs_description)
@@ -1396,7 +1425,7 @@ GeneList_for_enrichment <- function(Species, Ortholog,Gene_set, org, Custom_gene
   }else return(NULL)
 }
 GOI_color_palette<-c("default","Set1","Set2","Set3","Paired","Dark2","Accent","Spectral")
-GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0,
+GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0, ylabel=NULL,
                        pair=NULL,ssGSEA=FALSE,color_design="new",color="default",rev="OFF"){
   print("GOIboxplot start")
   collist <- gsub("\\_.+$", "", colnames(data))
@@ -1507,10 +1536,10 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0,
   }else{
     if(ssGSEA == FALSE) {
       if(is.na(ymin)) ylim <- NULL else ylim = c(ymin, NA)
-      ylab = "Normalized_count"
+      if(is.null(ylabel)) ylab = "Normalized_count" else ylab = ylabel
     }else {
       ylim = NULL
-      ylab = "ssGSEA score"
+      if(is.null(ylabel)) ylab = "ssGSEA score" else ylab = ylabel
     }
     if (plottype == "Boxplot"){
       if(color_design=="new"){
@@ -1618,9 +1647,10 @@ enrich_viewer_forMulti1 <- function(gene_type,df, Species, Ortholog, org){
         gene_IDs <- Ortholog
       }else{
       if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+      if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
       gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = key,
-                                      columns = c(key,"SYMBOL", "ENTREZID"))
+                                      columns = c(key,SYMBOL, "ENTREZID"))
       }
       colnames(gene_IDs) <- c("GeneID","SYMBOL", "ENTREZID")
     }else{
@@ -2032,9 +2062,10 @@ MotifRegion <- function(data, target_motif, Species, x){
       gene_IDs <- org(Species)
       gene_IDs <- gene_IDs[,-1]
     }else{
+      if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
     gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
-                                      keytype = "SYMBOL",
-                                      columns = c("SYMBOL","ENTREZID"))
+                                      keytype = SYMBOL,
+                                      columns = c(SYMBOL,"ENTREZID"))
     }
     colnames(gene_IDs) <- c("SYMBOL","gene_id")
   }
@@ -2171,9 +2202,10 @@ ensembl2symbol <- function(data,Species,Ortholog,gene_type,org, merge=TRUE, rown
     if(gene_type == "ENSEMBL"){
       my.symbols <- gsub("\\..*","", rownames(data))
       if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+      if(org$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
       gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
                                       keytype = key,
-                                      columns = c(key,"SYMBOL"))
+                                      columns = c(key,SYMBOL))
     }
   }
     colnames(gene_IDs) <- c("Row.names","SYMBOL")
@@ -2196,12 +2228,16 @@ ensembl2symbol <- function(data,Species,Ortholog,gene_type,org, merge=TRUE, rown
 gene_type <- function(my.symbols,org,Species){
   if(Species != "not selected"){
     if(sum(is.element(no_orgDb, Species)) != 1){
+      if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+      print("a")
+      if(org$packageName == "org.Sc.sgd.db") SYMBOLa <- "GENENAME" else SYMBOLa <- "SYMBOL"
+      print("b")
     ENSEMBL<-try(AnnotationDbi::select(org,keys = my.symbols,
-                                       keytype = "ENSEMBL",
-                                       columns = c("ENSEMBL", "ENTREZID")))
+                                       keytype = key,
+                                       columns = c(key, "ENTREZID")))
     SYMBOL <-try(AnnotationDbi::select(org,keys = my.symbols,
-                                       keytype = "SYMBOL",
-                                       columns = c("SYMBOL", "ENTREZID")))
+                                       keytype = SYMBOLa,
+                                       columns = c(SYMBOLa, "ENTREZID")))
     if(class(ENSEMBL) == "try-error" && class(SYMBOL) != "try-error") {type <- "SYMBOL"
     }else if(class(ENSEMBL) != "try-error" && class(SYMBOL) == "try-error") {type <- "ENSEMBL"
     }else if(class(ENSEMBL) == "try-error" && class(SYMBOL) == "try-error") {validate("Cannot identify gene IDs. Please check the 'Species' and use the 'Official gene symbol' or 'ENSEMBL ID' for gene names.")

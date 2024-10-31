@@ -43,11 +43,11 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.1.2, 2024/8/19)"),
-                        "Add a function for gene extraction using public gene sets in the Normalized count analysis.",br(),
-                        "Improve the graph design of boxplot, barplot, and violinplot.",br(),
-                        "Fix bugs regarding errors caused by using ENSEMBL IDs that include a decimal point.",br(),
-                        "Fix bugs regarding EBSeq in the Pair-wise DEG",br(),
+                        h4("Current version (v1.1.3, 2024/10/31)"),
+                        "Fix bugs regarding errors caused by using IDs of plants in Normalized count analysis.",br(),
+                        "Add an eulerr package for venn diagram.",br(),
+                        "Improve GOI plots in Normalized count analysis.",br(),
+                        "Add session information that displayed from 'More -> SessionInfo'.",br(),
                         "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
@@ -1161,6 +1161,10 @@ shinyUI(
                               fluidRow(
                                 column(4, downloadButton("download_vennplot", "Download venn diagram"))
                               ),
+                              fluidRow(
+                                column(4,radioButtons("venn_type","venn_type",c("default"="default","eulerr package"="eulerr"),"default")),
+                                column(4,htmlOutput("eulerr_label"))
+                              ),
                               plotOutput("venn"),
                               downloadButton("download_venn_result", "Download venn result"),
                               dataTableOutput("venn_result")
@@ -1429,7 +1433,10 @@ shinyUI(
                                 column(3, htmlOutput("Color_norm")),
                                 column(3, htmlOutput("Color_rev_norm"))
                               ),
-                              numericInput("norm_ymin","min value of y-axis",value = 0),
+                              fluidRow(
+                                column(3, numericInput("norm_ymin","min value of y-axis",value = 0)),
+                                column(3, textInput("norm_ylab","title of y-axis","Normalized count"))
+                              ),
                               htmlOutput("statistics"),
                               downloadButton("download_norm_GOIbox", "Download boxplot"),
                               div(
@@ -1878,6 +1885,18 @@ shinyUI(
                             column(12,
                             h2("Publications using RNAseqChef:"),
                             tags$ol(
+                              tags$li(HTML("Muramoto, J, & Sakamoto, T. Tripodal Quinone-Cyanine G-Quadruplex Ligands as Novel Photosensitizers on Photoinduced Cancer Cell Death. <b> Molecules</b> 
+                                           (2024) <a href='https://doi.org/10.3390/molecules29215094'>https://doi.org/10.3390/molecules29215094</a>")),
+                              tags$li(HTML("Matsuo, K., Asamitsu, S., Maeda, K., Suzuki, H., Kawakubo, K., Komiya, G., ... & Yabuki, Y. RNA G-quadruplexes form scaffolds that promote neuropathological α-synuclein aggregation. <b> Cell</b> 
+                                           (2024) <a href='https://doi.org/10.1016/j.cell.2024.09.037'>https://doi.org/10.1016/j.cell.2024.09.037</a>")),
+                              tags$li(HTML("Itoh, M., Watanabe, K., Mizukami, Y., & Sugimoto, H. Molecular alterations associated with pathophysiology in liver-specific ZO-1 and ZO-2 knockout mice. <b> Cell Structure and Function</b> 
+                                           (2024) <a href='https://doi.org/10.1247/csf.24046'>https://doi.org/10.1247/csf.24046</a>")),
+                              tags$li(HTML("Yoshida S., Tsuneoka Y., Tsukada T., Nakakura T., Kawamura A., Kai W., & Yoshida K. Primary Cilia are Required for Cell-Type Determination and Angiogenesis in Pituitary Development. <b> Endocrinology</b> 
+                                           (2024) <a href='https://doi.org/10.1210/endocr/bqae085'>https://doi.org/10.1210/endocr/bqae085</a>")),
+                              tags$li(HTML("Ozone K., Kumagai T., Arakawa K., Sugasawa T., Gu W., Kawabata S., Shimada N., Takahashi H., Yoeno M., Minegishi Y., Takahara K., Sato M., Oka Y., & Kanemura, N. Effectiveness of Exercise Intervention in Preventing Active Arthritis Exacerbation in an SKG Mouse Model of Rheumatoid Arthritis. <b> bioRxiv</b> 
+                                           (2024) <a href='https://doi.org/10.1101/2024.08.25.609287'>https://doi.org/10.1101/2024.08.25.609287</a>")),
+                              tags$li(HTML("Tanaka M., Toyonaga T., Nakagawa F., Iwamoto T., Komatsu A., Sumiyoshi N., Shibuya N., Minemura A., Ariyoshi T., Matsumoto A., Oka K., Shimoda M., & Saruta M. Exploring 3-Aminobenzoic Acid as a Therapeutic Dietary Component for Enhancing Intestinal Barrier Integrity in Ulcerative Colitis. <b> bioRxiv</b> 
+                                           (2024) <a href='https://doi.org/10.1101/2024.08.18.608525'>https://doi.org/10.1101/2024.08.18.608525</a>")),
                               tags$li(HTML("Yasumura Y, Teshima T, Nagashima T, Michishita M, Taira Y, Suzuki R and Matsumoto H 
                                             Effective enhancement of the immunomodulatory capacity of canine adipose-derived mesenchymal stromal cells on colitis by priming with colon tissue from mice with colitis. <b>Front. Vet. Sci.</b> 
                                            (2024) <a href='https://doi.org/10.3389/fvets.2024.1437648'>https://doi.org/10.3389/fvets.2024.1437648</a>")),
@@ -1991,6 +2010,8 @@ shinyUI(
   (UCSC version hg19, based on GRCh37.p13)_. R package version 1.4.3.",br(),
                                    "Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor
   binding site analysis. Bioinformatics 32, 1555-1556.",br(),
+                                   "Larsson J (2022). _eulerr: Area-Proportional Euler and Venn Diagrams with Ellipses_. R package version 7.0.0,
+  <https://CRAN.R-project.org/package=eulerr>.",br(),
                                    )
                           )
                  ),
@@ -2064,7 +2085,16 @@ shinyUI(
                                    img(src="color norm.png", width = 800,height = 600),br(),br(),br(),
                                    strong("Fix bugs regarding errors caused by using ENSEMBL IDs that include a decimal point."),br(),
                                    strong("Fix bugs regarding EBSeq in the Pair-wise DEG"),br(),
+                                   h4("v1.1.3, 2024/10/31"),
+                                   strong("Fix bugs regarding errors caused by using IDs of several species in Normalized count analysis."),br(),
+                                   strong("Add an eulerr package for venn diagram."),br(),
+                                   strong("Add session information that displayed from 'More -> SessionInfo'.")
                             )
+                          )
+                 ),
+                 tabPanel("SessionInfo",
+                          fluidRow(
+                            column(12,h2("SessionInfo:"),verbatimTextOutput("sessionInfo"))
                           )
                  )
       )

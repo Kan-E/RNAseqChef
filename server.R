@@ -255,7 +255,15 @@ shinyServer(function(input, output, session) {
             meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
             colname <- colnames(meta)
             data <- merge(meta, row_t, by=0, sort = F)
-            if(dim(data)[1] == 0) validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+            if(dim(data)[1] == 0) {
+              rownames(meta) <- gsub("\\.","-",rownames(meta))
+              data <- merge(meta, row_t, by=0, sort = F)
+              if(dim(data)[1] == 0) {
+                rownames(row_t) <- gsub("\\.","-",rownames(row_t))
+                data <- merge(meta, row_t, by=0, sort = F)
+                validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+              }
+            }
             rownames(data) <- data$characteristics
             data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
             data2_t <- t(data2)
@@ -299,7 +307,15 @@ shinyServer(function(input, output, session) {
           meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
           colname <- colnames(meta)
           data <- merge(meta, row_t, by=0, sort = F)
-          if(dim(data)[1] == 0) validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+          if(dim(data)[1] == 0) {
+            rownames(meta) <- gsub("\\.","-",rownames(meta))
+            data <- merge(meta, row_t, by=0, sort = F)
+            if(dim(data)[1] == 0) {
+              rownames(row_t) <- gsub("\\.","-",rownames(row_t))
+              data <- merge(meta, row_t, by=0, sort = F)
+              validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+            }
+          }
           rownames(data) <- data$characteristics
           data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
           data2_t <- t(data2)
@@ -647,9 +663,10 @@ shinyServer(function(input, output, session) {
           }else{
             my.symbols <- data$Row.names
             if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+            if(org1()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
             gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
                                             keytype = key,
-                                            columns = c(key,"SYMBOL", "ENTREZID"))
+                                            columns = c(key,SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -662,9 +679,10 @@ shinyServer(function(input, output, session) {
             gene_IDs <- ortholog1()[,-1]
           }else{
             my.symbols <- data$Row.names
+            if(org1()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
             gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
-                                            keytype = "SYMBOL",
-                                            columns = c("SYMBOL", "ENTREZID"))
+                                            keytype = SYMBOL,
+                                            columns = c(SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -2147,9 +2165,10 @@ shinyServer(function(input, output, session) {
               }else{
                 my.symbols <- data$Row.names
                 if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+                if(org1()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
                 gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
                                                 keytype = key,
-                                                columns = c(key,"SYMBOL", "ENTREZID"))
+                                                columns = c(key,SYMBOL, "ENTREZID"))
               }
               colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
               gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -2162,9 +2181,10 @@ shinyServer(function(input, output, session) {
                 gene_IDs <- ortholog1_batch()[,-1]
               }else{
                 my.symbols <- data$Row.names
+                if(org1()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
                 gene_IDs<-AnnotationDbi::select(org1(),keys = my.symbols,
-                                                keytype = "SYMBOL",
-                                                columns = c("SYMBOL", "ENTREZID"))
+                                                keytype = SYMBOL,
+                                                columns = c(SYMBOL, "ENTREZID"))
               }
               colnames(gene_IDs) <- c("Row.names", "ENTREZID")
               gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -3648,9 +3668,10 @@ shinyServer(function(input, output, session) {
           }else{
             my.symbols <- sig_res_LRT$Row.names
             if(str_detect(my.symbols[1], "^AT.G")) key = "TAIR" else key = "ENSEMBL"
+            if(org6()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
             gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
                                             keytype = key,
-                                            columns = c(key,"SYMBOL", "ENTREZID"))
+                                            columns = c(key,SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names","SYMBOL", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -3663,9 +3684,10 @@ shinyServer(function(input, output, session) {
             gene_IDs <- ortholog6()[,-1]
           }else{
             my.symbols <- sig_res_LRT$Row.names
+            if(org6()$packageName == "org.Sc.sgd.db") SYMBOL <- "GENENAME" else SYMBOL <- "SYMBOL"
             gene_IDs<-AnnotationDbi::select(org6(),keys = my.symbols,
-                                            keytype = "SYMBOL",
-                                            columns = c("SYMBOL", "ENTREZID"))
+                                            keytype = SYMBOL,
+                                            columns = c(SYMBOL, "ENTREZID"))
           }
           colnames(gene_IDs) <- c("Row.names", "ENTREZID")
           gene_IDs <- gene_IDs %>% distinct(Row.names, .keep_all = T)
@@ -4561,7 +4583,15 @@ shinyServer(function(input, output, session) {
           meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
           colname <- colnames(meta)
           data <- merge(meta, row_t, by=0, sort = F)
-          if(dim(data)[1] == 0) validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+          if(dim(data)[1] == 0) {
+            rownames(meta) <- gsub("\\.","-",rownames(meta))
+            data <- merge(meta, row_t, by=0, sort = F)
+            if(dim(data)[1] == 0) {
+              rownames(row_t) <- gsub("\\.","-",rownames(row_t))
+              data <- merge(meta, row_t, by=0, sort = F)
+              validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+            }
+          }
           rownames(data) <- data$characteristics
           data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
           data2_t <- t(data2)
@@ -4608,7 +4638,15 @@ shinyServer(function(input, output, session) {
         meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
         colname <- colnames(meta)
         data <- merge(meta, row_t, by=0, sort = F)
-        if(dim(data)[1] == 0) validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+        if(dim(data)[1] == 0) {
+          rownames(meta) <- gsub("\\.","-",rownames(meta))
+          data <- merge(meta, row_t, by=0, sort = F)
+          if(dim(data)[1] == 0) {
+            rownames(row_t) <- gsub("\\.","-",rownames(row_t))
+            data <- merge(meta, row_t, by=0, sort = F)
+            validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+          }
+        }
         rownames(data) <- data$characteristics
         data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
         data2_t <- t(data2)
@@ -5773,6 +5811,16 @@ shinyServer(function(input, output, session) {
       updateSelectInput(session, "gene_set_forFilter2","",list)
     }
   }))
+  observeEvent(input$Species3, ({
+    if(input$Species3 == "Xenopus laevis" || input$Species3 == "Arabidopsis thaliana" || 
+       input$Ortholog3 == "Xenopus laevis" || input$Ortholog3 == "Arabidopsis thaliana"){
+      updateRadioButtons(session, "norm_filter","Gene set filter",
+                   c("not selected"="not selected","cusom"="custom"))
+    }else{
+      updateRadioButtons(session, "norm_filter","Gene set filter",
+                         c("not selected"="not selected","Gene set"="Gene set","cusom"="custom"))
+    }
+  }))
   d_norm_count_matrix <- reactive({
     count <- pre_d_norm_count_matrix()
     order <- input$sample_order_norm
@@ -5875,7 +5923,15 @@ shinyServer(function(input, output, session) {
           meta <- data.frame(characteristics = meta[,1], row.names = rownames(meta))
           colname <- colnames(meta)
           data <- merge(meta, row_t, by=0, sort = F)
-          if(dim(data)[1] == 0) validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+          if(dim(data)[1] == 0) {
+            rownames(meta) <- gsub("\\.","-",rownames(meta))
+            data <- merge(meta, row_t, by=0, sort = F)
+            if(dim(data)[1] == 0) {
+              rownames(row_t) <- gsub("\\.","-",rownames(row_t))
+              data <- merge(meta, row_t, by=0, sort = F)
+              validate("Error: failed to merge count data with metadata. Please check row names of matadata.")
+            }
+          }
           rownames(data) <- data$characteristics
           data2 <- data[, - which(colnames(data) %in% c("Row.names", colname))]
           data2_t <- t(data2)
@@ -6283,7 +6339,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data) || is.null(input$statistics)){
       p <- NULL
     }else{
-      p <- GOIboxplot(data = data,statistical_test =input$statistics,color_design=input$Color_design_norm,
+      p <- GOIboxplot(data = data,statistical_test =input$statistics,color_design=input$Color_design_norm,ylab=input$norm_ylab,
                       plottype=input$PlotType,color = input$Color_norm,rev=input$Color_rev_norm,ymin=input$norm_ymin)
     }
     return(p)
@@ -7334,6 +7390,9 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session,inputId = "Species7","Species",species_list, selected = "Mus musculus")
   }))
   
+  output$eulerr_label <- renderUI({
+    if(input$venn_type == "eulerr") radioButtons("eulerr_label","label",c("ON"="ON","OFF"="OFF"),"ON")
+  })
   output$venn <- renderPlot({
     if(is.null(files_table())){
       return(NULL)
@@ -7343,7 +7402,13 @@ shinyServer(function(input, output, session) {
         names(gene_list)[i] <- gsub("_", " ", names(gene_list)[i])
         names(gene_list)[i] <- paste(strwrap(names(gene_list)[i], width = 15),collapse = "\n")
       }
-      venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)
+      if(input$venn_type == "default" || is.null(input$eulerr_label)) venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5) else{
+        if(input$eulerr_label =="ON") label=list(cex=2) else label=NULL
+        plot(euler(gene_list, shape = "ellipse"), 
+             labels = label,quantities = list(type="counts",cex=2),
+             edges = list(col=as.vector(seq(1,length(names(gene_list)))),lex = 2),
+             fills = list(fill=rep("white",length(names(gene_list)))),legend = list(side = "right",cex=2)) 
+      }
     }
   })
   
@@ -7396,7 +7461,13 @@ shinyServer(function(input, output, session) {
             pdf_width <- 3
           }else pdf_width <- input$venn_pdf_width
           pdf(file, height = pdf_height, width = pdf_width)
-          print((venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1, sncs = 1 )))
+          if(input$venn_type == "default" || is.null(input$eulerr_label)) print(venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)) else{
+            if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL
+            print(plot(euler(gene_list, shape = "ellipse"), 
+                 labels = label,quantities = list(type="counts",cex=0.8),
+                 edges = list(col=as.vector(seq(1,length(names(gene_list)))),lex = 0.8),
+                 fills = list(fill=rep("white",length(names(gene_list)))),legend = list(side = "right",cex=0.8)) )
+          }
           dev.off()
           incProgress(1)
         })
@@ -8865,5 +8936,10 @@ shinyServer(function(input, output, session) {
   observeEvent(input$dorothea_target_set, ({
     updateCollapse(session,id =  "dorothea_collapse_panel", open="dorothea_tf_panel")
   }))
-
+  
+  
+  output$sessionInfo <- renderPrint({
+    capture.output(sessionInfo())
+  })
+  
 })

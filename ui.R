@@ -43,7 +43,7 @@ shinyUI(
                  ),
                  column(12,
                         br(),
-                        h4("Current version (v1.1.3, 2024/10/31)"),
+                        h4("Current version (v1.1.3, 2024/11/5)"),
                         "Fix bugs regarding errors caused by using IDs of plants in Normalized count analysis.",br(),
                         "Add an eulerr package for venn diagram.",br(),
                         "Improve GOI plots in Normalized count analysis.",br(),

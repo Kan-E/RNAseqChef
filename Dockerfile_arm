@@ -26,14 +26,15 @@ RUN apt-get update && apt-get install -y \
     chrpath \
     libxft-dev \
     libfontconfig1 \
-    libfontconfig1-dev
+    libfontconfig1-dev \
+    libglpk-dev
 RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('devtools', update = F)" && \
     R -e  "devtools::install_github('YuLab-SMU/clusterProfiler.dplyr')" && \
     R -e "BiocManager::install('shiny', update = F)" && \
     R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/lasso2/lasso2_1.2-22.tar.gz',repos = NULL, type = 'source')" && \
     R -e "BiocManager::install('DT', update = F)" && \
-    R -e "BiocManager::install('gdata', update = F)" && \
+    R -e "BiocManager::install('readxl', update = F)" && \
     R -e "BiocManager::install('rstatix', update = F)" && \
     R -e "BiocManager::install('multcomp', update = F)" && \
     R -e "BiocManager::install('venn', update = F)" && \
@@ -88,19 +89,26 @@ RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
     R -e "BiocManager::install('org.At.tair.db', update = F)" && \
     R -e "BiocManager::install('colorspace', update = F)" && \
     R -e "install.packages('pdftools', repos = 'https://ropensci.r-universe.dev')" && \
-    R -e "BiocManager::install('magick')"
+    R -e "BiocManager::install('magick')" && \
+    R -e "BiocManager::install('clue', update = F)" && \
+    R -e "devtools::install_github('VPetukhov/ggrastr')"
+RUN R -e "BiocManager::install('eulerr', update = F)"
 RUN rm -rf /srv/shiny-server/hello
 RUN mkdir -p /srv/shiny-server/RNAseqChef
+
+## remove "library(IHW)" in global.R
+## remove "tags$head(includeHTML(("google-analytics.html")))," in ui.R
+
 COPY ui.R /srv/shiny-server/RNAseqChef/
 COPY server.R /srv/shiny-server/RNAseqChef/
-## remove "library(IHW)" in global.R
 COPY global.R /srv/shiny-server/RNAseqChef/
 COPY google-analytics.html /srv/shiny-server/RNAseqChef/
 COPY www /srv/shiny-server/RNAseqChef/www/
-COPY data/Recode.Rdata /srv/shiny-server/RNAseqChef/data/
+COPY dds.rds /srv/shiny-server/RNAseqChef/
 COPY Rmd /srv/shiny-server/RNAseqChef/Rmd/
 COPY navAppend.js /srv/shiny-server/RNAseqChef/
 COPY shiny-server.conf /etc/shiny-server/
+COPY data /srv/shiny-server/RNAseqChef/data/
 RUN chown -R shiny:shiny /srv/shiny-server
 EXPOSE 3838
 CMD exec shiny-server >> /var/log/shiny-server.log 2>&1

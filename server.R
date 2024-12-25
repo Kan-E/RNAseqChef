@@ -9528,7 +9528,7 @@ shinyServer(function(input, output, session) {
   input_ens <- reactive({
     upload = list()
     tmp <- input$data_file_ens$datapath
-    if(is.null(input$data_file_ens) && input$goButton_ens > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example_ens.txt"
+    if(is.null(input$data_file_ens) && input$goButton_ens > 0 )  tmp = "https://raw.githubusercontent.com/Kan-E/RNAseqChef/refs/tags/v1.1.4/data/sample_ens.txt"
     if(!is.null(tmp)){
     if(tools::file_ext(tmp) == "xlsx") {
       df <- try(readxl::read_xlsx(tmp))

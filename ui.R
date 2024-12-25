@@ -1,6 +1,5 @@
 popoverTempate <- 
   '<div class="popover popover-lg" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
-
 shinyUI(
   fluidPage(
     tags$head(
@@ -41,17 +40,21 @@ shinyUI(
                         p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
                           align="center"),br(),br(),style={'background-color:beige;font-size: 16px;'},
                  ),
+                 column(11, br(),h4("Current version (v1.1.4, 2024/12/25)"),
+                        "Add a filter function in GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi.",br(),
+                        "Add a function to switch unique IDs to short unique IDs in GOI profiling (when using ENSEMBL ID).",br(),
+                        "Add a new function for gene ID conversion, named 'ENSEMBL ID to SYMBOL'.",br(),
+                        "See the details from 'More -> Change log'",),
+                 
                  column(12,
                         br(),
-                        h4("Current version (v1.1.3, 2024/11/5)"),
-                        "Fix bugs regarding errors caused by using IDs of plants in Normalized count analysis.",br(),
-                        "Add an eulerr package for venn diagram.",br(),
-                        "Improve GOI plots in Normalized count analysis.",br(),
-                        "Add session information that displayed from 'More -> SessionInfo'.",br(),
-                        "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
-                        a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),),
+                        a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),
+                        br(),
+                        h4("Citation"),
+                        tags$div(HTML('<span class="__dimensions_badge_embed__" data-doi="10.1016/j.jbc.2023.104810" data-style="small_circle"></span>')),tags$div(HTML('<script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>'))),
+                        
                  column(12,br(),
                         column(6,br(),
                                h4(strong("Pair-wise DEG")),
@@ -324,10 +327,16 @@ shinyUI(
                               fluidRow(
                                 column(4, selectInput("GOI_plot_select","Plot type",c("Volcano plot","MA plot"),
                                                       selected = "Volcano plot",multiple = F),
-                                       htmlOutput("GOI")),
+                                       htmlOutput("GOI_color_type")),
                                 column(4, htmlOutput("volcano_x"), htmlOutput("GOIreset_pair")),
                                 column(4, htmlOutput("volcano_y"))
                               ),
+                              conditionalPanel(condition="input.GOI_color_type=='pathway'",
+                                               column(6,selectInput("GOI_color_pathway1","Select a gene set",choices = ""),
+                                                      selectInput("GOI_color_pathway2","",choices = ""))             
+                              ),
+                              htmlOutput("GOI"),
+                              htmlOutput("uniqueID_cut"),
                               fluidRow(
                                 column(8, 
                                        plotOutput("volcano1",
@@ -617,10 +626,17 @@ shinyUI(
                                 column(4, downloadButton("download_3cond_GOIheat", "Download heatmap"))
                               ),
                               fluidRow(
-                                column(4, htmlOutput("GOI2"), htmlOutput("cond3_GOI_pair")),
+                                column(4,
+                                       htmlOutput("cond3_GOI_color_type")),
                                 column(4, htmlOutput("cond3_xrange"), htmlOutput("GOIreset_cond3")),
                                 column(4, htmlOutput("cond3_yrange"))
                               ),
+                              conditionalPanel(condition="input.cond3_GOI_color_type=='pathway'",
+                                               column(6,selectInput("cond3_GOI_color_pathway1","Select a gene set",choices = ""),
+                                                      selectInput("cond3_GOI_color_pathway2","",choices = ""))             
+                              ),
+                              htmlOutput("GOI2"), htmlOutput("cond3_GOI_pair"),
+                              htmlOutput("cond3_uniqueID_cut"),
                               fluidRow(
                                 column(8, plotOutput("cond3_GOIscatter",
                                                      brush = "plot1_brush_cond3")),
@@ -1411,17 +1427,21 @@ shinyUI(
                               ),
                               fluidRow(
                                 column(4, 
-                                       htmlOutput("selectFC_normGOI"),
-                                       textOutput("filtered_regionGOI"),
-                                       tags$head(tags$style("#filtered_regionGOI{color: red;
+                                       radioButtons("normGOI_filter_on","Filter (basemean, fold change)",c("ON" = "ON","OFF"="OFF"),selected = "OFF"),
+                                       conditionalPanel(condition="input.normGOI_filter_on=='ON'",
+                                                        htmlOutput("selectFC_normGOI"),
+                                                        textOutput("filtered_regionGOI"),
+                                                        tags$head(tags$style("#filtered_regionGOI{color: red;
                                  font-size: 20px;
                                  font-style: bold;
-                                 }")),
+                                 }"))
+                                       ),
                                        radioButtons('GOI3_type','Genes:',
                                                     c('Select all genes'="ALL",
                                                       'Custom'="custom"
                                                     ),selected = "custom"),
-                                       htmlOutput("GOI3"), htmlOutput("GOIreset_norm")),
+                                       htmlOutput("GOI3"), htmlOutput("GOIreset_norm"),
+                                       htmlOutput("norm_uniqueID_cut")),
                                 column(8, plotOutput("norm_GOIheatmap"))
                               ),
                               fluidRow(
@@ -1798,10 +1818,16 @@ shinyUI(
                                            column(4, downloadButton("download_deg_heatmap", "Download heatmap"))
                                          ),
                                          fluidRow(
-                                           column(4, htmlOutput("degGOI")),
+                                           column(4, htmlOutput("deg_GOI_color_type")),
                                            column(4, htmlOutput("deg_volcano_x"),htmlOutput("GOIreset_deg")),
                                            column(4, htmlOutput("deg_volcano_y"))
                                          ),
+                                         conditionalPanel(condition="input.deg_GOI_color_type=='pathway'",
+                                                          column(6,selectInput("deg_GOI_color_pathway1","Select a gene set",choices = ""),
+                                                                 selectInput("deg_GOI_color_pathway2","",choices = ""))             
+                                         ),
+                                         htmlOutput("degGOI"),
+                                         htmlOutput("deg_uniqueID_cut"),
                                          fluidRow(
                                            column(8, plotOutput("deg_volcano1",brush = "plot1_brush_volcano")),
                                            column(4, plotOutput("deg_GOIheatmap"))
@@ -1827,6 +1853,75 @@ shinyUI(
                                          )
                                          )
                               )
+                            )
+                          ) #sidebarLayout
+                 ),
+                 tabPanel("ENSEMBL ID to SYMBOL",
+                          sidebarLayout(
+                            # ENSEMBL ID to SYMBOL---------------------------------
+                            sidebarPanel(
+                              fileInput("data_file_ens",
+                                        strong(
+                                          span("Select gene list files (txt, csv, xlsx)"),
+                                          span(icon("info-circle"), id = "icon_venn", 
+                                               options = list(template = popoverTempate))
+                                        ),
+                                        accept = c("txt", "csv", "xlsx"),
+                                        multiple = FALSE,
+                                        width = "80%"),
+                              bsPopover("icon_venn", "Gene list files (txt, csv, or xlsx):", 
+                                        content= paste("The first column is", strong("gene name"), ".<br>", 
+                                                       "The second and subsequent columns do not affect the analysis.<br>", 
+                                                       img(src="venn_input.png", width = 400,height = 300)),
+                                        placement = "right",options = list(container = "body")),
+                              fluidRow(
+                                column(6, selectInput("Species_ens", "Species", species_list, selected = "not selected")),
+                                conditionalPanel(condition=c("input.Species != 'not selected' && input.Species_ens != 'Homo sapiens' &&
+                   input.Species_ens != 'Mus musculus' && input.Species_ens != 'Rattus norvegicus' &&
+                   input.Species_ens != 'Drosophila melanogaster' && input.Species_ens != 'Caenorhabditis elegans' &&
+                   input.Species_ens != 'Bos taurus' && input.Species_ens != 'Canis lupus familiaris' &&
+                   input.Species_ens != 'Danio rerio' && input.Species_ens != 'Gallus gallus' &&
+                   input.Species_ens != 'Macaca mulatta' && input.Species_ens != 'Pan troglodytes' &&
+                   input.Species_ens != 'Saccharomyces cerevisiae' && input.Species_ens != 'Sus scrofa' &&
+                   input.Species_ens != 'Xenopus laevis' && input.Species_ens != 'Arabidopsis thaliana'"),
+                                                 column(6, selectInput("Ortholog_ens", strong(
+                                                   span("Ortholog"),
+                                                   span(icon("info-circle"), id = "Ortholog_enrich", 
+                                                        options = list(template = popoverTempate))
+                                                 ), orgDb_list, selected = "Mus musculus"),
+                                                 bsPopover("Ortholog_enrich", "Ortholog for the pathway analysis of non-model organisms", 
+                                                           content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
+                                                           placement = "right",options = list(container = "body"))),
+                                                 column(12, selectInput("Biomart_archive4", "Biomart host", ensembl_archive)))
+                              ),
+                              actionButton("goButton_ens", "example data (human)"),
+                              tags$head(tags$style("#goButton_ens{color: black;
+                                 font-size: 12px;
+                                 font-style: italic;
+                                 }"),
+                                        tags$style("
+          body {
+            padding: 0 !important;
+          }"
+                                        )
+                              ) #sidebarPanel
+                            ),
+                            
+                            # Main Panel -------------------------------------
+                            mainPanel(
+                              h4("Input file"),
+                              dataTableOutput('input_ens'),
+                              h4("Result file"),
+                              downloadButton("download_ens2symbol", "Download"),
+                              textOutput("Spe_ens"),
+                              tags$head(tags$style("#Spe_ens{color: red;
+                                 font-size: 20px;
+            font-style: bold;
+            }")),
+                              dataTableOutput('input_ens2symbol'),
+                              #h4("Result file (Ready for use in RNAseqChef analysis)"),
+                              #downloadButton("download_ens2symbol2", "Download"),
+                              #dataTableOutput('input_ens2symbol2'),
                             )
                           ) #sidebarLayout
                  ),
@@ -1879,66 +1974,6 @@ shinyUI(
                               )
                             )
                           ) #sidebarLayout
-                 ),
-                 tabPanel("Publications",
-                          fluidRow(
-                            column(12,
-                            h2("Publications using RNAseqChef:"),
-                            tags$ol(
-                              tags$li(HTML("Muramoto, J, & Sakamoto, T. Tripodal Quinone-Cyanine G-Quadruplex Ligands as Novel Photosensitizers on Photoinduced Cancer Cell Death. <b> Molecules</b> 
-                                           (2024) <a href='https://doi.org/10.3390/molecules29215094'>https://doi.org/10.3390/molecules29215094</a>")),
-                              tags$li(HTML("Matsuo, K., Asamitsu, S., Maeda, K., Suzuki, H., Kawakubo, K., Komiya, G., ... & Yabuki, Y. RNA G-quadruplexes form scaffolds that promote neuropathological α-synuclein aggregation. <b> Cell</b> 
-                                           (2024) <a href='https://doi.org/10.1016/j.cell.2024.09.037'>https://doi.org/10.1016/j.cell.2024.09.037</a>")),
-                              tags$li(HTML("Itoh, M., Watanabe, K., Mizukami, Y., & Sugimoto, H. Molecular alterations associated with pathophysiology in liver-specific ZO-1 and ZO-2 knockout mice. <b> Cell Structure and Function</b> 
-                                           (2024) <a href='https://doi.org/10.1247/csf.24046'>https://doi.org/10.1247/csf.24046</a>")),
-                              tags$li(HTML("Yoshida S., Tsuneoka Y., Tsukada T., Nakakura T., Kawamura A., Kai W., & Yoshida K. Primary Cilia are Required for Cell-Type Determination and Angiogenesis in Pituitary Development. <b> Endocrinology</b> 
-                                           (2024) <a href='https://doi.org/10.1210/endocr/bqae085'>https://doi.org/10.1210/endocr/bqae085</a>")),
-                              tags$li(HTML("Ozone K., Kumagai T., Arakawa K., Sugasawa T., Gu W., Kawabata S., Shimada N., Takahashi H., Yoeno M., Minegishi Y., Takahara K., Sato M., Oka Y., & Kanemura, N. Effectiveness of Exercise Intervention in Preventing Active Arthritis Exacerbation in an SKG Mouse Model of Rheumatoid Arthritis. <b> bioRxiv</b> 
-                                           (2024) <a href='https://doi.org/10.1101/2024.08.25.609287'>https://doi.org/10.1101/2024.08.25.609287</a>")),
-                              tags$li(HTML("Tanaka M., Toyonaga T., Nakagawa F., Iwamoto T., Komatsu A., Sumiyoshi N., Shibuya N., Minemura A., Ariyoshi T., Matsumoto A., Oka K., Shimoda M., & Saruta M. Exploring 3-Aminobenzoic Acid as a Therapeutic Dietary Component for Enhancing Intestinal Barrier Integrity in Ulcerative Colitis. <b> bioRxiv</b> 
-                                           (2024) <a href='https://doi.org/10.1101/2024.08.18.608525'>https://doi.org/10.1101/2024.08.18.608525</a>")),
-                              tags$li(HTML("Yasumura Y, Teshima T, Nagashima T, Michishita M, Taira Y, Suzuki R and Matsumoto H 
-                                            Effective enhancement of the immunomodulatory capacity of canine adipose-derived mesenchymal stromal cells on colitis by priming with colon tissue from mice with colitis. <b>Front. Vet. Sci.</b> 
-                                           (2024) <a href='https://doi.org/10.3389/fvets.2024.1437648'>https://doi.org/10.3389/fvets.2024.1437648</a>")),
-                              tags$li(HTML("Etoh K., Araki H., Koga T., Hino Y., Kuribayashi K., Hino S., & Nakao M. 
-                                           Citrate metabolism controls the senescent microenvironment via the remodeling of pro-inflammatory enhancers. <b>Cell Reports</b> 
-                                           (2024) <a href='https://doi.org/10.1016/j.celrep.2024.114496'>https://doi.org/10.1016/j.celrep.2024.114496</a>")),
-                              tags$li(HTML("Irawan A., & Bionaz M. Liver Transcriptomic Profiles of Ruminant Species Fed Spent Hemp Biomass Containing Cannabinoids. <b>Genes</b>
-                                           (2024) <a href='https://doi.org/10.3390/genes15070963'>https://doi.org/10.3390/genes15070963</a>")),
-                              tags$li(HTML("Carels N. (2024). Assessing RNA-Seq Workflow Methodologies Using Shannon Entropy. <b>Biology</b>
-                                           (2024) <a href='https://doi.org/10.3390/biology13070482'>https://doi.org/10.3390/biology13070482</a>")),
-                              tags$li(HTML("Toya H., Okamatsu-Ogura Y., Yokoi S., Kurihara M., Mito M., Iwasaki S., Hirose T., Nakagawa S. 
-                                           The essential role of architectural noncoding RNA Neat1 in cold-induced beige adipocyte differentiation in mice. <b>RNA</b> 
-                                           (2024) <a href='https://doi.org/10.1261/rna.079972.124'>https://doi.org/10.1261/rna.079972.124</a>")),
-                              tags$li(HTML("Nagai L.A.E., Lee S., & Nakato R. Protocol for identifying differentially expressed genes using the RumBall RNA-seq analysis platform. <b>STAR protocols</b>
-                                           (2024) <a href='https://doi.org/10.1016/j.xpro.2024.102926'>https://doi.org/10.1016/j.xpro.2024.102926</a>")),
-                              tags$li(HTML("Habib T.N., Altonsy M.O., Ghanem S.A., Salama M.S., & Hosny M.A.
-                                            Optimizing combination therapy in prostate cancer: mechanistic insights into the synergistic effects of Paclitaxel and Sulforaphane-induced apoptosis. <b>BMC Molecular and Cell Biology</b>
-                                           (2024) <a href='https://doi.org/10.1186/s12860-024-00501-z'>https://doi.org/10.1186/s12860-024-00501-z</a>")),
-                              tags$li(HTML("Ohguchi H, Ohguchi Y, Kubota S, Etoh K, Hamashima A, Usuki A, Yokomizo-Nakano T, Bai J, Masuda T, Kawano Y, Harada T, Nakao M, Minami T, Hideshima T, Araki K, Sashida G.,
-                               Multiple myeloma-associated DIS3 gene is essential for hematopoiesis but loss of DIS3 is insufficient for myelomagenesis.
-                                      <b>Blood neoplasia</b> (2024) <a href='https://doi.org/10.1016/j.bneo.2024.100005'>https://doi.org/10.1016/j.bneo.2024.100005</a>")), 
-                              tags$li(HTML("Fukuda M, Fujita Y, Hino Y, Nakao M, Shirahige K, Yamashita T,
-                               Inhibition of HDAC8 Reduces the Proliferation of Adult Neural Stem Cells in the Subventricular Zone.
-                                      <b>Int. J. Mol. Sci.</b> (2024) <a href='https://doi.org/10.3390/ijms25052540'>https://doi.org/10.3390/ijms25052540</a>")), 
-                              tags$li(HTML("Mine K, Nagafuchi S, Akazawa S, Abiru N, Mori H, Kurisaki H, Shimoda K, Yoshikai Y, Takahashi H, Anzai K., 
-                              TYK2 signaling promotes the development of autoreactive CD8+ cytotoxic T lymphocytes and type 1 diabetes. 
-                                      <b>Nat Commun.</b> (2024) <a href='https://doi.org/10.1038/s41467-024-45573-9'>https://doi.org/10.1038/s41467-024-45573-9</a>")), 
-                              tags$li(HTML("Kodera K, Hishida R, Sakai A, Nyuzuki H, Matsui N, Yamanaka T, Saitoh A, Matsui H., 
-                              GPATCH4 contributes to nucleolus morphology and its dysfunction impairs cell viability. 
-                                      <b>Biochem Biophys Res Commun.</b> (2024) <a href='https://doi.org/10.1016/j.bbrc.2023.149384.'>https://doi.org/10.1016/j.bbrc.2023.149384.</a>")), 
-                              tags$li(HTML("L. Mwalilino, M. Yamane, K. Ishiguro, S. Usuki, M. Endoh, H. Niwa, 
-                              The role of Zfp352 in the regulation of transient expression of 2‐cell specific genes in mouse embryonic stem cells. 
-                                      <b>Genes to Cells</b> (2023) <a href='https://doi.org/10.1111/gtc.13070'>https://doi.org/10.1111/gtc.13070</a>")), 
-                              tags$li(HTML("Horie M, Takagane K, Itoh G, Kuriyama S, Yanagihara K, Yashiro M, Umakoshi M, Goto A, Arita J, Tanaka M., 
-                              Exosomes secreted by ST3GAL5 high cancer cells promote peritoneal dissemination by establishing a pre‐metastatic microenvironment. 
-                                      <b>Mol Oncol</b> (2023) <a href='https://doi.org/10.1002/1878-0261.13524'>https://doi.org/10.1002/1878-0261.13524</a>")),
-                              tags$li(HTML("Mine K, Nagafuchi S, Akazawa S, Abiru N, Mori H, Kurisaki H, Yoshikai Y, Takahashi H, Anzai K., 
-                              Tyk2-mediated signaling promotes the development of autoreactive CD8 + CTLs and 1 autoimmune type 1 diabetes 2 3 Affiliations, 
-                                           <b>bioRxiv</b> (2023) <a href='https://doi.org/10.1101/2023.07.14.548984'>https://doi.org/10.1101/2023.07.14.548984</a>")), 
-                            )
-                            )
-                          )
                  ),
                  tabPanel("Reference",
                           fluidRow(
@@ -2088,7 +2123,11 @@ shinyUI(
                                    h4("v1.1.3, 2024/10/31"),
                                    strong("Fix bugs regarding errors caused by using IDs of several species in Normalized count analysis."),br(),
                                    strong("Add an eulerr package for venn diagram."),br(),
-                                   strong("Add session information that displayed from 'More -> SessionInfo'.")
+                                   strong("Add session information that displayed from 'More -> SessionInfo'."),br(),
+                                   h4("v1.1.4, 2024/12/25"),
+                                   strong("Add a filter function in GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi."),br(),
+                                   strong("Add a function to switch unique IDs to short unique IDs in GOI profiling (when using ENSEMBL ID)."),br(),
+                                   strong("Add a new function for gene ID conversion, named 'ENSEMBL ID to SYMBOL'."),br(),
                             )
                           )
                  ),

@@ -1,5 +1,5 @@
 ---
-title: "3 conditions DEG with RNAseqChef v1.1.3"
+title: "3 conditions DEG with RNAseqChef v1.1.4"
 date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
 params:
     raw_count: [some object]
@@ -106,12 +106,14 @@ try(magick::image_read_pdf("./DEG_result/scatter_plot.pdf")[3])
 
 ```{r, out.height=255.68181, out.width=255.68181, include=TRUE, fig.align="center", echo=FALSE}
 if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
-try(magick::image_read_pdf("./GOI_profiling/scatter_plot.pdf"))
+   if(params$input$cond3_GOI_color_type == "default") scatter <- "GOI_profiling/scatter_plot.pdf" else scatter <- paste0("GOI_profiling/scatter_plot_",params$input$cond3_GOI_color_pathway2,".pdf")
+   try(magick::image_read_pdf(paste0("./",scatter)))
     }else print("Not performed")
 ```
 ```{r, out.height=255.68181, out.width=178.977267, include=TRUE, fig.align="center", echo=FALSE}
 if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
-try(magick::image_read_pdf("./GOI_profiling/heatmap.pdf"))
+     if(params$input$cond3_GOI_color_type == "default") heatmap <- "GOI_profiling/heatmap.pdf" else heatmap <- paste0("GOI_profiling/heatmap_",params$input$cond3_GOI_color_pathway2,".pdf")
+   try(magick::image_read_pdf(paste0("./",heatmap)))
     }else print("Not performed")
 ```
 
@@ -119,7 +121,8 @@ try(magick::image_read_pdf("./GOI_profiling/heatmap.pdf"))
  
 ```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
 if(!is.null(params$input$cond3_GOIpair) && !is.null(params$input$cond3_scatter_yrange) && !is.null(params$input$cond3_scatter_xrange)){
-try(magick::image_read_pdf("./GOI_profiling/boxplot.pdf"))    
+       if(params$input$cond3_GOI_color_type == "default") boxplot <- "GOI_profiling/boxplot.pdf" else boxplot <- paste0("GOI_profiling/boxplot_",params$input$cond3_GOI_color_pathway2,".pdf")
+   try(magick::image_read_pdf(paste0("./",boxplot)))  
     }else print("Not performed")
 ```
 

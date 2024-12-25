@@ -179,6 +179,31 @@ shinyServer(function(input, output, session) {
       updateSelectInput(session,inputId = "Biomart_archive7", "Biomart host", ensembl_archive)
     }
   }))
+  observeEvent(input$Species_ens,({
+    if(sum(is.element(no_orgDb_plants,input$Species_ens)) == 1){
+      updateSelectInput(session,inputId = "Ortholog_ens", 
+                        "Ortholog",
+                        "Arabidopsis thaliana", selected = "Arabidopsis thaliana")
+      updateSelectInput(session,inputId = "Biomart_archive_ens", "Biomart host", ensembl_archive_plants)
+    }
+    if(sum(is.element(no_orgDb_fungi,input$Species_ens)) == 1){
+      updateSelectInput(session,inputId = "Ortholog_ens", 
+                        "Ortholog",
+                        "Saccharomyces cerevisiae", selected = "Saccharomyces cerevisiae")
+      updateSelectInput(session,inputId = "Biomart_archive_ens", "Biomart host", ensembl_archive_fungi)
+    }
+    if(sum(is.element(no_orgDb_metazoa,input$Species_ens)) == 1){
+      updateSelectInput(session,inputId = "Ortholog_ens", 
+                        "Ortholog",
+                        c("Drosophila melanogaster","Caenorhabditis elegans"), selected = "Drosophila melanogaster")
+      updateSelectInput(session,inputId = "Biomart_archive_ens", "Biomart host", ensembl_archive_metazoa)
+    }
+    if(sum(is.element(no_orgDb_animals,input$Species_ens)) == 1){
+      updateSelectInput(session,inputId = "Ortholog_ens", 
+                        "Ortholog", orgDb_list, selected = "Mus musculus")
+      updateSelectInput(session,inputId = "Biomart_archive_ens", "Biomart host", ensembl_archive)
+    }
+  }))
   # pair-wise ------------------------------------------------------------------------------
   org1 <- reactive({
     return(org(Species = input$Species,Ortholog = input$Ortholog))
@@ -6033,7 +6058,6 @@ shinyServer(function(input, output, session) {
                 heat <- "GOI_profiling/heatmap.pdf"
               }else {
                 boxplot <- paste0("GOI_profiling/boxplot_",input$cond3_GOI_color_pathway2,".pdf") 
-                heat <- paste0("GOI_profiling/heatmap_",input$cond3_GOI_color_pathway2,".pdf") 
                 }
              
               fs <- c(fs,boxplot,heat)
@@ -9494,7 +9518,7 @@ shinyServer(function(input, output, session) {
     return(org(Species = input$Species_ens,Ortholog = input$Ortholog_ens))
   })
   ortholog_ens <- reactive({
-    return(no_org_ID(gene_list = rownames(input_ens()),Species = input$Species_ens,Ortholog = input$Ortholog_ens,Biomart_archive=input$Biomart_archive_ens))
+    return(no_org_ID(gene_list = data.frame(rownames(input_ens())),Species = input$Species_ens,Ortholog = input$Ortholog_ens,Biomart_archive=input$Biomart_archive_ens))
   })
   gene_type_ens <- reactive({
     data <- input_ens()
@@ -9535,6 +9559,7 @@ shinyServer(function(input, output, session) {
       data <- ensembl2symbol(gene_type=gene_type_ens(),
                              data = input_ens(), input$Species_ens,
                              Ortholog=ortholog_ens(),org = org_ens())
+      print(head(data))
       data$Unique_ID <- paste0(data$SYMBOL,"\n- ",rownames(data))
       id_list <- gsub("\\\n.+$", "", data$Unique_ID)
       dup_list <- unique(id_list[duplicated(id_list)])

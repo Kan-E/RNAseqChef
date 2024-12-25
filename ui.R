@@ -1876,7 +1876,7 @@ shinyUI(
                                         placement = "right",options = list(container = "body")),
                               fluidRow(
                                 column(6, selectInput("Species_ens", "Species", species_list, selected = "not selected")),
-                                conditionalPanel(condition=c("input.Species != 'not selected' && input.Species_ens != 'Homo sapiens' &&
+                                conditionalPanel(condition=c("input.Species_ens != 'not selected' && input.Species_ens != 'Homo sapiens' &&
                    input.Species_ens != 'Mus musculus' && input.Species_ens != 'Rattus norvegicus' &&
                    input.Species_ens != 'Drosophila melanogaster' && input.Species_ens != 'Caenorhabditis elegans' &&
                    input.Species_ens != 'Bos taurus' && input.Species_ens != 'Canis lupus familiaris' &&
@@ -1892,7 +1892,8 @@ shinyUI(
                                                  bsPopover("Ortholog_enrich", "Ortholog for the pathway analysis of non-model organisms", 
                                                            content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
                                                            placement = "right",options = list(container = "body"))),
-                                                 column(12, selectInput("Biomart_archive4", "Biomart host", ensembl_archive)))
+                                                 column(12, selectInput("Biomart_archive_ens", "Biomart host", ensembl_archive))
+                                                 )
                               ),
                               actionButton("goButton_ens", "example data (human)"),
                               tags$head(tags$style("#goButton_ens{color: black;

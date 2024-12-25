@@ -6033,7 +6033,7 @@ shinyServer(function(input, output, session) {
                 heat <- "GOI_profiling/heatmap.pdf"
               }else {
                 boxplot <- paste0("GOI_profiling/boxplot_",input$cond3_GOI_color_pathway2,".pdf") 
-                heatmap <- paste0("GOI_profiling/heatmap_",input$cond3_GOI_color_pathway2,".pdf") 
+                heat <- paste0("GOI_profiling/heatmap_",input$cond3_GOI_color_pathway2,".pdf") 
                 }
              
               fs <- c(fs,boxplot,heat)

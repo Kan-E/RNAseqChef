@@ -1597,7 +1597,7 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0, yla
     if (plottype == "Boxplot"){
       if(color_design=="new"){
       p <- ggplot(data, aes(x=sample,y=value))+
-        geom_boxplot(aes(group=sample,colour=sample,fill=after_scale(alpha(colour,0.5))))+
+        geom_boxplot(aes(group=sample,colour=sample,fill=after_scale(alpha(colour,0.5))),outlier.colour = NA)+
         geom_jitter(alpha=1)+
         xlab(NULL)+ylab(ylab)+theme_classic()
       }else{
@@ -1645,7 +1645,7 @@ GOIboxplot <- function(data,statistical_test=NULL,plottype="Boxplot",ymin=0, yla
     }
     if(!is.null(pair)){
       if(plottype == "Boxplot"){
-      p <- ggplot(data, aes(x = sample, y = value)) + geom_boxplot(aes(fill=sample))+
+      p <- ggplot(data, aes(x = sample, y = value)) + geom_boxplot(aes(fill=sample),outlier.colour = NA)+
         geom_line(aes(group = pair),alpha = .2) +
         geom_point() + theme_classic() + theme(legend.position = "top")+ 
         xlab(NULL)  + ylab(ylab)

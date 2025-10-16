@@ -41,11 +41,6 @@ shinyUI(
                           align="center"),br(),br(),style={'background-color:beige;font-size: 16px;'},
                  ),
                  column(11, br(),h4("Current version (v1.1.5, 2025/10/16)"),
-                        
-                        "Fixed the issue where outliers in the boxplot overlapped with individual data points.",br(),
-                        "See the details from 'More -> Change log'",),
-                 column(11, br(),h4("Current version (v1.1.5, 2025/10/16)"),
-                        
                         "Fixed the issue where outliers in the boxplot overlapped with individual data points.",br(),
                         "See the details from 'More -> Change log'",),
                  column(12,

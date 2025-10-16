@@ -187,4 +187,4 @@ You may contact the author of this code, Kan Etoh, at <kaneto@kumamoto-u.ac.jp>
 # Author
 
 Kan Etoh
-<[kaneto@kumamoto-u.ac.jp](mailto:kaneto@kumamoto-u.ac.jp)>
+<[kaneto@kumamoto-u.ac.jp](mailto:eto.kan.563@m.kyushu-u.ac.jp)>

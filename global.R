@@ -523,7 +523,9 @@ PCAdata <- function(row_count, deg_norm_count){
     if(length(grep("Unique_ID", colnames(data))) != 0){
       data <- data[, - which(colnames(data) == "Unique_ID")]
     }
-    pca <- prcomp(data, scale. = T)
+    X <- as.matrix(t(data))
+    X <- X[, apply(X, 2, sd, na.rm = TRUE) > 0, drop = FALSE]  
+    pca <- prcomp(X, scale. = T)
     label<- colnames(data)
     label<- gsub("\\_.+$", "", label)
     lab_x <- paste(summary(pca)$importance[2,1]*100,
@@ -532,8 +534,8 @@ PCAdata <- function(row_count, deg_norm_count){
     lab_y <- paste(summary(pca)$importance[2,2]*100,
                    "% of variance)", sep = "")
     lab_y <- paste("PC2 (", lab_y, sep = "")
-    pca$rotation <- as.data.frame(pca$rotation)
-    return(pca$rotation)
+    pca$x <- as.data.frame(pca$x)
+    return(pca$x)
   } 
 }
 PCAplot <- function(data,legend=NULL){
@@ -543,7 +545,9 @@ PCAplot <- function(data,legend=NULL){
   if(length(grep("Unique_ID", colnames(data))) != 0){
     data <- data[, - which(colnames(data) == "Unique_ID")]
   }
-  pca <- prcomp(data, scale. = T)
+  X <- as.matrix(t(data))
+  X <- X[, apply(X, 2, sd, na.rm = TRUE) > 0, drop = FALSE]  
+  pca <- prcomp(X, scale. = T)
   label<- colnames(data)
   lab_x <- paste(summary(pca)$importance[2,1]*100,
                  "% of variance)", sep = "")
@@ -551,7 +555,7 @@ PCAplot <- function(data,legend=NULL){
   lab_y <- paste(summary(pca)$importance[2,2]*100,
                  "% of variance)", sep = "")
   lab_y <- paste("PC2 (", lab_y, sep = "")
-  pca$rotation <- as.data.frame(pca$rotation)
+  pca$x <- as.data.frame(pca$x)
   if(!is.null(legend)) {
     if(legend == "Legend"){
       legend_position <- "top" 
@@ -559,11 +563,11 @@ PCAplot <- function(data,legend=NULL){
     }else{
       legend_position <- "none"
       label2<- label
+    }
   }
-  }
-  g1 <- ggplot(pca$rotation,aes(x=pca$rotation[,1],
-                                y=pca$rotation[,2],
-                                col=gsub("\\_.+$", "", label), label = label2)) +
+  g1 <- ggplot(pca$x,aes(x=pca$x[,1],
+                         y=pca$x[,2],
+                         col=gsub("\\_.+$", "", label), label = label2)) +
     geom_point()+
     theme(panel.background =element_rect(fill=NA,color=NA),
           panel.border = element_rect(fill = NA)) +
@@ -577,14 +581,14 @@ PCAplot <- function(data,legend=NULL){
   d <- dist(1-rho)
   mds <- try(as.data.frame(cmdscale(d)))
   if(class(mds) != "try-error"){
-  g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
-                        col = gsub("\\_.+$", "", label), label = label2)) +
-    geom_point()+
-    theme(panel.background =element_rect(fill=NA,color=NA),
-          panel.border = element_rect(fill = NA)) +
-    xlab("dim 1") + ylab("dim 2") +
-    theme(legend.position=legend_position, aspect.ratio=1)+ 
-    guides(color=guide_legend(title=""))
+    g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],
+                          col = gsub("\\_.+$", "", label), label = label2)) +
+      geom_point()+
+      theme(panel.background =element_rect(fill=NA,color=NA),
+            panel.border = element_rect(fill = NA)) +
+      xlab("dim 1") + ylab("dim 2") +
+      theme(legend.position=legend_position, aspect.ratio=1)+ 
+      guides(color=guide_legend(title=""))
   }else g2 <- NULL
   if(!is.null(legend)){
     if(legend == "Label") g2 <- g2 + geom_text_repel(show.legend = NULL)

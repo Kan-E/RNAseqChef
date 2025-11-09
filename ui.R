@@ -43,7 +43,7 @@ shinyUI(
                  column(11, br(),h4("Current version (v1.1.6, 2025/11/9)"),
                         tags$span("Important update", ": We’ve corrected a PCA plotting bug in RNAseqChef.",br(),
                                   "Previously, we used the rotation (gene loadings) from R’s prcomp() instead of the x matrix (sample scores), which could misrepresent sample separation. The plot now shows correct sample coordinates. Please re-run PCA; PCs and % variance may change.",style = "color:#d00; font-weight:700;"),br(),
-                        "See the details from 'More -> Change log'",
+                        "See the details from 'More -> Change log'",),
                  column(12,
                         br(),
                         h4("Publication"),

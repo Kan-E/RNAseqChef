@@ -578,7 +578,7 @@ PCAplot <- function(data,legend=NULL){
     if(legend == "Label") g1 <- g1 + geom_text_repel(show.legend = NULL)
   }
   rho <- cor(data,method="spearman")
-  d <- dist(1-rho)
+  d <- as.dist(1-rho)
   mds <- try(as.data.frame(cmdscale(d)))
   if(class(mds) != "try-error"){
     g2 <- ggplot(mds, aes(x = mds[,1], y = mds[,2],

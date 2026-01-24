@@ -16,6 +16,9 @@ Manual (Japanese)：[https://kan-e.github.io/RNAseqChef_manual_japanese/](https:
 - Run the following commands once to get the docker image of RNAseqChef<br>
 ```
 docker pull omicschef/rnaseqchef:latest
+
+##beta version
+docker pull omicschef/rnaseqchef:beta-latest
 ```
 You may now run RNAseqChef with just one command in the command line:
 ```

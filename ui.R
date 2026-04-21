@@ -1,5 +1,21 @@
 popoverTempate <- 
   '<div class="popover popover-lg" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
+
+hiddenFixedRadio <- function(inputId, selected) {
+  tags$div(
+    style = "display:none;",
+    radioButtons(inputId, NULL, setNames(selected, selected), selected = selected, inline = TRUE)
+  )
+}
+
+fixedSetting <- function(label, value) {
+  tags$div(
+    style = "margin-bottom: 10px;",
+    tags$strong(paste0(label, ": ")),
+    value
+  )
+}
+
 shinyUI(
   fluidPage(
     tags$head(
@@ -40,19 +56,65 @@ shinyUI(
                         p("RNAseqChef, an RNA-seq data controller highlighting gene expression features, is a web-based application for automated, systematic, and integrated RNA-seq differential expression analysis.",
                           align="center"),br(),br(),style={'background-color:beige;font-size: 16px;'},
                  ),
-                 column(11, br(),h4("Current version (v1.1.6, 2025/11/9)"),
-                        tags$span("Important update", ": We’ve corrected a PCA plotting bug in RNAseqChef.",br(),
-                                  "Previously, we used the rotation (gene loadings) from R’s prcomp() instead of the x matrix (sample scores), which could misrepresent sample separation. The plot now shows correct sample coordinates. Please re-run PCA; PCs and % variance may change.",style = "color:#d00; font-weight:700;"),br(),
-                        "See the details from 'More -> Change log'",),
                  column(12,
                         br(),
+                        h4("Current version (v1.1.7)"),
+                        tags$ul(
+                          tags$li("Added ssGSEA analysis to Multi DEG."),
+                          tags$li("Added boxplots to compare gene expression by group in k-means clustering of Normalized count analysis."),
+                          tags$li("Improved app performance with lighter and more optimized processing."),
+                          tags$li("Fixed bugs in the Venn diagram workflow.")
+                        ),
+                        "See the details from 'More -> Change log'",
                         h4("Publication"),
                         "Etoh K. & Nakao M. A web-based integrative transcriptome analysis, RNAseqChef, uncovers cell/tissue type-dependent action of sulforaphane. JBC, 299(6), 104810 (2023)", 
                         a("https://doi.org/10.1016/j.jbc.2023.104810",href = "https://doi.org/10.1016/j.jbc.2023.104810"),
                         br(),
                         h4("Citation"),
-                        tags$div(HTML('<span class="__dimensions_badge_embed__" data-doi="10.1016/j.jbc.2023.104810" data-style="small_circle"></span>')),tags$div(HTML('<script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>'))),
-                        
+                        tags$div(
+                          style = paste(
+                            "display:flex;",
+                            "align-items:center;",
+                            "justify-content:space-between;",
+                            "gap:16px;",
+                            "flex-wrap:wrap;",
+                            "margin-top:8px;"
+                          ),
+                          tags$div(HTML('
+                            <span class="__dimensions_badge_embed__" data-doi="10.1016/j.jbc.2023.104810" data-style="small_circle"></span>
+                            <script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+                          ')),
+                          tags$a(
+                            href = "https://x.com/kanetoh1",
+                            target = "_blank",
+                            rel = "noopener noreferrer",
+                            style = paste(
+                              "display:inline-flex;",
+                              "align-items:center;",
+                              "gap:10px;",
+                              "margin-left:auto;",
+                              "padding:10px 18px;",
+                              "background:#000;",
+                              "color:#fff;",
+                              "border-radius:999px;",
+                              "text-decoration:none;",
+                              "font-weight:700;",
+                              "font-size:13px;",
+                              "line-height:1;",
+                              "box-shadow:0 2px 8px rgba(0,0,0,0.18);"
+                            ),
+                            tags$span(HTML('
+                              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fill="#ffffff" d="M18.901 1.153h3.68l-8.04 9.188L24 22.847h-7.406l-5.8-7.584-6.639 7.584H.474l8.6-9.83L0 1.153h7.594l5.243 6.932 6.064-6.932zm-1.291 19.492h2.039L6.486 3.24H4.298z"/>
+                              </svg>
+                            ')),
+                            tags$span(
+                              "Follow on X for update announcement",
+                              style = "white-space:nowrap;"
+                            )
+                          )
+                        ),
+                 ),
                  column(12,br(),
                         column(6,br(),
                                h4(strong("Pair-wise DEG")),
@@ -84,8 +146,8 @@ shinyUI(
                  # sidebar---------------------------------
                  sidebarPanel(
                    radioButtons('data_file_type','Input:',
-                                c('Raw_count_matrix'="Row1",
-                                  'Option: Raw_count_matrix + Metadata'="Row2",
+                                c('Count_matrix'="Row1",
+                                  'Option: Count_matrix + Metadata'="Row2",
                                   'Option: Batch mode (not displayed in the output panel)'="Row11"
                                 ),selected = "Row1"),
                    conditionalPanel(condition="input.data_file_type=='Row1'",
@@ -136,18 +198,45 @@ shinyUI(
                                               width = "80%"),
                                     bsPopover("icon3", "Count matrix format (txt, csv, or xlsx):", 
                                               content=paste(strong("The replication number"), "is represented by", strong("the underline"),".<br>", strong("Do not use it for anything else"),".<br>",
-                                                            "There is no limitation to the number of uploaded files.<br>",
-                                                            strong("In the case of batch-mode, do not use any hyphens (-) in the file names."),"<br><br>",
+                                                            "There is no limitation to the number of uploaded files.<br><br>",
                                                             img(src="input_format1.png", width = 400,height = 250)), 
                                               placement = "right",options = list(container = "body")),
                    ),
+                   hiddenFixedRadio("Level_pair", "gene_level"),
                    radioButtons('DEG_method','DEG analysis method:',
                                 c('DESeq2'="DESeq2",
                                   'EBSeq'="EBSeq",
                                   'edgeR'="edgeR"
                                 ),selected = "DESeq2"),
+                   conditionalPanel(condition=c("input.DEG_method=='limma' || input.DEG_method=='edgeR'"),
+                                    fluidRow(
+                                      column(6, radioButtons("pair_prefilterON","Pre-filtering (to remove low count)",
+                                                             c('ON'="ON",
+                                                               'OFF'="OFF"
+                                                             ), selected = "ON")),
+                                      
+                                      column(6, conditionalPanel(condition=c("input.pair_prefilterON=='ON'"),
+                                             numericInput("pair_prefilter", "Minimum count required for at least some samples", value = 10),
+                                             numericInput("pair_prefilterTotal", "Minimum total count required", value = 15)
+                                             )
+                                      )
+                                      )
+                   ),
                    conditionalPanel(condition=c("input.DEG_method=='DESeq2' || input.DEG_method=='edgeR'"),
                                     selectInput("FDR_method", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH")
+                   ),
+                   conditionalPanel(condition="input.DEG_method=='limma'",
+                                    fluidRow(
+                                      column(6, radioButtons("limma_trend","Trend",
+                                                             c('TRUE'=TRUE,
+                                                               'FALSE'=FALSE
+                                                             ), selected = TRUE)),
+                                      column(6, radioButtons("regression_mode","Regression",
+                                                             c('least squares'=FALSE,
+                                                               'robust'=TRUE
+                                                             ), selected = FALSE))
+                                    ),
+                                    radioButtons("cutoff_limma", "parameter for cut-off (fdr or pval)", c('fdr'="fdr",'pval'="pval"), selected = "fdr")
                    ),
                    fluidRow(
                      column(6, selectInput("Species", "Species", species_list, selected = "not selected")),
@@ -170,8 +259,17 @@ shinyUI(
                                                        content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
                                                        placement = "right",options = list(container = "body"))
                                              ),
-                                      column(12, selectInput("Biomart_archive", "Biomart host", ensembl_archive))
                      )
+                   ),
+                   conditionalPanel(condition=c("input.Species != 'not selected' && input.Species != 'Homo sapiens' &&
+                   input.Species != 'Mus musculus' && input.Species != 'Rattus norvegicus' &&
+                   input.Species != 'Drosophila melanogaster' && input.Species != 'Caenorhabditis elegans' &&
+                   input.Species != 'Bos taurus' && input.Species != 'Canis lupus familiaris' &&
+                   input.Species != 'Danio rerio' && input.Species != 'Gallus gallus' &&
+                   input.Species != 'Macaca mulatta' && input.Species != 'Pan troglodytes' &&
+                   input.Species != 'Saccharomyces cerevisiae' && input.Species != 'Sus scrofa' &&
+                   input.Species != 'Xenopus laevis' && input.Species != 'Arabidopsis thaliana' || input.Level_pair != 'gene_level'"),
+                                    column(12, selectInput("Biomart_archive", "Biomart host", ensembl_archive))
                    ),
                    h4("Cut-off conditions:"),
                    fluidRow(
@@ -179,6 +277,7 @@ shinyUI(
                      column(4, numericInput("fdr", "FDR", min   = 0, max   = 1, value = 0.05)),
                      column(4, numericInput("basemean", "Basemean", min   = 0, max   = NA, value = 0))
                    ),
+                   conditionalPanel(condition="input.DEG_method!='limma'",
                    fileInput("norm_file1",
                              strong(
                                span("Option: Select a normalized count file"),
@@ -191,7 +290,8 @@ shinyUI(
                    bsPopover("icon4", "Option: Normalized count file (txt, csv, or xlsx):", 
                              content=paste0("You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.<br>",
                                             strong("The column names of the normalized count data must match those of the uploaded raw count data.")), 
-                             placement = "right",options = list(container = "body")),
+                             placement = "right",options = list(container = "body"))
+                   ),
                    strong(span("Output plot size setting for pdf (0: default)"),
                           span(icon("info-circle"), id = "pair_pdf_icon", 
                                options = list(template = popoverTempate))),
@@ -237,10 +337,10 @@ shinyUI(
                  # Main Panel -------------------------------------
                  mainPanel(
                    tabsetPanel(
-                     type = "tabs",
-                     tabPanel("Input Data",
+                     type = "tabs",id = "pair_tabs",
+                     tabPanel("Input Data", value = "pair_input_data_tab",
                               bsCollapse(id="input_collapse_panel",open="Row_count_panel",multiple = FALSE,
-                                         bsCollapsePanel(title="Raw_count_matrix:",
+                                         bsCollapsePanel(title="Count_matrix:",
                                                          value="Row_count_panel",
                                                          dataTableOutput('Row_count_matrix')
                                          ),
@@ -248,7 +348,7 @@ shinyUI(
                                                          value="Metadata_panel",
                                                          dataTableOutput('Metadata')
                                          ),
-                                         bsCollapsePanel(title="Defined_raw_count_matrix:",
+                                         bsCollapsePanel(title="Defined_count_matrix:",
                                                          value="D_row_count_matrix_panel",
                                                          conditionalPanel(condition="input.data_file_type!='Row11'",
                                                                           selectizeInput("sample_order", "Select samples:", choices = "", multiple = T),
@@ -259,13 +359,18 @@ shinyUI(
             }"))
                                                          ),
                                                          fluidRow(
+                                                           column(6, radioButtons("paired_sample", "Paired-sample?", c('No'="No",'Yes'="Yes"), selected = "No")),
+                                                           column(6, htmlOutput("paired_sample_file"),)
+                                                         ),
+                                                         dataTableOutput('paired_table'),
+                                                         fluidRow(
                                                            column(4, downloadButton("download_pair_d_row_count", "Download defined raw count"))
                                                          ),
                                                          dataTableOutput('D_Row_count_matrix')
                                          )
                               )
                      ),
-                     tabPanel("Result overview",
+                     tabPanel("Result overview", value = "pair_result_overview_tab",
                               fluidRow(
                                 column(6, downloadButton("download_pair_PCA", "Download clustering analysis"),
                                        textOutput("not_cond2"),
@@ -317,7 +422,7 @@ shinyUI(
                                                          dataTableOutput("pair_PCA_data")
                                          )
                               )),
-                     tabPanel("GOI profiling",
+                     tabPanel("GOI profiling", value = "pair_goi_tab",
                               fluidRow(
                                 column(4, downloadButton("download_pair_volcano", "Download volcano plot / MA plot")),
                                 column(4, downloadButton("download_pair_GOIheatmap", "Download heatmap"))
@@ -330,10 +435,11 @@ shinyUI(
                                 column(4, htmlOutput("volcano_y"))
                               ),
                               conditionalPanel(condition="input.GOI_color_type=='pathway'",
-                                               column(6,selectInput("GOI_color_pathway1","Select a gene set",choices = ""),
+                                               column(10,selectInput("GOI_color_pathway1","Select a gene set",choices = ""),
                                                       selectInput("GOI_color_pathway2","",choices = ""))             
                               ),
-                              htmlOutput("GOI"),
+                              selectizeInput("GOI", "genes of interest (GOI)", choices = NULL, multiple = TRUE,
+                                             options = list(delimiter = " ", create = TRUE, plugins = list("remove_button"), persist = FALSE)),
                               htmlOutput("uniqueID_cut"),
                               fluidRow(
                                 column(8, 
@@ -343,6 +449,7 @@ shinyUI(
                                        ),
                                 column(4, plotOutput("GOIheatmap"))
                               ),
+                              htmlOutput("paired_for_GOItype"),
                               div(
                                 plotOutput("GOIbox", height = "100%"),
                                 style = "height: calc(100vh  - 100px)"
@@ -350,7 +457,7 @@ shinyUI(
                               fluidRow(
                                 column(4, downloadButton("download_pair_GOIbox", "Download boxplot"))
                               )),
-                     tabPanel("Enrichment analysis",
+                     tabPanel("Enrichment analysis", value = "pair_enrichment_tab",
                               fluidRow(
                                 column(4, textOutput("Spe1"),
                                        tags$head(tags$style("#Spe1{color: red;
@@ -358,6 +465,7 @@ shinyUI(
             font-style: bold;
             }"))),
                                 column(4, htmlOutput("Gene_set")),
+                                column(4, htmlOutput("Custom_input_pair")),
                                 column(4, downloadButton("download_pair_enrichment", "Download"))
                               ),
                               plotOutput("enrichment1"),
@@ -378,7 +486,7 @@ shinyUI(
                                                          dataTableOutput('pair_GSEA_result')
                                          )
                               )
-                     )
+                     ),
                    )
                  ) # main panel
                ) #sidebarLayout
@@ -452,6 +560,7 @@ shinyUI(
                                 c('v2 (recommend)'=TRUE,
                                   'v1 (<= RNAseqChef v.1.1.0)'=FALSE),
                                 selected = TRUE),
+                   hiddenFixedRadio("Level_cond3", "gene_level"),
                    fluidRow(
                      column(6, selectInput("Species2", "Species", species_list, selected = "not selected")),
                      conditionalPanel(condition=c("input.Species2 != 'not selected' && input.Species2 != 'Homo sapiens' &&
@@ -633,7 +742,9 @@ shinyUI(
                                                column(6,selectInput("cond3_GOI_color_pathway1","Select a gene set",choices = ""),
                                                       selectInput("cond3_GOI_color_pathway2","",choices = ""))             
                               ),
-                              htmlOutput("GOI2"), htmlOutput("cond3_GOI_pair"),
+                              selectizeInput("GOI2", "genes of interest (GOI)", choices = NULL, multiple = TRUE,
+                                             options = list(delimiter = " ", create = TRUE, plugins = list("remove_button"), persist = FALSE)),
+                              htmlOutput("cond3_GOI_pair"),
                               htmlOutput("cond3_uniqueID_cut"),
                               fluidRow(
                                 column(8, plotOutput("cond3_GOIscatter",
@@ -694,13 +805,13 @@ shinyUI(
                  # sidebar---------------------------------
                  sidebarPanel(
                    radioButtons('multi_data_file_type','Input:',
-                                c('Raw_count_matrix (One-factor multi-condition)'="Row1",
-                                  'Raw_count_matrix + metadata (Two-factor multi-condition)'="Row2"
+                                c('Count_matrix (One-factor multi-condition)'="Row1",
+                                  'Count_matrix + metadata (Two-factor multi-condition)'="Row2"
                                 ),selected = "Row1"),
                    conditionalPanel(condition="input.multi_data_file_type=='Row1'",
                                     fileInput("multi_file1",
                                               strong(
-                                                span("Select a raw count matrix file"),
+                                                span("Select a count matrix file"),
                                                 span(icon("info-circle"), id = "icon8", 
                                                      options = list(template = popoverTempate))
                                               ),
@@ -715,7 +826,7 @@ shinyUI(
                    conditionalPanel(condition="input.multi_data_file_type=='Row2'",
                                     fileInput("multi_file2",
                                               strong(
-                                                span("Select a raw count matrix file"),
+                                                span("Select a count matrix file"),
                                                 span(icon("info-circle"), id = "icon9", 
                                                      options = list(template = popoverTempate))
                                               ),
@@ -732,6 +843,36 @@ shinyUI(
                                                             "The second column is", strong("the corresponding sample name"), "that matches the sample name in the first column.<br><br>",
                                                             img(src="input_format_multi.png", width = 400,height = 400)),
                                               placement = "right",options = list(container = "body")),
+                   ),
+                   hiddenFixedRadio("Level_multi", "gene_level"),
+                   fixedSetting("DEG analysis method", "DESeq2 for raw count"),
+                   hiddenFixedRadio("DEG_method_multi", "DESeq2"),
+                   conditionalPanel(condition="input.DEG_method_multi=='limma'",
+                                    fluidRow(
+                                      column(6, radioButtons("multi_prefilterON","Pre-filtering (to remove low count)",
+                                                             c('ON'="ON",
+                                                               'OFF'="OFF"
+                                                             ), selected = "ON")),
+                                      column(6, conditionalPanel(condition=c("input.multi_prefilterON=='ON'"),
+                                             numericInput("multi_prefilter", "Minimum count required for at least some samples", value = 0),
+                                             numericInput("multi_prefilterTotal", "Minimum total count required", value = 0))
+                                      )
+                                    ),
+                                    fluidRow(
+                                      column(6, radioButtons("limma_trend_multi","Trend",
+                                                             c('TRUE'=TRUE,
+                                                               'FALSE'=FALSE
+                                                             ), selected = TRUE)),
+                                      column(6, radioButtons("regression_mode_multi","Regression",
+                                                             c('least squares'=FALSE,
+                                                               'robust'=TRUE
+                                                             ), selected = FALSE))
+                                    )
+                   ),
+                   conditionalPanel(condition="input.DEG_method_multi=='DESeq2'",
+                                    fluidRow(
+                                      column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH"))
+                                    )
                    ),
                    fluidRow(
                             column(6, selectInput("Species6", "Species", species_list, selected = "not selected")),
@@ -753,15 +894,13 @@ shinyUI(
                                                        placement = "right",options = list(container = "body"))),
                                              column(12, selectInput("Biomart_archive6", "Biomart host", ensembl_archive)))
                             ),
-                   fluidRow(
-                     column(6,  selectInput("FDR_method6", "FDR method", c("BH", "Qvalue", "IHW"), selected = "BH"))
-                   ),
                    h4("Cut-off conditions:"),
                    fluidRow(
                      column(4, numericInput("fc6", "Fold Change", min   = 0, max   = NA, value = 1.5)),
                      column(4, numericInput("fdr6", "FDR", min   = 0, max   = 1, value = 0.05)),
                      column(4, numericInput("basemean6", "Basemean", min   = 0, max   = NA, value = 0))
                    ),
+                   conditionalPanel(condition="input.DEG_method_multi!='limma'",
                    fileInput("multi_norm_file1",
                              strong(
                                span("Option: Select a normalized count file"),
@@ -773,7 +912,8 @@ shinyUI(
                              width = "80%"),
                    bsPopover("icon10", "Option: Normalized count file (txt, csv, or xlsx):", 
                              content="You can use a normalized count data (e.g. TPM count) for basemean cutoff and boxplot.", 
-                             placement = "right",options = list(container = "body")),
+                             placement = "right",options = list(container = "body"))
+                   ),
                    strong(span("Output plot size setting for pdf (0: default)"),
                           span(icon("info-circle"), id = "multi_pdf_icon", 
                                options = list(template = popoverTempate))),
@@ -811,11 +951,12 @@ shinyUI(
                  
                  # Main Panel -------------------------------------
                  mainPanel(
-                   tabsetPanel(
-                     type = "tabs",
-                     tabPanel("Input Data",
+                  tabsetPanel(
+                    id = "multi_main_tab",
+                    type = "tabs",
+                    tabPanel("Input Data", value = "multi_input_data_tab",
                               bsCollapse(id="multi_input_collapse_panel",open="multi_Row_count_panel",multiple = TRUE,
-                                         bsCollapsePanel(title="Raw_count_matrix:",
+                                         bsCollapsePanel(title="Count_matrix:",
                                                          value="multi_Row_count_panel",
                                                          dataTableOutput('multi_Row_count_matrix')
                                          ),
@@ -823,13 +964,13 @@ shinyUI(
                                                          value="multi_Metadata_panel",
                                                          dataTableOutput('multi_Metadata')
                                          ),
-                                         bsCollapsePanel(title="Defined_raw_count_matrix:",
+                                         bsCollapsePanel(title="Defined_count_matrix:",
                                                          value="multi_d_Row_count_panel",
                                                          dataTableOutput('multi_d_Row_count_matrix')
                                          )
                               )
                      ),
-                     tabPanel("Result overview",
+                    tabPanel("Result overview", value = "multi_result_overview_tab",
                               fluidRow(
                                 column(4, downloadButton("download_multi_PCA", "Download clustering analysis")),
                                 column(6, selectInput("PCA_legend_multi","Label",c("Label","Legend"),selected = "Label"))
@@ -872,7 +1013,7 @@ shinyUI(
                                                          dataTableOutput("multi_PCA_data")
                                          )
                               )),
-                     tabPanel("Divisive clustering",
+                    tabPanel("Divisive clustering", value = "multi_divisive_clustering_tab",
                               fluidRow(
                                 column(6, htmlOutput("selectFC")),
                                 column(6, htmlOutput("selectFC_2")),
@@ -913,7 +1054,10 @@ shinyUI(
                               bsCollapsePanel(title="DEG_pattern_normalized_count_data:",
                                               value="multi_deg_pattern_count_panel",
                                               fluidRow(
-                                                column(4, htmlOutput("multi_select_file1")),
+                                                column(4, selectInput("multi_selectfile1", "cluster_list",
+                                                                      choices = character(0),
+                                                                      selected = NULL,
+                                                                      multiple = FALSE)),
                                                 column(4, downloadButton("download_deg_pattern_count", "Download DEG pattern normalized count data"))
                                               ),
                                               DTOutput("multi_pattern1_count")
@@ -957,7 +1101,7 @@ shinyUI(
                               )
                               )
                      ),
-                     tabPanel("k-means clustering",
+                    tabPanel("k-means clustering", value = "multi_kmeans_clustering_tab",
                               fluidRow(
                                 column(6, htmlOutput("selectFC2")),
                                 column(6, htmlOutput("selectFC2_2"))
@@ -973,9 +1117,17 @@ shinyUI(
                               fluidRow(
                                 column(4, htmlOutput("multi_kmeans_num"),
                                        actionButton("kmeans_start_multi", "Start"),
+                                       textOutput("multi_kmeans_progress_text"),
                                        tags$head(tags$style("#kmeans_start_multi{color: red;
                                  font-size: 20px;
                                  font-style: bold;
+                                 }
+                                 #multi_kmeans_progress_text{
+                                 color: #d9534f;
+                                 font-size: 14px;
+                                 font-weight: bold;
+                                 white-space: pre-line;
+                                 margin-top: 8px;
                                  }"),
                                                  tags$style("
           body {
@@ -1046,10 +1198,11 @@ shinyUI(
                               )
                               )
                      ),
-                     tabPanel("GSEA",
+                    tabPanel("GSEA", value = "multi_gsea_tab",
                               fluidRow(
-                                column(3, htmlOutput("selectEnrich_pair")),
-                                column(4, htmlOutput("Gene_set6")),
+                                column(3, selectizeInput("selectEnrich_pair", "Select a pair for GSEA", choices = NULL,
+                                                         multiple = TRUE, options = list(maxItems = 2))),
+                                column(4, selectInput("Gene_set6", "Gene Set", choices = "")),
                                 column(4, downloadButton("download_multi_enrichment", "Download"))
                               ),
                               fluidRow(
@@ -1067,6 +1220,99 @@ shinyUI(
                                                            column(4, downloadButton("download_multi_GSEA_table", "Download GSEA result"))
                                                          ),
                                                          dataTableOutput('multi_GSEA_result')
+                                         )
+                              )
+                     ),
+                    tabPanel("ssGSEA", value = "multi_ssgsea_tab",
+                              fluidRow(
+                                column(4, selectInput("Gene_set_ssGSEA", "Gene Set", choices = "", selected = "")),
+                              column(4, htmlOutput("Custom_input_ssGSEA"))
+                              ),
+                              fluidRow(
+                                column(4, textOutput("multi_Spe1_ssGSEA"),
+                                       tags$head(tags$style("#multi_Spe1_ssGSEA{color: red;
+                                         font-size: 20px;
+                                         font-style: bold;
+                                      }")))
+                              ),
+                              bsCollapse(id="input_collapse_multi_ssGSEA",open="ssGSEA_score_panel",multiple = TRUE,
+                                         bsCollapsePanel(title="ssGSEA score:",
+                                                         value="ssGSEA_score_panel",
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_multi_ssGSEA_score", "Download"))
+                                                         ),
+                                                         dataTableOutput('multi_ssGSEA_score')
+                                         ),
+                                         bsCollapsePanel(title="Differential analysis:",
+                                                         value="ssGSEA_limma_panel",
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_multi_ssGSEA_limma", "Download"))
+                                                         ),
+                                                         dataTableOutput('multi_ssGSEA_limma')
+                                         ),
+                                         bsCollapsePanel(title="Differential pathways:",
+                                                         value="ssGSEA_limma_panel",
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_multi_ssGSEA_limma_dp", "Download"))
+                                                         ),
+                                                         dataTableOutput('multi_ssGSEA_limma_dp')
+                                         )
+                              ),
+                              fluidRow(
+                                column(4, downloadButton("download_multi_ssGSEA_GOIheat", "Download heatmap"))
+                              ),
+                              fluidRow(
+                                column(4, 
+                                       numericInput("ssGSEA_fdr","FDR cut-off value",value = 0.01,max = 1,min = 0,step = 0.0001),
+                                       radioButtons('GOI_type_multi_ssGSEA','Pathways:',
+                                                    c('Select all differential pathways'="ALL",
+                                                      'Custom'="custom"
+                                                    ),selected = "custom"),
+                                       htmlOutput("GOI_type_multi_ssGSEA_all"),
+                                       htmlOutput("GOI_type_multi_ssGSEA_custom"),
+                                       conditionalPanel(
+                                         condition = "input.GOI_type_multi_ssGSEA=='ALL' || (input.GOI_type_multi_ssGSEA=='custom' && input.GOI_type_multi_ssGSEA_custom=='Manual')",
+                                         selectizeInput("GOI_multi_ssGSEA", "Pathways of interest", choices = NULL, multiple = TRUE,
+                                                        options = list(delimiter = " ", create = TRUE, plugins = list("remove_button"), persist = FALSE)),
+                                         actionButton("GOIreset_multi_ssGSEA", "reset")
+                                       )),
+                                column(8, plotOutput("multi_ssGSEA_GOIheatmap"))
+                              ),
+                              fluidRow(
+                                column(4, htmlOutput("statistics_multi_ssGSEA")),
+                                column(4, selectInput('PlotType_multi_ssGSEA', 'PlotType', c("Boxplot", "Barplot", "Violin plot","Errorplot"))),
+                                column(4, downloadButton("download_multi_ssGSEA_GOIbox", "Download boxplot"))
+                              ),
+                              div(
+                                plotOutput("multi_ssGSEA_GOIboxplot", height = "100%"),
+                                style = "height: calc(100vh  - 100px)"
+                              ),
+                              column(4, downloadButton("download_multi_ssGSEA_statisics", "Download table")),
+                              dataTableOutput("statistical_table_multi_ssGSEA"),
+                              bsCollapse(id="input_collapse_multi_ssGSEA_dorothea",multiple = TRUE,
+                                         bsCollapsePanel(title="Highly contributed genes:",
+                                                         value="ssGSEA_contribute_panel",
+                                                         selectizeInput("selectssGSEA_contribute_pathway", "Select pathway of interest",
+                                                                        choices = NULL, multiple = FALSE,
+                                                                        options = list(create = FALSE, persist = FALSE)),
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_multi_ssGSEA_contribute", "Download"))
+                                                         ),
+                                                         div(
+                                                           plotOutput("multi_ssGSEA_contribute", height = "100%"),
+                                                           style = "height: calc(100vh  - 100px)"
+                                                         ),
+                                                         downloadButton("download_multi_ssGSEA_contribute_table", "Download"),
+                                                         dataTableOutput('multi_ssGSEA_contribute_table')
+                                         ),
+                                         bsCollapsePanel(title="Correlation between ssGSEA score and expression level of TFs:",
+                                                         value="ssGSEA_dorothea_panel",
+                                                         fluidRow(
+                                                           column(4, downloadButton("download_multi_ssGSEA_dorothea", "Download"))
+                                                         ),
+                                                         plotOutput('multi_ssGSEA_dorothea'),
+                                                         downloadButton("download_multi_ssGSEA_dorothea_table", "Download"),
+                                                         dataTableOutput('multi_ssGSEA_dorothea_table')
                                          )
                               )
                      )
@@ -1095,6 +1341,7 @@ shinyUI(
                              "The maximum number of uploads is",strong("7 files"), ".<br><br>", 
                              img(src="venn_input.png", width = 400,height = 300)),
                              placement = "right",options = list(container = "body")),
+                   hiddenFixedRadio("Level_venn", "gene_level"),
                    h4("Input for integrated heatmap"),
                    fileInput(
                      inputId = "countfiles",
@@ -1287,6 +1534,7 @@ shinyUI(
                                                             img(src="input_format2.png", width = 400,height = 400)), 
                                               placement = "right",options = list(container = "body")),
                    ),
+                   hiddenFixedRadio("Level_norm", "gene_level"),
                    fluidRow(
                      column(6, selectInput("Species3", "Species", species_list, selected = "not selected")),
                      conditionalPanel(condition=c("input.Species3 != 'not selected' && input.Species3 != 'Homo sapiens' &&
@@ -1427,9 +1675,9 @@ shinyUI(
                                 column(4, 
                                        radioButtons("normGOI_filter_on","Filter (basemean, fold change)",c("ON" = "ON","OFF"="OFF"),selected = "OFF"),
                                        conditionalPanel(condition="input.normGOI_filter_on=='ON'",
-                                                        htmlOutput("selectFC_normGOI"),
-                                                        textOutput("filtered_regionGOI"),
-                                                        tags$head(tags$style("#filtered_regionGOI{color: red;
+                                       htmlOutput("selectFC_normGOI"),
+                                       textOutput("filtered_regionGOI"),
+                                       tags$head(tags$style("#filtered_regionGOI{color: red;
                                  font-size: 20px;
                                  font-style: bold;
                                  }"))
@@ -1438,7 +1686,9 @@ shinyUI(
                                                     c('Select all genes'="ALL",
                                                       'Custom'="custom"
                                                     ),selected = "custom"),
-                                       htmlOutput("GOI3"), htmlOutput("GOIreset_norm"),
+                                       selectizeInput("GOI3", "genes of interest (GOI)", choices = NULL, multiple = TRUE,
+                                                      options = list(delimiter = " ", create = TRUE, plugins = list("remove_button"), persist = FALSE)),
+                                       htmlOutput("GOIreset_norm"),
                                        htmlOutput("norm_uniqueID_cut")),
                                 column(8, plotOutput("norm_GOIheatmap"))
                               ),
@@ -1476,9 +1726,15 @@ shinyUI(
                                                     ),selected = "corr_mode2"),
                                        selectInput("corr_statistics","Statistics",c("spearman","pearson"),
                                                    selected = "spearman",multiple = F),
-                                       htmlOutput("GOI_x"),
-                                       htmlOutput("GOI_y"),
-                                       htmlOutput("corr_color"),
+                                       selectizeInput("GOI_x", "Select GOI", choices = NULL, multiple = FALSE,
+                                                      options = list(create = FALSE, persist = FALSE)),
+                                       conditionalPanel(
+                                         condition="input.corr_mode=='corr_mode2'",
+                                         selectizeInput("GOI_y", "Select GOI (y_axis)", choices = NULL, multiple = FALSE,
+                                                        options = list(create = FALSE, persist = FALSE)),
+                                         selectizeInput("corr_color","Color", choices = NULL, multiple = FALSE,
+                                                        options = list(create = FALSE, persist = FALSE))
+                                       ),
                                        conditionalPanel(condition="input.corr_mode=='corr_mode1'",
                                        actionButton("corr_start", "Start"),
                                        tags$head(tags$style("#corr_start{color: red;
@@ -1494,14 +1750,18 @@ shinyUI(
                                        htmlOutput("norm_corr_cutoff"),
                                        htmlOutput("corr_fdr"),
                                        htmlOutput("corr_rho")
-                                       ),
-                                column(8, plotOutput("norm_corrplot",brush = "plot1_brush_corr"))
+                              ),
+                              column(8, plotOutput("norm_corrplot",brush = "plot1_brush_corr"))
                               ),
                               column(4, downloadButton("download_statisics_corrplot", "Download table")),
                               dataTableOutput("statistical_table_corrplot"),
                               fluidRow(
                               column(4, htmlOutput("norm_corr_selected_list"),
-                                     htmlOutput("corr_color_selected"),
+                                     conditionalPanel(
+                                       condition="input.corr_mode=='corr_mode1'",
+                                       selectizeInput("corr_color_selected","Color", choices = NULL, multiple = FALSE,
+                                                      options = list(create = FALSE, persist = FALSE))
+                                     ),
                                      downloadButton("download_norm_corr_selected", "Download correlation plot (all genes from 'select GOI')"))
                               ),
                               plotOutput("norm_corrplot_selected")
@@ -1520,9 +1780,17 @@ shinyUI(
                                 column(4, htmlOutput("norm_kmeans_num"),
                                        htmlOutput("kmeans_cv"),
                                        actionButton("kmeans_start", "Start"),
+                                       textOutput("norm_kmeans_progress_text"),
                                        tags$head(tags$style("#kmeans_start{color: red;
                                  font-size: 20px;
                                  font-style: bold;
+                                 }
+                                 #norm_kmeans_progress_text{
+                                 color: #d9534f;
+                                 font-size: 14px;
+                                 font-weight: bold;
+                                 white-space: pre-line;
+                                 margin-top: 8px;
                                  }"),
                                                  tags$style("
           body {
@@ -1530,8 +1798,14 @@ shinyUI(
           }"
                                                  ))),
                                 column(8, downloadButton("download_norm_kmeans_heatmap", "Download heatmap"),
-                                       htmlOutput("kmeans_order"),
-                                       plotOutput("norm_kmeans_heatmap"))
+                                       downloadButton("download_norm_kmeans_boxplot", "Download boxplots"),
+                                       selectInput("kmeans_order", "Order of clusters on heatmap",
+                                                   choices = character(0), selected = character(0), multiple = TRUE),
+                                       plotOutput("norm_kmeans_heatmap")),
+                              ),
+                              div(
+                                plotOutput("norm_kmeans_boxplot", height = "100%"),
+                                style = "height: calc(100vh  - 100px)"
                               ),
                               bsCollapse(id="norm_kmeans_collapse_panel",open="norm_kmeans_count",multiple = TRUE,
                               bsCollapsePanel(title="k-means clustering result:",
@@ -1552,7 +1826,10 @@ shinyUI(
                               bsCollapsePanel(title="cluster count data:",
                                               value="norm_kmeans_extract_count",
                                               fluidRow(
-                                                column(4, htmlOutput("norm_select_kmean"))
+                                                column(4, selectInput("norm_select_kmean", "cluster_list",
+                                                                      choices = character(0),
+                                                                      selected = character(0),
+                                                                      multiple = TRUE))
                                               ),
                                               downloadButton("download_norm_kmeans_extract_count", "Download cluster count data"),
                                               DTOutput("norm_kmeans_extract_table")
@@ -1587,6 +1864,7 @@ shinyUI(
                                            "File names are used as", strong("group names"),".<br><br>",
                                            img(src="input_format_enrich.png", width = 400,height = 250)), 
                              placement = "right",options = list(container = "body")),
+                   hiddenFixedRadio("Level_enrich", "gene_level"),
                    fluidRow(
                      column(6, selectInput("Species4", "Species", species_list, selected = "not selected")),
                      conditionalPanel(condition=c("input.Species4 != 'not selected' && input.Species4 != 'Homo sapiens' &&
@@ -1738,6 +2016,7 @@ shinyUI(
                                                       "You can use a pair-wise DEG result file as input.<br><br>", 
                                                       img(src="input_format_volcano.png", width = 480,height = 230)), 
                                         placement = "right",options = list(container = "body")),
+                              hiddenFixedRadio("Level_volcano", "gene_level"),
                               radioButtons('volcano_inputType','Reverse number signs of log2FoldChange:',
                                            c('ON'="reverseON",
                                              'OFF'="reverseOFF"
@@ -1824,7 +2103,8 @@ shinyUI(
                                                           column(6,selectInput("deg_GOI_color_pathway1","Select a gene set",choices = ""),
                                                                  selectInput("deg_GOI_color_pathway2","",choices = ""))             
                                          ),
-                                         htmlOutput("degGOI"),
+                                         selectizeInput("degGOI", "genes of interest (GOI)", choices = NULL, multiple = TRUE,
+                                                        options = list(delimiter = " ", create = TRUE, plugins = list("remove_button"), persist = FALSE)),
                                          htmlOutput("deg_uniqueID_cut"),
                                          fluidRow(
                                            column(8, plotOutput("deg_volcano1",brush = "plot1_brush_volcano")),
@@ -1890,10 +2170,9 @@ shinyUI(
                                                  bsPopover("Ortholog_enrich", "Ortholog for the pathway analysis of non-model organisms", 
                                                            content=paste(img(src="non-model organism.png", width = 500,height = 800)), 
                                                            placement = "right",options = list(container = "body"))),
-                                                 column(12, selectInput("Biomart_archive_ens", "Biomart host", ensembl_archive))
-                                                 )
+                                                 column(12, selectInput("Biomart_archive_ens", "Biomart host", ensembl_archive)))
                               ),
-                              actionButton("goButton_ens", "example data (human)"),
+                              actionButton("goButton_ens", "example data (mouse)"),
                               tags$head(tags$style("#goButton_ens{color: black;
                                  font-size: 12px;
                                  font-style: italic;
@@ -1918,9 +2197,6 @@ shinyUI(
             font-style: bold;
             }")),
                               dataTableOutput('input_ens2symbol'),
-                              #h4("Result file (Ready for use in RNAseqChef analysis)"),
-                              #downloadButton("download_ens2symbol2", "Download"),
-                              #dataTableOutput('input_ens2symbol2'),
                             )
                           ) #sidebarLayout
                  ),
@@ -1974,166 +2250,11 @@ shinyUI(
                             )
                           ) #sidebarLayout
                  ),
-                 tabPanel("Reference",
-                          fluidRow(
-                            column(12,
-                                   h2("Reference:"),
-                                   "- Winston Chang, Joe Cheng, JJ Allaire, Carson Sievert, Barret Schloerke, Yihui Xie, Jeff Allen, Jonathan McPherson, Alan Dipert and Barbara Borges (2021). shiny: Web Application Framework for R. R package version 1.7.1. https://CRAN.R-project.org/package=shiny",br(),
-                                   "- Ning Leng and Christina Kendziorski (2020). EBSeq: An R package for gene and isoform
-  differential expression analysis of RNA-seq data. R package version 1.30.0.",br(),
-                                   "- Ma X, Leng N (2019). _EBSeq: An R package for gene and isoform differential expression analysis of RNA-seq data_. R package version 1.99.0.",br(),
-                                   "- Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for
-  RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)",br(),
-                                   "- Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential
-  expression analysis of digital gene expression data. Bioinformatics 26, 139-140",br(),
-                                   "- Nikolaos Ignatiadis, Bernd Klaus, Judith Zaugg and Wolfgang Huber (2016): Data-driven hypothesis
-  weighting increases detection power in genome-scale multiple testing. Nature Methods 13:577,
-  doi: 10.1038/nmeth.3885",br(),
-                                   "- John D. Storey, Andrew J. Bass, Alan Dabney and David Robinson (2021). qvalue: Q-value
-  estimation for false discovery rate control. R package version 2.26.0.
-  http://github.com/jdstorey/qvalue",br(),
-                                   "- Pantano L (2022). DEGreport: Report of DEG analysis. R package version 1.32.0, http://lpantano.github.io/DEGreport", br(),
-                                   "- Andrie de Vries and Brian D. Ripley (2020). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1.22. https://CRAN.R-project.org/package=ggdendro",br(),
-                                   "- Konopka T (2022). _umap: Uniform Manifold Approximation and Projection_. R package version 0.2.8.0, <https://CRAN.R-project.org/package=umap>.", br(),
-                                   "- T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141",br(),
-                                   "- Guangchuang Yu, Li-Gen Wang, Guang-Rong Yan, Qing-Yu He. DOSE: an R/Bioconductor package for Disease Ontology Semantic and Enrichment analysis. Bioinformatics 2015 31(4):608-609",br(),
-                                   "- Dolgalev I (2022). _msigdbr: MSigDB Gene Sets for Multiple Organisms in a Tidy Data Format_. R
-  package version 7.5.1, <https://CRAN.R-project.org/package=msigdbr>.", br(),
-                                   "- Garcia-Alonso L, Holland CH, Ibrahim MM, Turei D, Saez-Rodriguez J. 'Benchmark and integration of resources for the estimation of human
-  transcription factor activities.' Genome Research. 2019. DOI: 10.1101/gr.240663.118.", br(),
-                                   "- Hervé Pagès, Marc Carlson, Seth Falcon and Nianhua Li (2020). AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor. R package version 1.52.0. https://bioconductor.org/packages/AnnotationDbi",br(),
-                                   "- Marc Carlson (2020). org.Hs.eg.db: Genome wide annotation for Human. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2020). org.Mm.eg.db: Genome wide annotation for Mouse. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2020). org.Rn.eg.db: Genome wide annotation for Rat. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2020). org.Xl.eg.db: Genome wide annotation for Xenopus. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2020). org.Dm.eg.db: Genome wide annotation for Fly. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2020). org.Ce.eg.db: Genome wide annotation for Worm. R package version 3.12.0.",br(),
-                                   "- Marc Carlson (2022). org.Bt.eg.db: Genome wide annotation for Bovine. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Cf.eg.db: Genome wide annotation for Canine. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Dr.eg.db: Genome wide annotation for Zebrafish. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Gg.eg.db: Genome wide annotation for Chicken. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Mmu.eg.db: Genome wide annotation for Rhesus. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Pt.eg.db: Genome wide annotation for Chimp. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Sc.sgd.db: Genome wide annotation for Yeast. R package version 3.15.0.",br(),
-                                   "- Marc Carlson (2022). org.Ss.eg.db: Genome wide annotation for Pig. R package version 3.15.0.",br(),
-                                   "- Morgan M, Shepherd L (2022). AnnotationHub: Client to access AnnotationHub resources. R package version 3.4.0.",br(),
-                                   "- R. Gentleman, V. Carey, W. Huber and F. Hahne (2021). genefilter: methods for filtering genes from high-throughput experiments. R package version 1.72.1.",br(),
-                                   "- Gu, Z. (2016) Complex heatmaps reveal patterns and correlations in multidimensional genomic data. Bioinformatics.",br(),
-                                   "- H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.", br(),
-                                   "- Alboukadel Kassambara (2020). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.4.0. https://CRAN.R-project.org/package=ggpubr",br(),
-                                   "- Adrian Dusa (2021). venn: Draw Venn Diagrams. R package version 1.10. https://CRAN.R-project.org/package=venn",br(),
-                                   "- Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr",br(),
-                                   "- Hadley Wickham (2021). tidyr: Tidy Messy Data. R package version 1.1.3. https://CRAN.R-project.org/package=tidyr",br(),
-                                   "- Machlab D, Burger L, Soneson C, Rijli FM, Schübeler D, Stadler MB. monaLisa: an R/Bioconductor package for identifying regulatory motifs. Bioinformatics (2022).",br(),
-                                   "- Lawrence M, Huber W, Pag\`es H, Aboyoun P, Carlson M, et al. (2013) Software for Computing and Annotating Genomic Ranges. PLoS Comput Biol 9(8): e1003118. doi:10.1371/journal.pcbi.1003118",br(),
-                                   "- Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel:
-  Bioconductor facilities for parallel evaluation_. R package version 1.30.3,
-  <https://github.com/Bioconductor/BiocParallel>.",br(),
-                                   "- Morgan M, Obenchain V, Hester J, Pagès H (2022). _SummarizedExperiment:
-  SummarizedExperiment container_. R package version 1.26.1,
-  <https://bioconductor.org/packages/SummarizedExperiment>.",br(),
-                                   "- Baranasic D (2020). _JASPAR2020: Data package for JASPAR database (version 2020)_. R
-  package version 0.99.10, <http://jaspar.genereg.net/>.",br(),
-                                   "- Team BC, Maintainer BP (2019). _TxDb.Mmusculus.UCSC.mm10.knownGene: Annotation package
-  for TxDb object(s)_. R package version 3.10.0.",br(),
-                                   "- Team TBD (2021). _BSgenome.Mmusculus.UCSC.mm10: Full genome sequences for Mus musculus
-  (UCSC version mm10, based on GRCm38.p6)_. R package version 1.4.3.",br(),
-                                   "- Carlson M, Maintainer BP (2015). _TxDb.Hsapiens.UCSC.hg19.knownGene: Annotation package
-  for TxDb object(s)_. R package version 3.2.2.",br(),
-                                   "- Team TBD (2020). _BSgenome.Hsapiens.UCSC.hg19: Full genome sequences for Homo sapiens
-  (UCSC version hg19, based on GRCh37.p13)_. R package version 1.4.3.",br(),
-                                   "Tan, G., and Lenhard, B. (2016). TFBSTools: an R/bioconductor package for transcription factor
-  binding site analysis. Bioinformatics 32, 1555-1556.",br(),
-                                   "Larsson J (2022). _eulerr: Area-Proportional Euler and Venn Diagrams with Ellipses_. R package version 7.0.0,
-  <https://CRAN.R-project.org/package=eulerr>.",br(),
-                                   )
-                          )
+                 tabPanel("Reference", value = "reference",
+                          uiOutput("reference_tab")
                  ),
                  tabPanel("Change log",value = "log",
-                          fluidRow(
-                            column(12,
-                                   h2("Log:"),
-                                   h4("v1.0.5 (2023/4/24)"),
-                                   strong("・Add 'download summary' buttons in the setting panel for 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'."),br(),
-                                   strong("・Add new species (Xenopus laevis and Arabidopsis thaliana) for KEGG and GO analysis."),br(),
-                                   strong("・Improve the 'start button' for motif analysis in Enrichment viewer."),br(),
-                                   strong("・Improve the 'condition' color of the integrated heatmap in Venn diagram."),br(),
-                                   strong("・Fix the issue of column name shifting in the output table data.(2023/5/10)"),br(),
-                                   strong("・Display a warning message when inappropriate data is uploaded in Pair-wise DEG and 3 conditions DEG.(2023/5/11)"),br(),
-                                   strong("・Display an error message when inappropriate data is uploaded in Pair-wise DEG, 3 conditions DEG, and Multi DEG.(2023/5/18)"),br(),
-                                   h4("v1.0.6 (2023/6/7)"),
-                                   strong("・Add new function: generating report (.docx) when 'download summary' button is pressed in the setting panel of 'Pair-wise DEG', '3 conditions DEG', and 'Multi conditions DEG'.(2023/6/7)"),br(),
-                                   strong("・Fix 'GOI reset' button in the 'Pair-wise DEG', '3 conditions DEG', 'Normalized data count analysis',and 'Volcano navi'.(2023/6/7)"),br(),
-                                   h4("v1.0.7 (2023/7/14)"),
-                                   strong("・Add approximately 200 non-model organisms."),br(),
-                                   strong("・Add new function for the non-model organisms. Related species (Ortholog) can be selected for pathway analysis."),br(),
-                                   strong("・Add the function to export and import a Recode.Rdata file in the '3 conditions DEG'. 
-                                          Recode.Rdata can be obtained by clicking the 'Download summary' button and be imported using 'Option: Recode.Rdata' mode. You can skip the time-consuming EBSeq analysis."),br(),
-                                   strong("・Add the functions for log2FoldChange cut-off and statistical analysis in the 'Normalized count analysis'."),br(),
-                                   strong("・Bug fix. Pathway analysis of non-model organism."),br(),
-                                   strong("(2023/7/19) Bug fix. Adjust the import of Excel files whose column names include hyphens."),br(),
-                                   h4("v1.0.8 (2023/8/1)"),
-                                   strong("(2023/8/1) Significant bug: FDR control for EdgeR in pair-wise DEG. 
-                                          Previous versions could not properly handle 'Qvalue' and 'IHW' when using EdgeR (There were no issues when 'BH' was selected). In the previous versions, 'BH' was always used as the FDR control method when EdgeR was used, even if 'Qvalue' and 'IHW' were selected."),br(),
-                                   strong("Add new species (117 plants, 70 fungi, and 251 metazoa)."),br(),
-                                   strong("(Docker version (ARM)): fix bug regarding edgeR in pair-wise DEG."),br(),
-                                   strong("Improve the image to provide instructions on the input format for the Venn diagram."),br(),
-                                   img(src="venn_input.png", width = 400,height = 300),br(),br(),
-                                   strong("Improve GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi."),
-                                   strong("You can select genes by drawing the box on the volcano/scatter plot."),br(),
-                                   img(src="pair-wise GOI profiling3.png", width = 400,height = 400),
-                                   img(src="cond 3 goi3.png", width = 400,height = 400),br(),br(),
-                                   strong("(2023/8/4) Fix bug regarding the batch-mode in pair-wise DEG."),br(),
-                                   h4("v1.0.9 (2023/9/6)"),
-                                   strong("・New function 'Correlation analysis' in Normalized count analysis."),br(),
-                                   strong("・Enhance usability"),br(),
-                                   strong("1. 'Select samples' function in Pair-wise DEG, 3 conditions DEG, and Normalized count analysis. 
-                                          You can choose the samples you want to analyze using the 'Select samples' function in Pair-wise DEG and 3 conditions DEG, and Normalized count analysis. 
-                                          It's not necessary to create a count file containing only the samples you intend to analyze, except for the batch-mode in Pair-wise DEG."),br(),
-                                   strong("2. k-means clustering in Multi DEG and Normalized count analysis. 
-                                          When genes of interest are selected in the 'kmeans_result (Multi DEG)' and 'k-means clustering result (Normalized count analysis)' panel, their positions are displayed on the heatmap.
-                                          Moreover, the order of clusters on the heatmap can be changed using the 'Order of clusters on the heatmap' function."),br(),
-                                   img(src="norm k-means 2.png", width = 600,height = 400),br(),br(),
-                                   strong("3. 'Order of groups' in the enrichment analysis."),br(), 
-                                   strong("In the previous versions, the x-axis in the dotplot was arranged alphabetically. you have the flexibility to change the order of groups."),br(),
-                                   strong("4. Add MA plot in GOI profiling of Pair-wise DEG."),br(),
-                                   strong("5. Rasterize Heatmap and volcano plot to reduce data size."),br(),
-                                   strong("・Improve the reproducibility of k-means clustering. typically relies on the initial cluster center, which poses a reproducibility issue."),br(), 
-                                   strong("In the previous versions, to mitigate this problem, k-means clustering was executed 100 times, and a final consensus k-means clustering was employed. However, this approach could not gurantee complete reproducibility"),br(),
-                                   strong("In the current version, to adress this problem, k-means clustering is performed with a fixed initial cluster center"),br(),
-                                   strong("・Fix bug."),br(),
-                                   strong("1. bug regarding input format 'normalized count data + meta data' in Normalized count analysis."),br(),
-                                   strong("2. bug when using ENSEMBL ID as gene names."),br(),
-                                   strong("   - Some table data formatting was skewed."),br(),
-                                   strong("   - 'Option: Select a normalized count file' in Pair-wise DEG and 3 conditions DEG was not work."),br(),
-                                   h4("v1.1.0, 2024/1/18"),
-                                   strong("Enhance the visualization of the clustering analysis (PCA, MDS, and UMAP)."), br(),
-                                   strong("Implement a feature to enable the selection of a second pair for fold change cut-off in Multi DEG and Normalized count analysis."), br(),
-                                   strong("Fix bug regarding the motif region of promoter motif analysis in Enrichment viewer."),br(),
-                                   h4("v1.1.1, 2024/3/14"),
-                                   strong("Update the EBSeq R package to version 2.0.0 in pair-wise DEG and 3 conditions DEG. EBSeq.v2 is significantly faster than EBSeq.v1."),br(),
-                                   h4("v1.1.2, 2024/8/19"),
-                                   strong("Add a function for gene extraction using public gene sets in the Normalized count analysis. You can select pathways of interest."),br(),
-                                   img(src="pathway extraction norm.png", width = 800,height = 1000),br(),br(),br(),
-                                   strong("Improve the graph design of boxplots, barplots, and violinplots. You can select the plot types and colors in the GOI profile of the Normalized count analysis."),br(),
-                                   img(src="color norm.png", width = 800,height = 600),br(),br(),br(),
-                                   strong("Fix bugs regarding errors caused by using ENSEMBL IDs that include a decimal point."),br(),
-                                   strong("Fix bugs regarding EBSeq in the Pair-wise DEG"),br(),
-                                   h4("v1.1.3, 2024/10/31"),
-                                   strong("Fix bugs regarding errors caused by using IDs of several species in Normalized count analysis."),br(),
-                                   strong("Add an eulerr package for venn diagram."),br(),
-                                   strong("Add session information that displayed from 'More -> SessionInfo'."),br(),
-                                   h4("v1.1.4, 2024/12/25"),
-                                   strong("Add a filter function in GOI profiling in Pair-wise DEG, 3 conditions DEG, and volcano navi."),br(),
-                                   strong("Add a function to switch unique IDs to short unique IDs in GOI profiling (when using ENSEMBL ID)."),br(),
-                                   strong("Add a new function for gene ID conversion, named 'ENSEMBL ID to SYMBOL'."),br(),
-                                   h4("v1.1.5, 2024/10/16"),
-                                   strong("Fixed the issue where outliers in the boxplot overlapped with individual data points."),br(),
-                                   h4("v1.1.6, 2024/11/9"),
-                                   tags$span("Important update", ": We’ve corrected a PCA plotting bug in RNAseqChef.",br(),
-                                             "Previously, we used the rotation (gene loadings) from R’s prcomp() instead of the x matrix (sample scores), which could misrepresent sample separation. The plot now shows correct sample coordinates. Please re-run PCA; PCs and % variance may change.",style = "color:#d00; font-weight:700;"),
-                            )
-                          )
+                          uiOutput("change_log_tab")
                  ),
                  tabPanel("SessionInfo",
                           fluidRow(

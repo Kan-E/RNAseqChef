@@ -95,6 +95,8 @@ RUN R -e "install.packages('BiocManager',repos='http://cran.rstudio.com/')" && \
 RUN R -e "BiocManager::install('eulerr', update = F)" && \
     R -e "BiocManager::install('grimbough/biomaRt', ref = 'RELEASE_3_14', force = T, update = F)" && \
     R -e "BiocManager::install('eulerr', update = F)"
+R -e "devtools::install_github('rcastelo/GSVA')" && \
+    R -e "BiocManager::install('statmod', update = F)"
 RUN rm -rf /srv/shiny-server/hello
 RUN mkdir -p /srv/shiny-server/RNAseqChef
 

@@ -308,12 +308,12 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing row count matrix, please wait",{
       if (input$data_file_type == "Row1"){
         tmp <- input$file3$datapath
-        if(is.null(input$file3) && input$goButton > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$file3) && input$goButton > 0 )  tmp = example_data_path("data/example1.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example1.txt")
         return(read_df(tmp = tmp))
       }
       if (input$data_file_type == "Row2"){
         tmp <- input$file1$datapath
-        if(is.null(input$file1) && input$goButton > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$file1) && input$goButton > 0 )  tmp = example_data_path("data/example2.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv")
         return(read_df(tmp = tmp))
       }
     })
@@ -323,7 +323,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$file2$datapath
-      if(is.null(input$file2) && input$goButton > 0 )  tmp = example_data_path("data/241011_test_meta.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test_meta.csv")
+      if(is.null(input$file2) && input$goButton > 0 )  tmp = example_data_path("data/example3.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example3.csv")
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
@@ -3379,12 +3379,12 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing row count matrix, please wait",{
       if (input$multi_data_file_type == "Row1"){
         tmp <- input$multi_file1$datapath
-        if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$multi_file1) && input$goButton6 > 0 )  tmp = example_data_path("data/example4.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example4.txt")
         return(read_df(tmp = tmp))
       }
       if (input$multi_data_file_type == "Row2"){
         tmp <- input$multi_file2$datapath
-        if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$multi_file2) && input$goButton6 > 0 )  tmp = example_data_path("data/example8.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example8.txt")
         return(read_df(tmp = tmp))
       }
     })
@@ -3394,7 +3394,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$multi_file3$datapath
-      if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = example_data_path("data/241011_test_metamulti.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test_metamulti.csv")
+      if(is.null(input$multi_file3) && input$goButton6 > 0 )  tmp = example_data_path("data/example5.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example5.csv")
       df <- read_df(tmp = tmp)
       if(!is.null(df)){
         rownames(df) <- gsub("-",".",rownames(df))
@@ -6780,7 +6780,7 @@ shinyServer(function(input, output, session) {
     }
     if (input$data_file_type2 == "Row4"){
       tmp <- input$file5$datapath
-      if(is.null(input$file5) && input$goButton2 > 0 )  tmp = example_data_path("data/sample_ens.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/refs/tags/v1.1.4/data/sample_ens.txt")
+      if(is.null(input$file5) && input$goButton2 > 0 )  tmp = example_data_path("data/example2.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv")
       return(read_df(tmp = tmp))
     }
     if (input$data_file_type2 == "RowRecode_cond3"){
@@ -8281,11 +8281,11 @@ shinyServer(function(input, output, session) {
     withProgress(message = "Importing normalized count matrix, please wait",{
       if (input$data_file_type3 == "Row5"){
         tmp <- input$file7$datapath
-        if(is.null(input$file7) && input$goButton3 > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$file7) && input$goButton3 > 0 )  tmp = example_data_path("data/example8.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example8.txt")
         return(read_df(tmp = tmp))
       }else{
         tmp <- input$file8$datapath
-        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = example_data_path("data/241011_test.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test.txt")
+        if(is.null(input$file8) && input$goButton3 > 0 )  tmp = example_data_path("data/example2.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example2.csv")
         return(read_df(tmp = tmp))
       }
       incProgress(1)
@@ -8296,7 +8296,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       tmp <- input$file9$datapath
-      if(is.null(input$file9) && input$goButton3 > 0 )  tmp <- example_data_path("data/241011_test_meta.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef_imeg/main/data/241011_test_meta.csv")
+      if(is.null(input$file9) && input$goButton3 > 0 )  tmp <- example_data_path("data/example9.csv", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/example9.csv")
       df <- read_df(tmp = tmp)
       if(!is.null(df)) rownames(df) <- gsub("-",".",rownames(df))
       return(df)
@@ -12247,7 +12247,7 @@ shinyServer(function(input, output, session) {
   input_ens <- reactive({
     upload = list()
     tmp <- input$data_file_ens$datapath
-    if(is.null(input$data_file_ens) && input$goButton_ens > 0 )  tmp = example_data_path("data/enrich_example.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/main/data/enrich_example.txt")
+    if(is.null(input$data_file_ens) && input$goButton_ens > 0 )  tmp = example_data_path("data/sample_ens.txt", "https://raw.githubusercontent.com/Kan-E/RNAseqChef/refs/tags/v1.1.4/data/sample_ens.txt")
     if(!is.null(tmp)){
     if(tools::file_ext(tmp) == "xlsx") {
       df <- try(readxl::read_xlsx(tmp))

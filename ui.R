@@ -358,10 +358,11 @@ shinyUI(
             font-style: bold;
             }"))
                                                          ),
-                                                         fluidRow(
-                                                           column(6, radioButtons("paired_sample", "Paired-sample?", c('No'="No",'Yes'="Yes"), selected = "No")),
-                                                           column(6, htmlOutput("paired_sample_file"),)
+                                                         tags$div(
+                                                           style = "display:none;",
+                                                           radioButtons("paired_sample", "Paired-sample?", c('No' = "No"), selected = "No")
                                                          ),
+                                                         htmlOutput("paired_sample_file"),
                                                          dataTableOutput('paired_table'),
                                                          fluidRow(
                                                            column(4, downloadButton("download_pair_d_row_count", "Download defined raw count"))

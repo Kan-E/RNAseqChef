@@ -695,7 +695,7 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$goButton,({
-    updateSelectInput(session,inputId = "Species","Species",species_list, selected = "Homo sapiens")
+    updateSelectInput(session,inputId = "Species","Species",species_list, selected = "Mus musculus")
   }))
   
   observeEvent(input$file1, ({
@@ -3665,7 +3665,7 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$goButton6,({
-    updateSelectInput(session,inputId = "Species6","Species",species_list, selected = "Homo sapiens")
+    updateSelectInput(session,inputId = "Species6","Species",species_list, selected = "Mus musculus")
   }))
   
   observeEvent(input$multi_file1, ({
@@ -8527,7 +8527,7 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$goButton3,({
-    updateSelectInput(session,inputId = "Species3","Species",species_list, selected = "Homo sapiens")
+    updateSelectInput(session,inputId = "Species3","Species",species_list, selected = "Mus musculus")
   }))
   
   observeEvent(input$file7, ({

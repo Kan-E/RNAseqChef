@@ -166,6 +166,18 @@ shinyServer(function(input, output, session) {
     }
     value
   }
+  preview_download_filename <- function(title, default = "preview") {
+    title <- safe_choice_value(title, default)
+    title <- sub("^Exact PDF preview:\\s*", "", title, ignore.case = TRUE)
+    title <- sub("^PDF preview:\\s*", "", title, ignore.case = TRUE)
+    title <- trimws(title)
+    title <- gsub("[^A-Za-z0-9_-]+", "_", title)
+    title <- gsub("^_+|_+$", "", title)
+    if (!nzchar(title)) {
+      title <- default
+    }
+    paste0(title, ".pdf")
+  }
   open_pdf_device <- function(file, height, width, onefile = TRUE) {
     grDevices::pdf(
       file = file,
@@ -243,12 +255,75 @@ shinyServer(function(input, output, session) {
     }
     compute_venn_intersections_manual(gene_list)
   }
+  compute_venn_count_labels <- function(gene_list) {
+    gene_list <- normalize_venn_gene_list(gene_list)
+    n_sets <- length(gene_list)
+    if (!n_sets) {
+      return(character(0))
+    }
+    membership <- sapply(rev(seq_len(n_sets)), function(x) {
+      rep.int(c(sapply(0:1, function(y) rep.int(y, 2^(x - 1)))), 2^n_sets / 2^x)
+    })
+    if (is.null(dim(membership))) {
+      membership <- matrix(membership, ncol = 1)
+    }
+    colnames(membership) <- names(gene_list)
+    intersections <- apply(membership, 1, function(row) {
+      present <- gene_list[as.logical(row)]
+      absent <- gene_list[!as.logical(row)]
+      hits <- if (length(present)) Reduce(intersect, present) else character(0)
+      if (length(absent)) {
+        hits <- setdiff(hits, unlist(absent, use.names = FALSE))
+      }
+      hits
+    })
+    labels <- as.character(vapply(intersections, length, integer(1)))
+    labels[labels == "0"] <- ""
+    labels
+  }
+  get_venn_text_coords <- function(n_sets, ellipse = FALSE) {
+    icoords <- get("icoords", envir = asNamespace("venn"))
+    scoords <- get("scoords", envir = asNamespace("venn"))
+    list(
+      counts = icoords[icoords$s == n_sets & icoords$v == as.integer(ellipse), c("x", "y"), drop = FALSE],
+      sets = scoords[scoords$s == n_sets & scoords$v == as.integer(ellipse), c("x", "y"), drop = FALSE]
+    )
+  }
+  draw_default_venn_text <- function(gene_list, ilabels = "counts", ilcs = 1.5, sncs = 1.5,
+                                     ellipse = FALSE) {
+    n_sets <- length(gene_list)
+    if (!n_sets) {
+      return(invisible(NULL))
+    }
+    coords <- try(get_venn_text_coords(n_sets, ellipse = ellipse), silent = TRUE)
+    if (inherits(coords, "try-error")) {
+      return(invisible(NULL))
+    }
+    count_labels <- NULL
+    if (identical(ilabels, "counts") || isTRUE(ilabels)) {
+      count_labels <- compute_venn_count_labels(gene_list)
+    } else if (is.atomic(ilabels) && !is.null(ilabels)) {
+      count_labels <- as.character(ilabels)
+    }
+    if (!is.null(count_labels) && length(count_labels) == nrow(coords$counts)) {
+      text(coords$counts$x, coords$counts$y, labels = count_labels, cex = ilcs, xpd = NA)
+    }
+    invisible(NULL)
+  }
   draw_default_venn_plot <- function(gene_list, ilabels = "counts", ilcs = 1.5, sncs = 1.5,
                                      fallback_label_cex = 2, fallback_legend_cex = 2) {
+    gene_list <- normalize_venn_gene_list(gene_list)
+    if (is.null(gene_list) || !length(gene_list)) {
+      return(invisible(NULL))
+    }
+    if (is.null(names(gene_list)) || !length(names(gene_list))) {
+      names(gene_list) <- LETTERS[seq_along(gene_list)]
+    }
     result <- try(
       venn::venn(
         gene_list,
-        ilabels = ilabels,
+        snames = rep("", length(gene_list)),
+        ilabels = NULL,
         zcolor = "style",
         opacity = 0,
         ilcs = ilcs,
@@ -257,6 +332,7 @@ shinyServer(function(input, output, session) {
       silent = TRUE
     )
     if (!inherits(result, "try-error")) {
+      draw_default_venn_text(gene_list, ilabels = ilabels, ilcs = ilcs, sncs = sncs)
       return(invisible(result))
     }
     plot(
@@ -389,8 +465,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       req(shared_pdf_preview_state$request_fun, shared_pdf_preview_state$target)
       request <- shared_pdf_preview_state$request_fun(shared_pdf_preview_state$target)
-      title <- safe_choice_value(request$title, "preview")
-      paste0(gsub("[^A-Za-z0-9_-]+", "_", title), ".pdf")
+      preview_download_filename(request$title, "preview")
     },
     content = function(file) {
       req(shared_pdf_preview_state$request_fun, shared_pdf_preview_state$target)
@@ -795,7 +870,7 @@ shinyServer(function(input, output, session) {
                  paste(strwrap(x, width = 15), collapse = "\n")
                }, character(1))
                if(input$venn_type == "default" || is.null(input$eulerr_label)) {
-                 draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 1.5, sncs = 1.5,
+                 draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 0.8, sncs = 0.8,
                                         fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
                } else {
                  if(input$eulerr_label == "ON") {
@@ -11919,7 +11994,7 @@ shinyServer(function(input, output, session) {
           }else pdf_width <- input$venn_pdf_width
           open_pdf_device(file, height = pdf_height, width = pdf_width)
           if(input$venn_type == "default" || is.null(input$eulerr_label)) {
-            draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 1.5, sncs = 1.5,
+            draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 0.8, sncs = 0.8,
                                    fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
           } else {
             if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL

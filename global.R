@@ -10,21 +10,7 @@ library(shiny)
 library(shinyBS, verbose = FALSE)
 library('shinyjs', verbose = FALSE)
 library(DT)
-library(org.Hs.eg.db)
-library(org.Mm.eg.db)
-library(org.Rn.eg.db)
-library(org.Dm.eg.db)
-library(org.Ce.eg.db)
-library(org.Xl.eg.db)
 library(AnnotationDbi)
-library(org.Bt.eg.db)
-library(org.Cf.eg.db)
-library(org.Dr.eg.db)
-library(org.Gg.eg.db)
-library(org.Mmu.eg.db)
-library(org.Pt.eg.db)
-library(org.Sc.sgd.db)
-library(org.At.tair.db)
 library(dplyr)
 library(ggplot2)
 library(stringr)
@@ -42,28 +28,62 @@ library(DESeq2)
 library(EBSeq)
 library(ggnewscale)
 library(edgeR)
-library(qvalue)
 library(DEGreport)
-library(msigdbr)
 library(ComplexHeatmap)
-library(plotly,verbose=FALSE)
-library(umap)
 library(biomaRt)
 library(limma)
 library(colorspace)
-library(pdftools)
-library(magick)
 library(clue)
 library(ggrastr) ##devtools::install_github('VPetukhov/ggrastr')
 library(statmod)
 library(eulerr)
+orgdb_package_names <- c(
+  "org.Hs.eg.db",
+  "org.Mm.eg.db",
+  "org.Rn.eg.db",
+  "org.Dm.eg.db",
+  "org.Ce.eg.db",
+  "org.Xl.eg.db",
+  "org.Bt.eg.db",
+  "org.Cf.eg.db",
+  "org.Dr.eg.db",
+  "org.Gg.eg.db",
+  "org.Mmu.eg.db",
+  "org.Pt.eg.db",
+  "org.Sc.sgd.db",
+  "org.At.tair.db"
+)
+
+load_orgdb_package <- function(package_name) {
+  if (!requireNamespace(package_name, quietly = TRUE)) {
+    stop("Package not installed: ", package_name)
+  }
+  getExportedValue(package_name, package_name)
+}
+
+register_lazy_orgdb_packages <- function(env) {
+  for (package_name in orgdb_package_names) {
+    local({
+      pkg <- package_name
+      delayedAssign(
+        pkg,
+        load_orgdb_package(pkg),
+        assign.env = env
+      )
+    })
+  }
+}
+
+register_lazy_orgdb_packages(environment())
 bioc_repos <- tryCatch(
   suppressWarnings(BiocManager::repositories()),
   error = function(e) getOption("repos")
 )
 options(repos = bioc_repos)
+app_root <- normalizePath(getwd(), mustWork = TRUE)
+
 app_file <- function(...) {
-  file.path(getwd(), ...)
+  file.path(app_root, ...)
 }
 
 copy_to_temp_if_exists <- function(source_path, target_name = basename(source_path)) {
@@ -172,24 +192,71 @@ gene_primary_key <- function(my.symbols) {
   if (length(my.symbols) == 0 || is.na(my.symbols[1]) || !nzchar(my.symbols[1])) {
     return("ENSEMBL")
   }
-  if (str_detect(my.symbols[1], "^AT.G")) "TAIR" else "ENSEMBL"
+  first_id <- gsub("\\..*$", "", as.character(my.symbols[1]))
+  if (str_detect(first_id, "^AT[1-5MC]G[0-9]+$")) {
+    return("TAIR")
+  }
+  if (str_detect(first_id, "^WBGene[0-9]+$")) {
+    return("WORMBASE")
+  }
+  if (str_detect(first_id, "^S[0-9]{9}$")) {
+    return("SGD")
+  }
+  "ENSEMBL"
 }
 is_ensembl_like_id <- function(my.symbols, org_obj = NULL) {
   if (length(my.symbols) == 0 || is.na(my.symbols[1]) || !nzchar(my.symbols[1])) {
     return(FALSE)
   }
-  first_id <- my.symbols[1]
-  if (str_detect(first_id, "ENS") ||
-      str_detect(first_id, "FBgn") ||
-      str_detect(first_id, "^AT.G")) {
+  first_id <- gsub("\\..*$", "", as.character(my.symbols[1]))
+  if (str_detect(first_id, "^ENS") ||
+      str_detect(first_id, "^FBgn") ||
+      str_detect(first_id, "^AT[1-5MC]G[0-9]+$") ||
+      str_detect(first_id, "^WBGene[0-9]+$")) {
     return(TRUE)
   }
   if (!is.null(org_obj) &&
       !is.null(org_obj$packageName) &&
       identical(org_obj$packageName, "org.Sc.sgd.db")) {
-    return(str_detect(first_id, "^Y[A-Z]{2}[0-9]{3}[CW](?:-[A-Z])?$"))
+    return(str_detect(first_id, "^Y[A-Z]{2}[0-9]{3}[CW](?:-[A-Z])?$") ||
+             str_detect(first_id, "^S[0-9]{9}$"))
   }
   FALSE
+}
+is_transcript_like_id <- function(my.symbols) {
+  if (length(my.symbols) == 0) {
+    return(FALSE)
+  }
+  first_id <- as.character(my.symbols[1])
+  if (is.na(first_id) || !nzchar(first_id)) {
+    return(FALSE)
+  }
+  first_id <- gsub("\\..*$", "", first_id)
+  str_detect(first_id, "^ENS[A-Z0-9]*T[0-9]+$") ||
+    str_detect(first_id, "^FBtr") ||
+    str_detect(first_id, "^(NM|NR|XM|XR)_[0-9]+$")
+}
+prepare_ranked_gene_list <- function(data, value_col = "log2FoldChange", id_col = "ENTREZID") {
+  if (is.null(data) || !is.data.frame(data) || !nrow(data) ||
+      !all(c(value_col, id_col) %in% colnames(data))) {
+    return(NULL)
+  }
+  stats <- suppressWarnings(as.numeric(data[[value_col]]))
+  ids <- as.character(data[[id_col]])
+  keep <- !is.na(stats) & is.finite(stats) & !is.na(ids) & nzchar(ids)
+  if (!any(keep)) {
+    return(NULL)
+  }
+  ranked <- data.frame(
+    gene_id = ids[keep],
+    stat = stats[keep],
+    stringsAsFactors = FALSE
+  )
+  ranked <- ranked[order(abs(ranked$stat), decreasing = TRUE), , drop = FALSE]
+  ranked <- ranked[!duplicated(ranked$gene_id), , drop = FALSE]
+  geneList <- ranked$stat
+  names(geneList) <- ranked$gene_id
+  sort(geneList, decreasing = TRUE)
 }
 gene_set_cache <- new.env(parent = emptyenv())
 read_by_extension <- function(tmp, use_row_names = FALSE, na_strings = NULL){
@@ -1970,10 +2037,20 @@ keggEnrichment1_xenopus <- function(data3, data4, Species, Gene_set, org, org_co
 
 build_cnetplot <- function(cnet, foldChange = NULL, showCategory = NULL,
                            cex_label_gene = 0.7, cex_label_category = 0.75,
-                           cex_category = 0.75) {
-  args_core <- list(x = cnet)
-  if (!is.null(showCategory)) args_core$showCategory <- showCategory
-  if (!is.null(foldChange)) args_core$foldChange <- foldChange
+                           cex_category = 0.75, color_edge = "category") {
+  args_base <- list(x = cnet)
+  if (!is.null(showCategory)) args_base$showCategory <- showCategory
+  if (!is.null(foldChange)) args_base$foldChange <- foldChange
+  args_core <- args_base
+  if (!is.null(color_edge)) args_core$color_edge <- color_edge
+  args_base_label <- c(
+    args_base,
+    list(
+      cex_label_gene = cex_label_gene,
+      cex_label_category = cex_label_category,
+      cex_category = cex_category
+    )
+  )
   args_label <- c(
     args_core,
     list(
@@ -1986,14 +2063,20 @@ build_cnetplot <- function(cnet, foldChange = NULL, showCategory = NULL,
   candidates <- list(
     list(pkg = "enrichplot", args = args_core),
     list(pkg = "clusterProfiler", args = args_core),
-    list(pkg = "enrichplot", args = c(args_core, list(colorEdge = TRUE))),
-    list(pkg = "enrichplot", args = c(args_core, list(color.params = list(edge = TRUE)))),
-    list(pkg = "clusterProfiler", args = c(args_core, list(colorEdge = TRUE))),
+    list(pkg = "enrichplot", args = c(args_base, list(color.params = list(edge = color_edge)))),
+    list(pkg = "clusterProfiler", args = c(args_base, list(color.params = list(edge = color_edge)))),
+    list(pkg = "enrichplot", args = c(args_base, list(colorEdge = TRUE))),
+    list(pkg = "clusterProfiler", args = c(args_base, list(colorEdge = TRUE))),
+    list(pkg = "enrichplot", args = args_base),
+    list(pkg = "clusterProfiler", args = args_base),
     list(pkg = "enrichplot", args = args_label),
     list(pkg = "clusterProfiler", args = args_label),
-    list(pkg = "enrichplot", args = c(args_label, list(colorEdge = TRUE))),
-    list(pkg = "enrichplot", args = c(args_label, list(color.params = list(edge = TRUE)))),
-    list(pkg = "clusterProfiler", args = c(args_label, list(colorEdge = TRUE)))
+    list(pkg = "enrichplot", args = c(args_base_label, list(color.params = list(edge = color_edge)))),
+    list(pkg = "clusterProfiler", args = c(args_base_label, list(color.params = list(edge = color_edge)))),
+    list(pkg = "enrichplot", args = c(args_base_label, list(colorEdge = TRUE))),
+    list(pkg = "clusterProfiler", args = c(args_base_label, list(colorEdge = TRUE))),
+    list(pkg = "enrichplot", args = args_base_label),
+    list(pkg = "clusterProfiler", args = args_base_label)
   )
 
   for (candidate in candidates) {
@@ -2054,7 +2137,7 @@ keggEnrichment2 <- function(data3, data4,cnet_list2){
                                    cex_label_gene = 0.7,
                                    cex_label_category = 0.75,
                                    cex_category = 0.75)
-          c <- as_cnet_grob(c_plot, remove_all_legend = TRUE)
+          c <- as_cnet_grob(c_plot, remove_all_legend = FALSE)
           cnet_list[[name]] = c
         }
         cnet1 <- cnet_df
@@ -2849,7 +2932,7 @@ cnet_global <- function(data, group, enrich_gene_list, showCategory=5){
                                     cex_label_gene = 0.7,
                                     cex_label_category = 0.75,
                                     cex_category = 0.75)
-          p2 <- as_cnet_grob(p2_plot, remove_all_legend = TRUE)
+          p2 <- as_cnet_grob(p2_plot, remove_all_legend = FALSE)
         }
         p <- plot_grid(p2)
         return(p)
@@ -2883,229 +2966,6 @@ cnet_for_output <- function(data, plot_data, Gene_set, Species){
         }else return(NULL)
       }
     }
-}
-
-getTargetSeq <- function(Species, upstream, downstream){
-  library(TFBSTools)
-  if(Species == "Mus musculus"){
-    library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-    txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
-  }
-  if(Species == "Homo sapiens"){
-    library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-    txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-  }
-  x <- promoters(genes(txdb), upstream = upstream, downstream = downstream)
-  return(x)
-}
-
-MotifAnalysis <- function(data, Species, org,x){
-  withProgress(message = "Motif analysis takes about 2 min per group",{
-    library(TFBSTools)
-    library(monaLisa)
-    library(GenomicRanges)
-    library(BiocParallel)
-    library(SummarizedExperiment)
-    library(JASPAR2020)
-    if(Species == "Mus musculus"){
-      library(BSgenome.Mmusculus.UCSC.mm10)
-      genome = BSgenome.Mmusculus.UCSC.mm10
-      tax <- 10090
-    }
-    if(Species == "Homo sapiens"){
-      library(BSgenome.Hsapiens.UCSC.hg19)
-      genome = BSgenome.Hsapiens.UCSC.hg19
-      tax <- 9606
-    }
-  pwms <- getMatrixSet(JASPAR2020,
-                       opts = list(matrixtype = "PWM",
-                                   tax_group = "vertebrates",
-                                   species = tax
-                                   ))
-  df <- data.frame(GeneID = data[,1], Group = data[,2])
-  df2 <- list()
-  group_file <- length(unique(df$Group))
-  perc <- 0
-  for(name in unique(df$Group)){
-    perc <- perc + 1
-    data <- dplyr::filter(df, Group == name)
-    my.symbols <- data$GeneID
-    group.name <- paste(name, "\n(", length(my.symbols),")",sep = "")
-    if(is_ensembl_like_id(my.symbols, org)){
-      if(sum(is.element(no_orgDb, Species)) == 1){
-        gene_IDs <- org(Species)
-        gene_IDs <- gene_IDs[,-2]
-      }else{
-      key <- gene_primary_key(my.symbols)
-      gene_IDs<-AnnotationDbi::select(org,keys = my.symbols,
-                                      keytype = key,
-                                      columns = c("ENTREZID",key))
-      }
-      colnames(gene_IDs) <- c("ENSEMBL","gene_id")
-    }else{
-      if(sum(is.element(no_orgDb, Species)) == 1){
-        gene_IDs <- org(Species)
-        gene_IDs <- gene_IDs[,-1]
-      }else{
-      SYMBOL <- sgd_symbol_column(org)
-      gene_IDs <- AnnotationDbi::select(org, keys = my.symbols,
-                                        keytype = SYMBOL,
-                                        columns = c(SYMBOL,"ENTREZID"))
-      }
-      colnames(gene_IDs) <- c("SYMBOL","gene_id")
-    }
-    y <- subset(x, gene_id %in% gene_IDs$gene_id)
-    if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
-    seq <- getSeq(genome, y)
-    se <- calcBinnedMotifEnrR(seqs = seq,
-                              pwmL = pwms,
-                              background = "genome",
-                              genome = genome,
-                              genome.regions = subset(x, ! gene_id %in% gene_IDs$gene_id),
-                              genome.oversample = 2,
-                              BPPARAM = BiocParallel::SerialParam(RNGseed = 42),
-                              verbose = TRUE)
-      res <- data.frame(motif.id = elementMetadata(se)$motif.id, motif.name = elementMetadata(se)$motif.name,
-                        motif.percentGC = elementMetadata(se)$motif.percentGC,
-                        negLog10P = assay(se,"negLog10P"),negLog10Padj = assay(se,"negLog10Padj"), 
-                        log2enr = assay(se,"log2enr"),pearsonResid = assay(se,"pearsonResid"),
-                        expForegroundWgtWithHits = assay(se,"expForegroundWgtWithHits"),
-                        sumForegroundWgtWithHits = assay(se,"sumForegroundWgtWithHits"),
-                        sumBackgroundWgtWithHits = assay(se,"sumBackgroundWgtWithHits"),
-                        Group = group.name)
-      df2[[name]] <- res
-    incProgress(1/group_file, message = paste("Finish motif analysis of Group '", name, "', ", perc, "/", group_file,sep = ""))
-  }
-  return(df2)
-})
-}
-
-MotifRegion <- function(data, target_motif, Species, x){
-  if(Species == "Mus musculus"){
-    genome = BSgenome.Mmusculus.UCSC.mm10
-  }
-  if(Species == "Homo sapiens"){
-    genome = BSgenome.Hsapiens.UCSC.hg19
-  }
-  df <- data.frame(GeneID = data[,1], Group = data[,2])
-  target_motif$Group <- gsub(" ", "\n", target_motif$Group)
-  name <- gsub("\\\n.+$", "", target_motif$Group)
-  data <- dplyr::filter(df, Group %in% name)
-  my.symbols <- data$GeneID
-  if(is_ensembl_like_id(my.symbols, org(Species))){
-    if(sum(is.element(no_orgDb, Species)) == 1){
-      gene_IDs <- org(Species)
-      gene_IDs <- data.frame(gene_id = gene_IDs$ENTREZID, ENSEMBL = gene_IDs$ENSEMBL)
-    }else{
-    key <- gene_primary_key(my.symbols)
-    gene_IDs<-AnnotationDbi::select(org(Species),keys = my.symbols,
-                                    keytype = key,
-                                    columns = c("ENTREZID",key))
-    }
-    colnames(gene_IDs) <- c("gene_id","ENSEMBL")
-  }else{
-    if(sum(is.element(no_orgDb, Species)) == 1){
-      gene_IDs <- org(Species)
-      gene_IDs <- gene_IDs[,-1]
-    }else{
-      SYMBOL <- sgd_symbol_column(org(Species))
-    gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
-                                      keytype = SYMBOL,
-                                      columns = c(SYMBOL,"ENTREZID"))
-    }
-    colnames(gene_IDs) <- c("SYMBOL","gene_id")
-  }
-  y <- subset(x, gene_id %in% gene_IDs$gene_id)
-  if(length(rownames(as.data.frame(y))) == 0) stop("Incorrect species")
-  seq <- getSeq(genome, y)
-  pfm <- getMatrixByID(JASPAR2020,target_motif$motif.id)
-  pwm <- toPWM(pfm)
-  res <- findMotifHits(query = pwm,
-                       subject = seq,
-                       min.score = 6.0,
-                       method = "matchPWM",
-                       BPPARAM = BiocParallel::SerialParam()) %>% as.data.frame()
-  my.symbols <- as.character(res$seqnames)
-  SYMBOL <- sgd_symbol_column(org(Species))
-  gene_IDs <- AnnotationDbi::select(org(Species), keys = my.symbols,
-                                    keytype = "ENTREZID",
-                                    columns = c(SYMBOL,"ENTREZID"))
-  colnames(gene_IDs) <- c("seqnames","SYMBOL")
-  res2<-merge(gene_IDs,res,by="seqnames")
-  res2 <- res2[,-1]
-  return(res2)
-}
-
-Motifplot <- function(df2, showCategory=5,padj,data,group_order){
-  df <- data.frame(matrix(rep(NA, 11), nrow=1))[numeric(0), ]
-  data <- data.frame(GeneID = data[,1], Group = data[,2])
-  for(name in names(df2)){
-    res <- df2[[name]]
-    print(name)
-    data2 <- dplyr::filter(data, Group == name)
-    my.symbols <- data2$GeneID
-    if(!is.null(group_order)) group_order[which(group_order == name)] <- paste(name, "\n(", length(my.symbols),")",sep = "")
-    res <- dplyr::filter(res, X1 > -log10(padj))
-    res <- res %>% dplyr::arrange(-X1.1)
-    if(length(rownames(res)) > showCategory){
-      res <- res[1:showCategory,]
-    }
-    df <- rbind(df, res)
-  }
-  colnames(df) <- c("motif.id", "motif.name","motif.percentGC", "negLog10P", "negLog10Padj", "log2enr",
-                    "pearsonResid", "expForegroundWgtWithHits", "sumForegroundWgtWithHits", "sumBackgroundWgtWithHits",
-                    "Group")
-  if(length(df$motif.id) == 0){
-    return(NULL)
-  }else{
-    df$Group <- gsub("_", " ", df$Group)
-    print(unique(df$Group))
-    
-    if(!is.null(group_order)) group_order <- gsub("_", " ", group_order)
-    print(group_order)
-    if(!is.null(group_order)) df$Group <- factor(df$Group,levels=group_order)
-  df$padj <- 10^(-df$negLog10Padj)
-  df <- dplyr::mutate(df, x = paste0(Group, 1/-log10(eval(parse(text = "padj")))))
-  df$x <- gsub(":","", df$x)
-  df <- dplyr::arrange(df, x)
-  idx <- order(df[["Group"]], df[["x"]], decreasing = FALSE)
-  df$motif.name <- factor(df$motif.name,
-                          levels=rev(unique(df$motif.name[idx])))
-  d <- ggplot(df, aes(x = Group,y= motif.name,color=padj,size=log2enr))+
-    geom_point() +
-    scale_color_continuous(low="red", high="blue",
-                           guide=guide_colorbar(reverse=TRUE)) +
-    scale_size(range=c(1, 6))+ DOSE::theme_dose(font.size=15)+ylab(NULL)+xlab(NULL) +
-    scale_y_discrete(labels = label_wrap_gen(30)) + scale_x_discrete(position = "top")+
-    theme(plot.margin=margin(l=-0.75,unit="cm"))
-  
-  df <- df %>% distinct(motif.id, .keep_all = T)
-  width.seqlogo = 2
-  highlight <- NULL
-  clres <- FALSE
-  optsL <- list(ID = df$motif.id)
-  pfm1 <- TFBSTools::getMatrixSet(JASPAR2020, opts = optsL)
-  maxwidth <- max(vapply(TFBSTools::Matrix(pfm1), ncol, 0L))
-  grobL <- lapply(pfm1, seqLogoGrob, xmax = maxwidth, xjust = "center")
-  hmSeqlogo <- HeatmapAnnotation(logo = annoSeqlogo(grobL = grobL, 
-                                                    which = "row", space = unit(1, "mm"),
-                                                    width = unit(width.seqlogo, "inch")), 
-                                 show_legend = FALSE, show_annotation_name = FALSE, 
-                                 which = "row")
-  tmp <- matrix(rep(NA, length(df$motif.id)),ncol = 1, 
-                dimnames = list(df$motif.name, NULL))
-  
-  hmMotifs <- Heatmap(matrix = tmp, name = "names", width = unit(0, "inch"), 
-                      na_col = NA, col = c(`TRUE` = "green3",`FALSE` = "white"), 
-                      cluster_rows = clres, show_row_dend = show_dendrogram, 
-                      cluster_columns = FALSE, show_row_names = TRUE, row_names_side = "left", 
-                      show_column_names = FALSE, show_heatmap_legend = FALSE,
-                      left_annotation = hmSeqlogo)
-  h <- grid.grabExpr(print(hmMotifs),wrap.grobs=TRUE)
-  p <- plot_grid(plot_grid(NULL, h, ncol = 1, rel_heights = c(0.05:10)),as.grob(d))
-  
-  return(p)
-  }
 }
 
 GOIheatmap <- function(data.z, show_row_names = TRUE, type = NULL, GOI = NULL, all=FALSE){
@@ -3178,7 +3038,9 @@ ensembl2symbol <- function(data,Species,Ortholog,Isoform,gene_type,org, merge=TR
 gene_type <- function(my.symbols,org,Species,RNA_type="gene_level"){
     Species <- normalize_species_input(Species)
     if(Species != "not selected"){
-  if(RNA_type == "gene_level") {
+  if(RNA_type != "gene_level" && is_transcript_like_id(my.symbols)) {
+    type <- "isoform"
+  } else {
     ENS <- "ENSEMBL"
     ENT <- "SYMBOL"
     if(sum(is.element(no_orgDb, Species)) != 1){
@@ -3197,7 +3059,7 @@ gene_type <- function(my.symbols,org,Species,RNA_type="gene_level"){
       if(dim(ENSEMBL)[1] > dim(SYMBOL)[1]) type <- "ENSEMBL" else type <- "SYMBOL"
     }
     }else type <- "non-model organism"
-  }else type <- "isoform"
+  }
   }else type <- "not selected"
   return(type)
 }
@@ -3258,14 +3120,13 @@ corr_plot_pair <- function(data,corr_color,GOI_x,GOI_y,logscale=TRUE){
 }
 
 
-library(GSVA)
 ssGSEA <- function(norm_count, gene_set,org,gene_type,Species,Ortholog){
   set.seed(12345)
   genesbyGeneSet <- split(gene_set$GeneID,gene_set$gs_name)
   if(length(grep("SYMBOL", colnames(norm_count))) != 0) norm_count <- norm_count[, - which(colnames(norm_count) == "SYMBOL")]
   
-  ssgseaPar <- ssgseaParam(as.matrix(norm_count),genesbyGeneSet)
-  ssgsea.score <- gsva(ssgseaPar)
+  ssgseaPar <- GSVA::ssgseaParam(as.matrix(norm_count),genesbyGeneSet)
+  ssgsea.score <- GSVA::gsva(ssgseaPar)
   return(ssgsea.score)
 }
 

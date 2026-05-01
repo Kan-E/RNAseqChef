@@ -54,10 +54,12 @@
     <p><strong>&bull; Fix overlap between boxplot outliers and individual data points.</strong></p>
     <h4>v1.1.6-beta, 2024/11/9</h4>
     <p><span style="color:#d00; font-weight:700;">Important update: We've corrected a PCA plotting bug in RNAseqChef. Previously, we used the rotation (gene loadings) from R's prcomp() instead of the x matrix (sample scores), which could misrepresent sample separation. The plot now shows correct sample coordinates. Please re-run PCA; PCs and % variance may change.</span></p>
-    <h4>v1.1.7</h4>
+    <h4>v1.1.7 (2026/5/1)</h4>
     <p><strong>&bull; Added ssGSEA analysis to Multi DEG.</strong></p>
     <p><strong>&bull; Added boxplots to compare gene expression by group in k-means clustering of Normalized count analysis.</strong></p>
     <p><strong>&bull; Improved app performance with lighter and more optimized processing.</strong></p>
     <p><strong>&bull; Fixed bugs in the Venn diagram workflow.</strong></p>
+    <p><strong>&bull; Added popup PDF preview for plot downloads across all modules.</strong></p>
+    <p><strong>&bull; Removed promoter motif analysis from the web version. Motif analysis is available only in the Docker version.</strong></p>
   </div>
 </div>

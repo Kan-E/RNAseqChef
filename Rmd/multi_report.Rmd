@@ -12,6 +12,12 @@ params:
     multi_kmeans_box: [some object]
     multi_enrich_k_table: [some object]
     multi_GSEA_table: [some object]
+    multi_ssGSEA_score: [some object]
+    multi_ssGSEA_limma: [some object]
+    multi_ssGSEA_limma_dp: [some object]
+    multi_ssGSEA_GOIbox_statistic: [some object]
+    multi_ssGSEA_contribute_cor: [some object]
+    multi_ssGSEA_TF_cor: [some object]
     multi_pattern1: [some object]
     multi_deg_count1: [some object]
 output:
@@ -274,6 +280,111 @@ table <- try(params$multi_GSEA_table[,-2:-4])
 table <- try(table[,-3])
 try(knitr::kable(table[,-5:-7]))
 }
+```
+
+
+\newpage
+
+## ssGSEA
+
+```{r echo=FALSE}
+report_scalar <- function(x, default = "not selected") {
+  if(is.null(x) || !length(x)) {
+    return(default)
+  }
+  x <- x[[1]]
+  if(is.null(x) || is.na(x) || identical(as.character(x), "")) {
+    return(default)
+  }
+  as.character(x)
+}
+ssGSEA_done <- !is.null(params$multi_ssGSEA_score)
+ssGSEA_set <- report_scalar(params$input$Gene_set_ssGSEA)
+ssGSEA_file_set <- gsub("[^A-Za-z0-9_.-]+", "_", ssGSEA_set)
+ssGSEA_fdr <- report_scalar(params$input$ssGSEA_fdr)
+ssGSEA_contribute_pathway <- report_scalar(params$input$selectssGSEA_contribute_pathway)
+ssGSEA_contribute_file <- gsub("[^A-Za-z0-9_.-]+", "_", ssGSEA_contribute_pathway)
+```
+
+ - Gene set: **`r ssGSEA_set`**
+ - FDR cut-off: **`r ssGSEA_fdr`**
+ - table data
+    - ssGSEA score (`r paste0("ssGSEA/", ssGSEA_file_set, "_ssGSEA_score.txt")`)
+    - ssGSEA differential analysis (`r paste0("ssGSEA/", ssGSEA_file_set, "_ssGSEA_differential_analysis_all_result.txt")`)
+    - ssGSEA differential pathways (`r paste0("ssGSEA/", ssGSEA_file_set, "_ssGSEA_differential_pathways.txt")`)
+
+GOI heatmap: `r "ssGSEA/GOIheatmap.pdf"`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(ssGSEA_done && file.exists("ssGSEA/GOIheatmap.pdf")){
+try(magick::image_read_pdf("ssGSEA/GOIheatmap.pdf"))
+}else print("Not performed")
+```
+
+GOI boxplot: `r "ssGSEA/ssGSEA_boxplot.pdf"`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(ssGSEA_done && file.exists("ssGSEA/ssGSEA_boxplot.pdf")){
+try(magick::image_read_pdf("ssGSEA/ssGSEA_boxplot.pdf"))
+}else print("Not performed")
+```
+
+Contribution plot: `r paste0("ssGSEA/ssGSEAcontributed_", ssGSEA_contribute_file, ".pdf")`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(ssGSEA_done && file.exists(paste0("ssGSEA/ssGSEAcontributed_", ssGSEA_contribute_file, ".pdf"))){
+try(magick::image_read_pdf(paste0("ssGSEA/ssGSEAcontributed_", ssGSEA_contribute_file, ".pdf")))
+}else print("Not performed")
+```
+
+DoRothEA TF plot: `r "ssGSEA/ssGSEAscore_vsExpression_level.pdf"`
+
+```{r, out.width="0.3\\linewidth", include=TRUE, fig.align="center", echo=FALSE}
+if(ssGSEA_done && file.exists("ssGSEA/ssGSEAscore_vsExpression_level.pdf")){
+try(magick::image_read_pdf("ssGSEA/ssGSEAscore_vsExpression_level.pdf"))
+}else print("Not performed")
+```
+
+ - ssGSEA score
+
+```{r echo = FALSE}
+if(!is.null(params$multi_ssGSEA_score)){
+table <- as.data.frame(params$multi_ssGSEA_score)
+table <- table[seq_len(min(nrow(table), 6)), seq_len(min(ncol(table), 6)), drop = FALSE]
+try(knitr::kable(table))
+}else print("Not performed")
+```
+
+ - ssGSEA differential analysis
+
+```{r echo = FALSE}
+if(!is.null(params$multi_ssGSEA_limma)){
+try(knitr::kable(head(params$multi_ssGSEA_limma)))
+}else print("Not performed")
+```
+
+ - ssGSEA differential pathways
+
+```{r echo = FALSE}
+if(!is.null(params$multi_ssGSEA_limma_dp)){
+try(knitr::kable(head(params$multi_ssGSEA_limma_dp)))
+}else print("Not performed")
+```
+
+ - ssGSEA contribution table
+
+```{r echo = FALSE}
+if(!is.null(params$multi_ssGSEA_contribute_cor)){
+try(knitr::kable(head(params$multi_ssGSEA_contribute_cor)))
+}else print("Not performed")
+```
+
+ - DoRothEA TF table
+
+```{r echo = FALSE}
+if(!is.null(params$multi_ssGSEA_TF_cor)){
+try(knitr::kable(head(params$multi_ssGSEA_TF_cor)))
+}else print("Not performed")
 ```
 
 

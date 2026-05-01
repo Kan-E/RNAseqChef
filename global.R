@@ -1348,14 +1348,22 @@ PCAplot <- function(data,legend=NULL){
                  "% of variance)", sep = "")
   lab_y <- paste("PC2 (", lab_y, sep = "")
   pca$x <- as.data.frame(pca$x)
+  legend <- if(is.null(legend) || !length(legend)){
+    NULL
+  }else{
+    legend_value <- as.character(legend[[1]])
+    if(is.na(legend_value) || !nzchar(legend_value)) NULL else legend_value
+  }
+  legend_position <- "none"
+  label2 <- NULL
   if(!is.null(legend)) {
-    if(legend == "Legend"){
+    if(identical(legend, "Legend")){
       legend_position <- "top" 
-      label2<- NULL
+      label2 <- NULL
     }else{
       legend_position <- "none"
-      label2<- label
-  }
+      label2 <- label
+    }
   }
   g1 <- ggplot(pca$x,aes(x=pca$x[,1],
                                 y=pca$x[,2],
@@ -1367,7 +1375,7 @@ PCAplot <- function(data,legend=NULL){
     theme(legend.position=legend_position, aspect.ratio=1)+ 
     guides(color=guide_legend(title=""))
   if(!is.null(legend)){
-    if(legend == "Label") g1 <- g1 + geom_text_repel(show.legend = NULL)
+    if(identical(legend, "Label")) g1 <- g1 + geom_text_repel(show.legend = NULL)
   }
   rho <- cor(data,method="spearman")
   d <- as.dist(1-rho)
@@ -1383,7 +1391,7 @@ PCAplot <- function(data,legend=NULL){
     guides(color=guide_legend(title=""))
   }else g2 <- NULL
   if(!is.null(legend)){
-    if(legend == "Label") g2 <- g2 + geom_text_repel(show.legend = NULL)
+    if(identical(legend, "Label")) g2 <- g2 + geom_text_repel(show.legend = NULL)
   }
   x <- NULL
   y <- NULL

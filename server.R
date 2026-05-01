@@ -149,10 +149,35 @@ shinyServer(function(input, output, session) {
     }
     x
   }
+  first_scalar_value <- function(x, default = NULL) {
+    if (is.null(x) || !length(x)) {
+      return(default)
+    }
+    x[[1]]
+  }
+  safe_choice_value <- function(x, default = NULL) {
+    value <- first_scalar_value(x, default = default)
+    if (is.null(value) || !length(value) || is.na(value)) {
+      return(default)
+    }
+    value <- as.character(value[[1]])
+    if (!nzchar(value)) {
+      return(default)
+    }
+    value
+  }
+  open_pdf_device <- function(file, height, width, onefile = TRUE) {
+    grDevices::pdf(
+      file = file,
+      height = height,
+      width = width,
+      onefile = onefile
+    )
+  }
   render_pdf_preview_png <- function(height, width, draw_expr, dpi = 144) {
     pdf_file <- tempfile(fileext = ".pdf")
     png_file <- tempfile(fileext = ".png")
-    grDevices::pdf(pdf_file, height = height, width = width, onefile = TRUE)
+    open_pdf_device(pdf_file, height = height, width = width, onefile = TRUE)
     tryCatch(
       {
         draw_expr()
@@ -298,7 +323,7 @@ shinyServer(function(input, output, session) {
     filename = function() {
       req(shared_pdf_preview_state$request_fun, shared_pdf_preview_state$target)
       request <- shared_pdf_preview_state$request_fun(shared_pdf_preview_state$target)
-      title <- if (is.null(request$title) || !nzchar(request$title)) "preview" else request$title
+      title <- safe_choice_value(request$title, "preview")
       paste0(gsub("[^A-Za-z0-9_-]+", "_", title), ".pdf")
     },
     content = function(file) {
@@ -307,14 +332,14 @@ shinyServer(function(input, output, session) {
       if (is.null(request$dims$height) || is.null(request$dims$width)) {
         stop("Preview size is not available.", call. = FALSE)
       }
-      grDevices::pdf(file, height = request$dims$height, width = request$dims$width, onefile = TRUE)
+      open_pdf_device(file, height = request$dims$height, width = request$dims$width, onefile = TRUE)
       on.exit(grDevices::dev.off(), add = TRUE)
       request$draw()
     },
     contentType = "application/pdf"
   )
   pair_pdf_preview_request <- function(target) {
-    transcript_mode <- if (is.null(input$Transcript_top) || input$Transcript_top == "") "Top10" else input$Transcript_top
+    transcript_mode <- safe_choice_value(input$Transcript_top, "Top10")
     transcript_count <- switch(
       transcript_mode,
       Top10 = 10,
@@ -323,7 +348,7 @@ shinyServer(function(input, output, session) {
       manual = max(length(input$transcript_manual), 1),
       10
     )
-    dtu_mode <- if (is.null(input$DTU_top) || input$DTU_top == "") "Top10" else input$DTU_top
+    dtu_mode <- safe_choice_value(input$DTU_top, "Top10")
     dtu_count <- switch(
       dtu_mode,
       Top10 = 10,
@@ -819,7 +844,7 @@ shinyServer(function(input, output, session) {
              download_id = "download_norm_corr",
              dims = norm_pdf_dims(5, 5),
              draw = function() {
-               if (input$corr_mode == "corr_mode2") {
+               if (identical(safe_choice_value(input$corr_mode, "corr_mode1"), "corr_mode2")) {
                  print(require_plot_value(norm_GOI_corrplot_pair(), "Correlation plot is not available."))
                } else {
                  print(require_plot_value(norm_GOI_corrplot(), "Correlation plot is not available."))
@@ -2120,13 +2145,8 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$pair_pdf_height == 0){
-          pdf_height <- 4
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- 7
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        dims <- pair_pdf_dims(4, 7)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(ma_heatmap_plot())
         dev.off()
         incProgress(1)
@@ -2501,17 +2521,13 @@ shinyServer(function(input, output, session) {
   
   output$download_pair_volcano = downloadHandler(
     filename = function(){
-      if(input$GOI_color_type == "default") paste0(download_pair_overview_dir(), "_volcano.pdf") else paste0(download_pair_overview_dir(), "_volcano_",input$GOI_color_pathway2,".pdf")
+      goi_color_type <- safe_choice_value(input$GOI_color_type, "default")
+      if(identical(goi_color_type, "default")) paste0(download_pair_overview_dir(), "_volcano.pdf") else paste0(download_pair_overview_dir(), "_volcano_",input$GOI_color_pathway2,".pdf")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$pair_pdf_height == 0){
-          pdf_height <- 5
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- 5
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        dims <- pair_pdf_dims(5, 5)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(pair_volcano())
         dev.off()
         incProgress(1)
@@ -2560,17 +2576,13 @@ shinyServer(function(input, output, session) {
   
   output$download_pair_GOIheatmap = downloadHandler(
     filename = function(){
-      if(input$GOI_color_type == "default") paste0(download_pair_overview_dir(), "_GOIheatmap.pdf") else paste0(download_pair_overview_dir(), "_GOIheatmap_",input$GOI_color_pathway2,".pdf")
+      goi_color_type <- safe_choice_value(input$GOI_color_type, "default")
+      if(identical(goi_color_type, "default")) paste0(download_pair_overview_dir(), "_GOIheatmap.pdf") else paste0(download_pair_overview_dir(), "_GOIheatmap_",input$GOI_color_pathway2,".pdf")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$pair_pdf_height == 0){
-          pdf_height <- 10
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- 7
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        dims <- pair_pdf_dims(10, 7)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(pair_GOIheatmap())
         dev.off()
         incProgress(1)
@@ -2714,10 +2726,13 @@ shinyServer(function(input, output, session) {
   
   output$download_pair_GOIbox = downloadHandler(
     filename = function(){
-      if(input$GOI_color_type == "default") paste0(download_pair_overview_dir(), "_GOIboxplot.pdf") else paste0(download_pair_overview_dir(), "_GOIboxplot_",input$GOI_color_pathway2,".pdf")
+      goi_color_type <- safe_choice_value(input$GOI_color_type, "default")
+      if(identical(goi_color_type, "default")) paste0(download_pair_overview_dir(), "_GOIboxplot.pdf") else paste0(download_pair_overview_dir(), "_GOIboxplot_",input$GOI_color_pathway2,".pdf")
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
+        goi_color_type <- safe_choice_value(input$GOI_color_type, "default")
+        goi_plot_select <- safe_choice_value(input$GOI_plot_select, "Volcano plot")
         data <- data_degcount()
         count <- deg_norm_count()
         if(gene_type1() != "SYMBOL"){
@@ -2746,7 +2761,7 @@ shinyServer(function(input, output, session) {
           }
         }else{
           data2<-brush_info()
-          if(input$GOI_plot_select == "Volcano plot"){
+          if(identical(goi_plot_select, "Volcano plot")){
             data2 <- data2[, - which(colnames(data2) == "minusLog10padj")]
           }else{
             data2 <- data2[, - which(colnames(data2) == "log2baseMean")]
@@ -2760,18 +2775,14 @@ shinyServer(function(input, output, session) {
           }else{
             rownames(data2) <- data2$Row.names
           }
-          if(input$GOI_color_type != "default" && !is.null(pair_pathway_color_gene())){
+          if(!identical(goi_color_type, "default") && !is.null(pair_pathway_color_gene())){
             data2 <- data2 %>% dplyr::filter(Row.names %in% rownames(pair_pathway_color_gene()))
           }
         }
         rowlist <- rownames(data2)
-        if(input$pair_pdf_height == 0){
-          pdf_height <- pdf_h(rowlist)
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- pdf_w(rowlist)
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        defaults <- pdf_dims_from_items(rowlist, 6, 6)
+        dims <- pair_pdf_dims(defaults$height, defaults$width)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(pair_GOIbox())
         dev.off()
         incProgress(1)
@@ -2849,10 +2860,11 @@ shinyServer(function(input, output, session) {
     }
   })
   DETs_plot <- reactive({
-    if(input$Transcript_top == "Top10") gene <- DETs()[["res"]]$SYMBOL[1:10]
-    if(input$Transcript_top == "Top20") gene <- DETs()[["res"]]$SYMBOL[1:20]
-    if(input$Transcript_top == "Top40") gene <- DETs()[["res"]]$SYMBOL[1:40]
-    if(input$Transcript_top == "manual") if(!is.null(input$transcript_manual)) gene <- input$transcript_manual else validate("")
+    transcript_mode <- safe_choice_value(input$Transcript_top, "Top10")
+    if(identical(transcript_mode, "Top10")) gene <- DETs()[["res"]]$SYMBOL[1:10]
+    if(identical(transcript_mode, "Top20")) gene <- DETs()[["res"]]$SYMBOL[1:20]
+    if(identical(transcript_mode, "Top40")) gene <- DETs()[["res"]]$SYMBOL[1:40]
+    if(identical(transcript_mode, "manual")) if(!is.null(input$transcript_manual)) gene <- input$transcript_manual else validate("")
     p <- barplot_forTranscript(table=deg_norm_count(),name=gene)
     return(p)
   })
@@ -2892,17 +2904,14 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$Transcript_top == "Top10") rowlist <- 10
-        if(input$Transcript_top == "Top20") rowlist <- 20
-        if(input$Transcript_top == "Top40") rowlist <- 40
-        if(input$Transcript_top == "manual") rowlist <- length(input$transcript_manual)
-        if(input$pair_pdf_height == 0){
-          pdf_height <- pdf_h(rowlist)*2
-        }else pdf_height <- input$pair_pdf_height*2
-        if(input$pair_pdf_width == 0){
-          pdf_width <- pdf_w(rowlist)*3
-        }else pdf_width <- input$pair_pdf_width*3
-        pdf(file, height = pdf_height, width = pdf_width)
+        transcript_mode <- safe_choice_value(input$Transcript_top, "Top10")
+        if(identical(transcript_mode, "Top10")) rowlist <- 10
+        if(identical(transcript_mode, "Top20")) rowlist <- 20
+        if(identical(transcript_mode, "Top40")) rowlist <- 40
+        if(identical(transcript_mode, "manual")) rowlist <- length(input$transcript_manual)
+        defaults <- pdf_dims_from_items(rowlist, 6, 6, height_multiplier = 2, width_multiplier = 3)
+        dims <- pair_pdf_dims(defaults$height, defaults$width)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(DETs_plot())
         dev.off()
         incProgress(1)
@@ -2928,13 +2937,9 @@ shinyServer(function(input, output, session) {
         gene <- DETs()[["res"]][input$transcript_barplot_table_rows_selected,]$SYMBOL
         rowlist <- deg_norm_count() %>% dplyr::filter(SYMBOL == gene)
         rowlist <- dim(rowlist)[1]
-        if(input$pair_pdf_height == 0){
-          pdf_height <- pdf_h(rowlist)*2
-        }else pdf_height <- input$pair_pdf_height*2
-        if(input$pair_pdf_width == 0){
-          pdf_width <- pdf_w(rowlist)*3
-        }else pdf_width <- input$pair_pdf_width*3
-        pdf(file, height = pdf_height, width = pdf_width)
+        defaults <- pdf_dims_from_items(rowlist, 6, 6, height_multiplier = 2, width_multiplier = 3)
+        dims <- pair_pdf_dims(defaults$height, defaults$width)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(GOIboxplot(data = transcript_GOIbox())+ scale_fill_manual(values=c("gray", "#ff8082")))
         dev.off()
         incProgress(1)
@@ -3054,10 +3059,11 @@ shinyServer(function(input, output, session) {
   })
 
   DTU_plot <- reactive({
-    if(input$DTU_top == "Top10") gene <- unique(DRIMSeq()$gene_id)[1:10]
-    if(input$DTU_top == "Top20") gene <- unique(DRIMSeq()$gene_id)[1:20]
-    if(input$DTU_top == "Top40") gene <- unique(DRIMSeq()$gene_id)[1:40]
-    if(input$DTU_top == "manual") if(!is.null(input$DTU_manual)) gene <- input$DTU_manual else validate("")
+    dtu_mode <- safe_choice_value(input$DTU_top, "Top10")
+    if(identical(dtu_mode, "Top10")) gene <- unique(DRIMSeq()$gene_id)[1:10]
+    if(identical(dtu_mode, "Top20")) gene <- unique(DRIMSeq()$gene_id)[1:20]
+    if(identical(dtu_mode, "Top40")) gene <- unique(DRIMSeq()$gene_id)[1:40]
+    if(identical(dtu_mode, "manual")) if(!is.null(input$DTU_manual)) gene <- input$DTU_manual else validate("")
     p <- barplot_forTranscript(table=deg_norm_count(),name=gene)
     return(p)
   })
@@ -3106,17 +3112,14 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$DTU_top == "Top10") rowlist <- 10
-        if(input$DTU_top == "Top20") rowlist <- 20
-        if(input$DTU_top == "Top40") rowlist <- 40
-        if(input$DTU_top == "manual") rowlist <- length(input$DTU_manual)
-        if(input$pair_pdf_height == 0){
-          pdf_height <- pdf_h(rowlist)*2
-        }else pdf_height <- input$pair_pdf_height*2
-        if(input$pair_pdf_width == 0){
-          pdf_width <- pdf_w(rowlist)*3
-        }else pdf_width <- input$pair_pdf_width*3
-        pdf(file, height = pdf_height, width = pdf_width)
+        dtu_mode <- safe_choice_value(input$DTU_top, "Top10")
+        if(identical(dtu_mode, "Top10")) rowlist <- 10
+        if(identical(dtu_mode, "Top20")) rowlist <- 20
+        if(identical(dtu_mode, "Top40")) rowlist <- 40
+        if(identical(dtu_mode, "manual")) rowlist <- length(input$DTU_manual)
+        defaults <- pdf_dims_from_items(rowlist, 6, 6, height_multiplier = 2, width_multiplier = 3)
+        dims <- pair_pdf_dims(defaults$height, defaults$width)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(DTU_plot())
         dev.off()
         incProgress(1)
@@ -3134,13 +3137,9 @@ shinyServer(function(input, output, session) {
         gene <- DRIMSeq()[input$DRIMSeq_table_rows_selected,]$gene_id
         rowlist <- deg_norm_count() %>% dplyr::filter(SYMBOL == gene)
         rowlist <- dim(rowlist)[1]
-        if(input$pair_pdf_height == 0){
-          pdf_height <- pdf_h(rowlist)*2
-        }else pdf_height <- input$pair_pdf_height*2
-        if(input$pair_pdf_width == 0){
-          pdf_width <- pdf_w(rowlist)*3
-        }else pdf_width <- input$pair_pdf_width*3
-        pdf(file, height = pdf_height, width = pdf_width)
+        defaults <- pdf_dims_from_items(rowlist, 6, 6, height_multiplier = 2, width_multiplier = 3)
+        dims <- pair_pdf_dims(defaults$height, defaults$width)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(GOIboxplot(data = DTU_GOIbox())+ scale_fill_manual(values=c("gray", "#ff8082")))
         dev.off()
         incProgress(1)
@@ -3206,7 +3205,7 @@ shinyServer(function(input, output, session) {
     if(is.null(data)){
       return(NULL)
     }
-    PCAplot(data = data,legend = input$PCA_legend)
+    PCAplot(data = data, legend = safe_choice_value(input$PCA_legend, "Legend"))
   })
 
   pair_pca_data <- reactive({
@@ -3224,13 +3223,8 @@ shinyServer(function(input, output, session) {
     },
     content = function(file) {
       withProgress(message = "Preparing download",{
-        if(input$pair_pdf_height == 0){
-          pdf_height <- 3.5
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- 9
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        dims <- pair_pdf_dims(3.5, 9)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(pair_pca_plot())
         dev.off()
         incProgress(1)
@@ -3264,9 +3258,12 @@ shinyServer(function(input, output, session) {
     },
     content = function(fname){
       withProgress(message = "Preparing download, please wait",{
+        pair_tabs_value <- safe_choice_value(input$pair_tabs, "pair_input_data_tab")
+        goi_color_type <- safe_choice_value(input$GOI_color_type, "default")
+        goi_plot_select <- safe_choice_value(input$GOI_plot_select, "Volcano plot")
         pair_analysis_requested(TRUE)
         on.exit({
-          if(is.null(input$pair_tabs) || input$pair_tabs == "pair_input_data_tab"){
+          if(identical(pair_tabs_value, "pair_input_data_tab")){
             pair_analysis_requested(FALSE)
           }
         }, add = TRUE)
@@ -3288,22 +3285,22 @@ shinyServer(function(input, output, session) {
         write.table(data_degcount_down(), down, quote = F, row.names = T, col.names=NA, sep = "\t")
         write.table(data_degcount_up(), up, quote = F, row.names = T, col.names=NA, sep = "\t")
         write.table(PCAdata(row_count = d_row_count_matrix(), deg_norm_count = deg_norm_count()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
-        pdf(PCA, height = 3.5, width = 9)
-        print(PCAplot(data = deg_norm_count(),legend = input$PCA_legend))
+        open_pdf_device(PCA, height = 3.5, width = 9)
+        print(PCAplot(data = deg_norm_count(),legend = safe_choice_value(input$PCA_legend, "Legend")))
         dev.off()
-        pdf(MAplot, height = 4, width = 7)
+        open_pdf_device(MAplot, height = 4, width = 7)
         print(ma_heatmap_plot())
         dev.off()
         if(!is.null(input$xrange)){
           dir.create("GOI_profiling/",showWarnings = FALSE)
-          if(input$GOI_color_type == "default") volcano <- "GOI_profiling/volcano_plot.pdf" else volcano <- paste0("GOI_profiling/volcano_plot_",input$GOI_color_pathway2,".pdf")
+          if(identical(goi_color_type, "default")) volcano <- "GOI_profiling/volcano_plot.pdf" else volcano <- paste0("GOI_profiling/volcano_plot_",input$GOI_color_pathway2,".pdf")
           fs <- c(fs,volcano)
-          pdf(volcano, height = 5, width = 5)
+          open_pdf_device(volcano, height = 5, width = 5)
           print(pair_volcano())
           dev.off()
           if(!is.null(brush_info())){
             if(length(pair_goi_selection()) != 0 || dim(brush_info())[1] != 0){
-                if(input$GOI_color_type == "default") {
+                if(identical(goi_color_type, "default")) {
                   boxplot <- "GOI_profiling/boxplot.pdf"
                   heat <- "GOI_profiling/heatmap.pdf"
                 }else{
@@ -3339,7 +3336,7 @@ shinyServer(function(input, output, session) {
                 }
               }else{
                 data2<-brush_info()
-                if(input$GOI_plot_select == "Volcano plot"){
+                if(identical(goi_plot_select, "Volcano plot")){
                   data2 <- data2[, - which(colnames(data2) == "minusLog10padj")]
                 }else{
                   data2 <- data2[, - which(colnames(data2) == "log2baseMean")]
@@ -3353,17 +3350,17 @@ shinyServer(function(input, output, session) {
                 }else{
                   rownames(data2) <- data2$Row.names
                 }
-                if(input$GOI_color_type != "default" && !is.null(pair_pathway_color_gene())){
+                if(!identical(goi_color_type, "default") && !is.null(pair_pathway_color_gene())){
                   data2 <- data2 %>% dplyr::filter(Row.names %in% rownames(pair_pathway_color_gene()))
                 }
               }
               rowlist <- rownames(data2)
               pdf_height <- pdf_h(rowlist)
               pdf_width <- pdf_w(rowlist)
-              pdf(boxplot, height = pdf_height, width = pdf_width)
+              open_pdf_device(boxplot, height = pdf_height, width = pdf_width)
               print(pair_GOIbox())
               dev.off()
-              pdf(heat, height = 10, width = 7)
+              open_pdf_device(heat, height = 10, width = 7)
               print(pair_GOIheatmap())
               dev.off()
             }
@@ -3377,7 +3374,7 @@ shinyServer(function(input, output, session) {
           fs <- c(fs,enrichplot,enrich_table,enrich_gseatable)
           p1 <- pair_enrich1_H()
           p2 <- pair_enrich2()
-          pdf(enrichplot, height = 10, width = 12)
+          open_pdf_device(enrichplot, height = 10, width = 12)
           print(plot_grid(p1, p2, nrow =2))
           dev.off()
           write.table(pair_enrich_table(), enrich_table, row.names = F, sep = "\t", quote = F)
@@ -3687,13 +3684,8 @@ shinyServer(function(input, output, session) {
       withProgress(message = "Preparing download",{
         p1 <- pair_enrich1_H()
         p2 <- pair_enrich2()
-        if(input$pair_pdf_height == 0){
-          pdf_height <- 10
-        }else pdf_height <- input$pair_pdf_height
-        if(input$pair_pdf_width == 0){
-          pdf_width <- 12
-        }else pdf_width <- input$pair_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        dims <- pair_pdf_dims(10, 12)
+        open_pdf_device(file, height = dims$height, width = dims$width)
         print(plot_grid(p1, p2, nrow =2))
         dev.off()
         incProgress(1)
@@ -4420,12 +4412,12 @@ shinyServer(function(input, output, session) {
             write.table(deg, DEG, quote = F, row.names = T, col.names=NA, sep = "\t")
             write.table(up, UP, quote = F, row.names = T, col.names=NA, sep = "\t")
             write.table(down, DOWN, quote = F, row.names = T, col.names=NA, sep = "\t")
-            pdf(MA, height = 4, width = 7)
+            open_pdf_device(MA, height = 4, width = 7)
             print(ma_r[[name]])
             dev.off() 
           }
           write.table(norm, norm_count, quote = F, row.names = T, col.names=NA, sep = "\t")
-          pdf(PCA, height = 3.5, width = 9)
+          open_pdf_device(PCA, height = 3.5, width = 9)
           print(pca_r[[name]])
           dev.off()
         }
@@ -5262,7 +5254,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(GOIboxplot(data = data))
         dev.off()
         incProgress(1)
@@ -5293,7 +5285,7 @@ shinyServer(function(input, output, session) {
           if(input$multi_pdf_width == 0){
             pdf_width <- pdf_w(clusterNumber)+2
           }else pdf_width <- input$multi_pdf_width
-          pdf(file, height = pdf_height, width = pdf_width)
+          open_pdf_device(file, height = pdf_height, width = pdf_width)
           print(multi_boxplot_reactive()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -5909,7 +5901,7 @@ shinyServer(function(input, output, session) {
           if(input$multi_pdf_width == 0){
             pdf_width <- pdf_w(clusterNumber)+2
           }else pdf_width <- input$multi_pdf_width
-          pdf(file, height = pdf_height, width = pdf_width)
+          open_pdf_device(file, height = pdf_height, width = pdf_width)
           print(multi_kmeans_box()+
                   theme(axis.text.x= element_text(size = 8),
                         axis.text.y= element_text(size = 8),
@@ -5945,7 +5937,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 7
         }else pdf_width <- input$multi_pdf_width
         if(is.null(multi_kmeans_selected_rows())) ht <- multi_kmeans() else ht <- multi_kmeans_GOI()
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         set.seed(123)
         draw(ht)
         dev.off()
@@ -6026,7 +6018,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(GOIboxplot(data = data))
         dev.off()
         incProgress(1)
@@ -6327,7 +6319,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 7
         }else pdf_width <-input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -6793,7 +6785,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(multi_ssGSEA_GOIbox())
         dev.off()
         incProgress(1)
@@ -6814,7 +6806,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 7
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(multi_ssGSEA_GOIheat())
         dev.off()
         incProgress(1)
@@ -7112,7 +7104,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_obj)
         dev.off()
         incProgress(1)
@@ -7258,7 +7250,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(multi_ssGSEA_TF_corplot())
         dev.off()
         incProgress(1)
@@ -7550,7 +7542,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 8
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -7571,7 +7563,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 8
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p1)
         dev.off()
         incProgress(1)
@@ -7592,7 +7584,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 6
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -7631,7 +7623,7 @@ shinyServer(function(input, output, session) {
         }
         summary_add_pdf <- function(path, height, width, plot_expr) {
           ok <- FALSE
-          pdf(path, height = height, width = width)
+          open_pdf_device(path, height = height, width = width)
           tryCatch({
             force(plot_expr)
             ok <- TRUE
@@ -7662,13 +7654,13 @@ shinyServer(function(input, output, session) {
         write.table(multi_deg_result(), DEG, row.names = T, col.names=NA, sep = "\t", quote = F)
         write.table(multi_deg_norm_count(), count, row.names = T, col.names=NA, sep = "\t", quote = F)
         write.table(PCAdata(row_count = multi_d_row_count_matrix(), deg_norm_count = multi_deg_norm_count()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
-        pdf(PCA, height = 3.5, width = 9)
+        open_pdf_device(PCA, height = 3.5, width = 9)
         print(multi_pca_plot())
         dev.off()
         if(length(multi_umap_plot()) != 1){
           umap <- "Clustering/umap.pdf"
           fs <- c(fs,umap)
-          pdf(umap, height = 3.5, width = 4.7)
+          open_pdf_device(umap, height = 3.5, width = 4.7)
           print(multi_umap_plot())
           dev.off()
         }
@@ -7701,7 +7693,7 @@ shinyServer(function(input, output, session) {
             clusterNumber <- length(unique(clusters$cluster))
             pdf_height <- pdf_h(clusterNumber)+2
             pdf_width <- pdf_w(clusterNumber)+2
-            pdf(summary_box1, height = pdf_height, width = pdf_width)
+            open_pdf_device(summary_box1, height = pdf_height, width = pdf_width)
             print(multi_boxplot_reactive()+
                     theme(axis.text.x= element_text(size = 8),
                           axis.text.y= element_text(size = 8),
@@ -7714,7 +7706,7 @@ shinyServer(function(input, output, session) {
               rowlist <- rownames(data)
               pdf_height <- pdf_h(rowlist)
               pdf_width <- pdf_w(rowlist)
-              pdf(box1, height = pdf_height, width = pdf_width)
+              open_pdf_device(box1, height = pdf_height, width = pdf_width)
               print(GOIboxplot(data = data))
               dev.off()
             }
@@ -7724,7 +7716,7 @@ shinyServer(function(input, output, session) {
               if(!is.null(input$multi_whichGroup1_1)){
                 fs <- c(fs,enrich1,enrichtxt)
                 p1 <- multi_enrich_H()
-                pdf(enrich1, height = 6, width = 8)
+                open_pdf_device(enrich1, height = 6, width = 8)
                 print(p1)
                 dev.off()
               }
@@ -7732,7 +7724,7 @@ shinyServer(function(input, output, session) {
               if(input$multi_whichGroup1_2 != "not selected"){
                 cnet1 <- paste0("Divisive clustering_",as.character(input$selectFC[1]),"_vs_",as.character(input$selectFC[2]),"/cnet_",input$Gene_set7,".pdf")
                 fs <- c(fs,cnet1)
-                pdf(cnet1, height = 6, width = 6)
+                open_pdf_device(cnet1, height = 6, width = 6)
                 print(p)
                 dev.off()
                 write.table(multi_enrich_div_table(), enrichtxt, row.names = F, sep = "\t", quote = F)
@@ -7753,14 +7745,14 @@ shinyServer(function(input, output, session) {
             clusterNumber <- length(unique(clusters$Cluster))
             pdf_height <- pdf_h(clusterNumber)+2
             pdf_width <- pdf_w(clusterNumber)+2
-            pdf(summary_kmeansbox1, height = pdf_height, width = pdf_width)
+            open_pdf_device(summary_kmeansbox1, height = pdf_height, width = pdf_width)
             print(multi_kmeans_box()+
                     theme(axis.text.x= element_text(size = 8),
                           axis.text.y= element_text(size = 8),
                           title = element_text(size = 8),text = element_text(size = 8)))
             dev.off()
             if(is.null(multi_kmeans_selected_rows())) ht <- multi_kmeans() else ht <- multi_kmeans_GOI()
-            pdf(kmeans_heat, height = 10, width = 7)
+            open_pdf_device(kmeans_heat, height = 10, width = 7)
             set.seed(123)
             draw(ht)
             dev.off()
@@ -7771,7 +7763,7 @@ shinyServer(function(input, output, session) {
               rowlist <- rownames(data)
               pdf_height <- pdf_h(rowlist)
               pdf_width <- pdf_w(rowlist)
-              pdf(box2, height = pdf_height, width = pdf_width)
+              open_pdf_device(box2, height = pdf_height, width = pdf_width)
               print(GOIboxplot(data = data))
               dev.off()
             }
@@ -7790,7 +7782,7 @@ shinyServer(function(input, output, session) {
               if(!is.null(input$multi_whichGroup2_1)){
                 fs <- c(fs,enrich2,enrichtxt2)
                 p1 <- multi_enrich_H2()
-                pdf(enrich2, height = 6, width = 8)
+                open_pdf_device(enrich2, height = 6, width = 8)
                 print(p1)
                 dev.off()
               }
@@ -7798,7 +7790,7 @@ shinyServer(function(input, output, session) {
               if(input$multi_whichGroup2_2 != "not selected"){
                 cnet2 <- paste0("kmeans clustering_",as.character(input$selectFC2[1]),"_vs_",as.character(input$selectFC2[2]),"/cnet_",input$Gene_set8,".pdf")
                 fs <- c(fs,cnet2)
-                pdf(cnet2, height = 6, width = 6)
+                open_pdf_device(cnet2, height = 6, width = 6)
                 print(p)
                 dev.off()
                 write.table(multi_enrich_k_table(), enrichtxt2, row.names = F, sep = "\t", quote = F)
@@ -7816,7 +7808,7 @@ shinyServer(function(input, output, session) {
               fs <- c(fs, multiEnrich,multiEnrich_table)
               write.table(multi_GSEA_table(), multiEnrich_table, row.names = F, sep = "\t", quote = F)
               p1 <- multi_enrich1_H()
-              pdf(multiEnrich, height = 5, width = 7)
+              open_pdf_device(multiEnrich, height = 5, width = 7)
               print(p1)
               dev.off()
             }}}
@@ -7937,7 +7929,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 6
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -8009,7 +8001,7 @@ shinyServer(function(input, output, session) {
         if(input$multi_pdf_width == 0){
           pdf_width <- 9
         }else pdf_width <- input$multi_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(multi_pca_plot())
         dev.off()
         incProgress(1)
@@ -8102,7 +8094,7 @@ shinyServer(function(input, output, session) {
         if(is.null(plot_obj)){
           stop("umap: plot is not available", call. = FALSE)
         }
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_obj)
         dev.off()
         incProgress(1)
@@ -8688,7 +8680,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- 10
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(cond3_scatter1_plot()) 
         print(cond3_scatter2_plot())
         print(cond3_scatter3_plot())
@@ -8760,7 +8752,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- 10
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(cond3_scatter_plot(gene_type=gene_type2(),data = deg_norm_count2(), data4 = data_3degcount2_1(),
                                  result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
                                  fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
@@ -8814,7 +8806,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- 9
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(cond3_pca_plot())
         dev.off()
       })
@@ -9236,7 +9228,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(cond3_GOIbox())
         dev.off()
         
@@ -9258,7 +9250,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- 7
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(cond3_GOIheat())
         dev.off()
         incProgress(1)
@@ -9427,7 +9419,7 @@ shinyServer(function(input, output, session) {
         if(input$cond3_pdf_width == 0){
           pdf_width <- 15
         }else pdf_width <- input$cond3_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1, p2, p3, nrow =3))
         dev.off()
         incProgress(1)
@@ -9468,10 +9460,10 @@ shinyServer(function(input, output, session) {
         write.table(data_3degcount2_2(), result2, row.names = F, sep = "\t", quote = F)
         write.table(data_3degcount2_3(), result3, row.names = F, sep = "\t", quote = F)
         write.table(PCAdata(row_count = deg_norm_count2(), deg_norm_count = deg_norm_count2()), PCA_table, row.names = T, col.names=NA, sep = "\t", quote = F)
-        pdf(PCA, height = 3.5, width = 9)
+        open_pdf_device(PCA, height = 3.5, width = 9)
         print(PCAplot(data = deg_norm_count2(),legend = input$PCA_legend_cond3))
         dev.off()
-        pdf(scatter, height = 6, width = 10)
+        open_pdf_device(scatter, height = 6, width = 10)
         print(cond3_scatter1_plot()) 
         print(cond3_scatter2_plot())
         print(cond3_scatter3_plot())
@@ -9480,7 +9472,7 @@ shinyServer(function(input, output, session) {
           dir.create("GOI_profiling/",showWarnings = FALSE)
           if(input$cond3_GOI_color_type == "default") goiscatter <- "GOI_profiling/scatter_plot.pdf" else goiscatter <- paste0("GOI_profiling/scatter_plot_",input$cond3_GOI_color_pathway2,".pdf") 
           fs <- c(fs,goiscatter)
-          pdf(goiscatter, height = 6, width = 10)
+          open_pdf_device(goiscatter, height = 6, width = 10)
           print(cond3_scatter_plot(gene_type=gene_type2(),data = deg_norm_count2(), data4 = data_3degcount2_1(),
                                    result_Condm = deg_result2_condmean(), result_FDR = deg_result2(), 
                                    fc = input$fc2, fdr = input$fdr2, basemean = input$basemean2,
@@ -9502,10 +9494,10 @@ shinyServer(function(input, output, session) {
               rowlist <- rownames(data)
               pdf_height <- pdf_h(rowlist)
               pdf_width <- pdf_w(rowlist)
-              pdf(boxplot, height = pdf_height, width = pdf_width)
+              open_pdf_device(boxplot, height = pdf_height, width = pdf_width)
               print(cond3_GOIbox())
               dev.off()
-              pdf(heat, height = 10, width = 7)
+              open_pdf_device(heat, height = 10, width = 7)
               print(cond3_GOIheat())
               dev.off()
             }}
@@ -9520,7 +9512,7 @@ shinyServer(function(input, output, session) {
           p1 <- keggEnrichment2_1()
           p2 <- keggEnrichment2_2()
           p3 <- keggEnrichment2_3()
-          pdf(enrichplot, height = 12, width = 15)
+          open_pdf_device(enrichplot, height = 12, width = 15)
           print(plot_grid(p1, p2, p3, nrow =3))
           dev.off()
           write.table(cond3_enrich_table1(), enrich_table1, row.names = F, sep = "\t", quote = F)
@@ -9977,7 +9969,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- 9
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(PCAplot(data = d_norm_count_matrix_cutofff(),legend = input$PCA_legend_norm))
         dev.off()
       })
@@ -10073,7 +10065,7 @@ shinyServer(function(input, output, session) {
         if(is.null(plot_obj)){
           stop("umap: plot is not available", call. = FALSE)
         }
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_obj)
         dev.off()
         incProgress(1)
@@ -10417,7 +10409,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(norm_GOIbox())
         dev.off()
         incProgress(1)
@@ -10438,7 +10430,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- 7
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(norm_GOIheat())
         dev.off()
         incProgress(1)
@@ -10898,7 +10890,7 @@ shinyServer(function(input, output, session) {
         }else{
           p <- norm_GOI_corrplot()
         }
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -10920,7 +10912,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- 5
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         for(y in GOI_y){
           print(p[[y]]) 
           incProgress(1/processNum, message = paste0("Download ",y))
@@ -11540,7 +11532,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- if (cluster_count > 0) pdf_w(seq_len(cluster_count)) + 2 else 7
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         on.exit(dev.off(), add = TRUE)
         print(plot_obj)
         incProgress(1)
@@ -11651,7 +11643,7 @@ shinyServer(function(input, output, session) {
         if(input$norm_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$norm_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(GOIboxplot(data = data))
         dev.off()
         incProgress(1)
@@ -11704,7 +11696,7 @@ shinyServer(function(input, output, session) {
           pdf_width <- 7
         }else pdf_width <- input$norm_pdf_width
         if(is.null(norm_kmeans_selected_rows())) ht <- norm_kmeans() else ht <- norm_kmeans_GOI()
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(ht)
         dev.off()
         incProgress(1)
@@ -11838,7 +11830,7 @@ shinyServer(function(input, output, session) {
           if(input$venn_pdf_width == 0){
             pdf_width <- 3
           }else pdf_width <- input$venn_pdf_width
-          pdf(file, height = pdf_height, width = pdf_width)
+          open_pdf_device(file, height = pdf_height, width = pdf_width)
           if(input$venn_type == "default" || is.null(input$eulerr_label)) print(venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)) else{
             if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL
             print(plot(euler(gene_list, shape = "ellipse"), 
@@ -12064,7 +12056,7 @@ shinyServer(function(input, output, session) {
         if(input$venn_pdf_width == 0){
           pdf_width <- 8
         }else pdf_width <- input$venn_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(integrated_heatmap())
         dev.off()
         incProgress(1)
@@ -12086,7 +12078,7 @@ shinyServer(function(input, output, session) {
         if(input$venn_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$venn_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(GOIboxplot(data = data[input$integrated_count_table_rows_selected,]))
         dev.off()
         incProgress(1)
@@ -12198,7 +12190,7 @@ shinyServer(function(input, output, session) {
         if(input$venn_pdf_width == 0){
           pdf_width <- 8
         }else pdf_width <- input$venn_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         dotplot_for_output(data = venn_enrich_viewer2(),
                            plot_genelist = venn_enrich_H(), Gene_set = input$Gene_set9, 
                            Species = input$Species7)
@@ -12273,7 +12265,7 @@ shinyServer(function(input, output, session) {
         if(input$venn_pdf_width == 0){
           pdf_width <- 6
         }else pdf_width <- input$venn_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(p)
         dev.off()
         incProgress(1)
@@ -12567,7 +12559,7 @@ shinyServer(function(input, output, session) {
         if(input$enrich_pdf_width == 0){
           pdf_width <- 6.5
         }else pdf_width <- input$enrich_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)
@@ -12587,7 +12579,7 @@ shinyServer(function(input, output, session) {
         if(input$enrich_pdf_width == 0){
           pdf_width <- 6
         }else pdf_width <- input$enrich_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(plot_grid(p1))
         dev.off()
         incProgress(1)
@@ -13128,7 +13120,7 @@ shinyServer(function(input, output, session) {
         if(input$volcano_pdf_width == 0){
           pdf_width <- 5
         }else pdf_width <- input$volcano_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(deg_volcano())
         dev.off()
         incProgress(1)
@@ -13289,7 +13281,7 @@ shinyServer(function(input, output, session) {
         if(input$volcano_pdf_width == 0){
           pdf_width <- pdf_w(rowlist)
         }else pdf_width <- input$volcano_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(deg_GOIbox())
         dev.off()
         incProgress(1)
@@ -13310,7 +13302,7 @@ shinyServer(function(input, output, session) {
         if(input$volcano_pdf_width == 0){
           pdf_width <- 7
         }else pdf_width <- input$volcano_pdf_width
-        pdf(file, height = pdf_height, width = pdf_width)
+        open_pdf_device(file, height = pdf_height, width = pdf_width)
         print(DEG_GOIheat())
         dev.off()
         incProgress(1)

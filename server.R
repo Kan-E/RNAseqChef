@@ -203,6 +203,72 @@ shinyServer(function(input, output, session) {
     }
     require_plot_value(x, message)
   }
+  normalize_venn_gene_list <- function(gene_list) {
+    if (is.null(gene_list)) {
+      return(NULL)
+    }
+    out <- lapply(gene_list, function(x) {
+      x <- as.character(x)
+      x <- x[!is.na(x) & nzchar(x)]
+      unique(x)
+    })
+    out[vapply(out, length, integer(1)) > 0L]
+  }
+  compute_venn_intersections_manual <- function(gene_list) {
+    gene_list <- normalize_venn_gene_list(gene_list)
+    if (is.null(gene_list) || !length(gene_list)) {
+      return(setNames(list(), character(0)))
+    }
+    all_genes <- unique(unlist(gene_list, use.names = FALSE))
+    if (!length(all_genes)) {
+      return(setNames(list(), character(0)))
+    }
+    membership <- vapply(gene_list, function(x) all_genes %in% x, logical(length(all_genes)))
+    if (is.null(dim(membership))) {
+      membership <- matrix(membership, ncol = 1, dimnames = list(NULL, names(gene_list)))
+    }
+    labels <- apply(membership, 1, function(row) {
+      idx <- which(row)
+      if (!length(idx)) return(NA_character_)
+      paste(colnames(membership)[idx], collapse = " & ")
+    })
+    labels <- as.character(labels)
+    valid <- !is.na(labels) & nzchar(labels)
+    split(all_genes[valid], labels[valid])
+  }
+  safe_venn_intersections <- function(gene_list) {
+    result <- try(venn::extractInfo(gene_list, what = "intersections", use.names = TRUE), silent = TRUE)
+    if (!inherits(result, "try-error") && !is.null(result)) {
+      return(result)
+    }
+    compute_venn_intersections_manual(gene_list)
+  }
+  draw_default_venn_plot <- function(gene_list, ilabels = "counts", ilcs = 1.5, sncs = 1.5,
+                                     fallback_label_cex = 2, fallback_legend_cex = 2) {
+    result <- try(
+      venn::venn(
+        gene_list,
+        ilabels = ilabels,
+        zcolor = "style",
+        opacity = 0,
+        ilcs = ilcs,
+        sncs = sncs
+      ),
+      silent = TRUE
+    )
+    if (!inherits(result, "try-error")) {
+      return(invisible(result))
+    }
+    plot(
+      euler(gene_list, shape = "ellipse"),
+      labels = list(cex = fallback_label_cex),
+      quantities = list(type = "counts", cex = fallback_label_cex),
+      edges = list(col = as.vector(seq_along(names(gene_list))), lex = fallback_label_cex),
+      fills = list(fill = rep("white", length(names(gene_list)))),
+      legend = list(side = "right", cex = fallback_legend_cex)
+    )
+    invisible(NULL)
+  }
   pair_pdf_preview_state <- reactiveValues(
     target = NULL,
     title = NULL,
@@ -729,7 +795,8 @@ shinyServer(function(input, output, session) {
                  paste(strwrap(x, width = 15), collapse = "\n")
                }, character(1))
                if(input$venn_type == "default" || is.null(input$eulerr_label)) {
-                 print(venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5))
+                 draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 1.5, sncs = 1.5,
+                                        fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
                } else {
                  if(input$eulerr_label == "ON") {
                    label <- list(cex = 0.8)
@@ -1879,6 +1946,9 @@ shinyServer(function(input, output, session) {
     if(length(my.symbols) == 0){
       return(NULL)
     }
+    if(gene_type1() != "SYMBOL"){
+      my.symbols <- gsub("\\..*", "", my.symbols)
+    }
 
     if(gene_type1() != "SYMBOL"){
       if(sum(is.element(no_orgDb, input$Species)) == 1){
@@ -1926,6 +1996,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }else{
       if(gene_type1() != "SYMBOL"){
+        rownames(data) <- gsub("\\..*", "", rownames(data))
         if(length(grep("SYMBOL", colnames(data))) != 0){
           data <- data[, - which(colnames(data) == "SYMBOL")]
           count <- count[, - which(colnames(count) == "SYMBOL")]
@@ -1983,6 +2054,9 @@ shinyServer(function(input, output, session) {
     if(is.null(count) || is.null(data)){
       return(NULL)
     }else{
+      if(gene_type1() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+        count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+      }
       collist <- factor(gsub("\\_.+$", "", colnames(count)))
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -2007,6 +2081,9 @@ shinyServer(function(input, output, session) {
     if(is.null(count) || is.null(data)){
       return(NULL)
     }else{
+      if(gene_type1() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+        count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+      }
       collist <- factor(gsub("\\_.+$", "", colnames(count)))
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -2021,10 +2098,10 @@ shinyServer(function(input, output, session) {
       up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
       if(input$Species != "not selected"){
         if(gene_type1() != "SYMBOL"){
-          up_all <- merge(up_all, gene_ID_pair(), by=0)
+          up_all$Row.names <- rownames(up_all)
+          up_all <- merge(up_all, gene_ID_pair(), by="Row.names")
           rownames(up_all) <- up_all$Row.names
-          up_all <- up_all[,-1]
-          up_all <- up_all[, - which(colnames(up_all) == "Row.names.y")]
+          up_all <- up_all[, colnames(up_all) != "Row.names", drop = FALSE]
         }
       }
       return(up_all)
@@ -2037,6 +2114,9 @@ shinyServer(function(input, output, session) {
     if(is.null(count) || is.null(data)){
       return(NULL)
     }else{
+      if(gene_type1() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+        count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+      }
       collist <- factor(gsub("\\_.+$", "", colnames(count)))
       vec <- c()
       for (i in 1:length(unique(collist))) {
@@ -2051,10 +2131,10 @@ shinyServer(function(input, output, session) {
       down_all <- down_all[,8:(7 + Cond_1 + Cond_2)]
       if(input$Species != "not selected"){
         if(gene_type1() != "SYMBOL"){
-          down_all <- merge(down_all, gene_ID_pair(), by=0)
+          down_all$Row.names <- rownames(down_all)
+          down_all <- merge(down_all, gene_ID_pair(), by="Row.names")
           rownames(down_all) <- down_all$Row.names
-          down_all <- down_all[,-1]
-          down_all <- down_all[, - which(colnames(down_all) == "Row.names.y")]
+          down_all <- down_all[, colnames(down_all) != "Row.names", drop = FALSE]
         }
       }
       return(down_all)
@@ -4199,6 +4279,9 @@ shinyServer(function(input, output, session) {
         if(name != "combined"){
           data <- data1[[name]]
           count <- count1[[name]]
+          if(gene_type1_batch() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+            count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+          }
           collist <- factor(gsub("\\_.+$", "", colnames(count)))
           vec <- c()
           for (i in 1:length(unique(collist))) {
@@ -4233,6 +4316,9 @@ shinyServer(function(input, output, session) {
         if(name != "combined"){
           data <- data1[[name]]
           count <- count1[[name]]
+          if(gene_type1_batch() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+            count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+          }
           collist <- factor(gsub("\\_.+$", "", colnames(count)))
           vec <- c()
           for (i in 1:length(unique(collist))) {
@@ -4248,9 +4334,11 @@ shinyServer(function(input, output, session) {
           up_all <- up_all[,8:(7 + Cond_1 + Cond_2)]
           if(input$Species != "not selected"){
             if(gene_type1_batch() != "SYMBOL"){
-              up_all <- merge(up_all, gene_ID_pair_batch(), by=0)
+              up_all$Row.names <- rownames(up_all)
+              up_all <- merge(up_all, as.data.frame(gene_ID_pair_batch()[[name]]), by="Row.names")
               rownames(up_all) <- up_all$Row.names
-              up_all <- up_all[,2:(1 + Cond_1 + Cond_2)]
+              keep_cols <- c(colnames(count), "SYMBOL")
+              up_all <- up_all[, intersect(keep_cols, colnames(up_all)), drop = FALSE]
             }
           }
           deglist[name] <- list(up_all)
@@ -4271,6 +4359,9 @@ shinyServer(function(input, output, session) {
         if(name != "combined"){
           data <- data1[[name]]
           count <- count1[[name]]
+          if(gene_type1_batch() != "SYMBOL" && "SYMBOL" %in% colnames(count)){
+            count <- count[, colnames(count) != "SYMBOL", drop = FALSE]
+          }
           collist <- factor(gsub("\\_.+$", "", colnames(count)))
           vec <- c()
           for (i in 1:length(unique(collist))) {
@@ -4286,9 +4377,11 @@ shinyServer(function(input, output, session) {
           down_all <- down_all[,8:(7 + Cond_1 + Cond_2)]
           if(input$Species != "not selected"){
             if(gene_type1_batch() != "SYMBOL"){
-              down_all <- merge(down_all, gene_ID_pair_batch(), by=0)
+              down_all$Row.names <- rownames(down_all)
+              down_all <- merge(down_all, as.data.frame(gene_ID_pair_batch()[[name]]), by="Row.names")
               rownames(down_all) <- down_all$Row.names
-              down_all <- down_all[,2:(1 + Cond_1 + Cond_2)]
+              keep_cols <- c(colnames(count), "SYMBOL")
+              down_all <- down_all[, intersect(keep_cols, colnames(down_all)), drop = FALSE]
             }
           }
           deglist[name] <- list(down_all)
@@ -11762,14 +11855,8 @@ shinyServer(function(input, output, session) {
     }, character(1))
     
     if (input$venn_type == "default" || is.null(input$eulerr_label)) {
-      venn::venn(
-        gene_list,
-        ilabels = "counts",
-        zcolor = "style",
-        opacity = 0,
-        ilcs = 1.5,
-        sncs = 1.5
-      )
+      draw_default_venn_plot(gene_list, ilabels = "counts", ilcs = 1.5, sncs = 1.5,
+                             fallback_label_cex = 2, fallback_legend_cex = 2)
     } else {
       if (input$eulerr_label == "ON") {
         label <- list(cex = 2)
@@ -11790,13 +11877,13 @@ shinyServer(function(input, output, session) {
   
   overlap_list <- reactive({
     req(files_table())
-    ints <- venn::extractInfo(files_table(), what = "intersections", use.names = TRUE)
+    ints <- safe_venn_intersections(files_table())
     names(ints)
   })
   
   overlap_table2 <- reactive({
     req(files_table())
-    ints <- venn::extractInfo(files_table(), what = "intersections", use.names = TRUE)
+    ints <- safe_venn_intersections(files_table())
     
     do.call(rbind, lapply(names(ints), function(nm) {
       data.frame(
@@ -11831,7 +11918,10 @@ shinyServer(function(input, output, session) {
             pdf_width <- 3
           }else pdf_width <- input$venn_pdf_width
           open_pdf_device(file, height = pdf_height, width = pdf_width)
-          if(input$venn_type == "default" || is.null(input$eulerr_label)) print(venn::venn(gene_list, ilabels = TRUE, zcolor = "style", opacity = 0, ilcs = 1.5, sncs = 1.5)) else{
+          if(input$venn_type == "default" || is.null(input$eulerr_label)) {
+            draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 1.5, sncs = 1.5,
+                                   fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
+          } else {
             if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL
             print(plot(euler(gene_list, shape = "ellipse"), 
                  labels = label,quantities = list(type="counts",cex=0.8),

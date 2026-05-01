@@ -13389,11 +13389,16 @@ shinyServer(function(input, output, session) {
     if(input$dorothea_Species == "not selected" || is.null(Dorothea_type())){
       return(NULL)
     }else{
-      withProgress(message = "Prepare gene sets",{
-        dorothea_list <- dorothea(species = input$dorothea_Species, type = Dorothea_type(), confidence = input$dorothea_confidence)
-        dorothea_list <- dorothea_list[,-2]
-        colnames(dorothea_list)[1] <- "TF"
-        return(dorothea_list)
+      tryCatch({
+        withProgress(message = "Prepare gene sets",{
+          dorothea_list <- dorothea(species = input$dorothea_Species, type = Dorothea_type(), confidence = input$dorothea_confidence)
+          dorothea_list <- dorothea_list[,-2]
+          colnames(dorothea_list)[1] <- "TF"
+          return(dorothea_list)
+        })
+      }, error = function(e) {
+        message("DoRothEA initialization skipped: ", conditionMessage(e))
+        return(NULL)
       })
     }
   })

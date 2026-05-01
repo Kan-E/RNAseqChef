@@ -54,7 +54,75 @@ orgdb_package_names <- c(
   "org.At.tair.db"
 )
 
+orgdb_package_by_species <- c(
+  "Homo sapiens" = "org.Hs.eg.db",
+  "Mus musculus" = "org.Mm.eg.db",
+  "Rattus norvegicus" = "org.Rn.eg.db",
+  "Xenopus laevis" = "org.Xl.eg.db",
+  "Drosophila melanogaster" = "org.Dm.eg.db",
+  "Caenorhabditis elegans" = "org.Ce.eg.db",
+  "Bos taurus" = "org.Bt.eg.db",
+  "Canis lupus familiaris" = "org.Cf.eg.db",
+  "Danio rerio" = "org.Dr.eg.db",
+  "Gallus gallus" = "org.Gg.eg.db",
+  "Macaca mulatta" = "org.Mmu.eg.db",
+  "Pan troglodytes" = "org.Pt.eg.db",
+  "Saccharomyces cerevisiae" = "org.Sc.sgd.db",
+  "Arabidopsis thaliana" = "org.At.tair.db"
+)
+
+rsconnect_orgdb_dependency_hints <- function() {
+  if (FALSE) {
+    library(org.Hs.eg.db)
+    library(org.Mm.eg.db)
+    library(org.Rn.eg.db)
+    library(org.Xl.eg.db)
+    library(org.Dm.eg.db)
+    library(org.Ce.eg.db)
+    library(org.Bt.eg.db)
+    library(org.Cf.eg.db)
+    library(org.Dr.eg.db)
+    library(org.Gg.eg.db)
+    library(org.Mmu.eg.db)
+    library(org.Pt.eg.db)
+    library(org.Sc.sgd.db)
+    library(org.At.tair.db)
+  }
+  invisible(NULL)
+}
+
+rsconnect_orgdb_dependency_hints()
+
+rsconnect_dynamic_dependency_hints <- function() {
+  if (FALSE) {
+    library(enrichplot)
+    library(clusterProfiler)
+    library(KEGGREST)
+    library(GO.db)
+    library(GSVA)
+    library(digest)
+    library(pdftools)
+    library(png)
+    library(rtracklayer)
+    library(rmarkdown)
+    library(dorothea)
+    library(DOSE)
+    library(ggdendro)
+    library(umap)
+    library(genefilter)
+    library(IHW)
+    library(qvalue)
+    library(BiocParallel)
+    library(SummarizedExperiment)
+    library(magick)
+  }
+  invisible(NULL)
+}
+
+rsconnect_dynamic_dependency_hints()
+
 load_orgdb_package <- function(package_name) {
+  package_name <- as.character(package_name)[1]
   if (!requireNamespace(package_name, quietly = TRUE)) {
     stop("Package not installed: ", package_name)
   }
@@ -1176,41 +1244,11 @@ barplot_forTranscript <- function(table,name){
 org <- function(Species, Ortholog=NULL){
   Species <- normalize_species_input(Species)
   Ortholog <- normalize_ortholog_input(Ortholog)
-  if(Species != "not selected"){
-    if(sum(is.element(no_orgDb, Species)) == 0){
-    switch (Species,
-            "Mus musculus" = org <- org.Mm.eg.db::org.Mm.eg.db,
-            "Homo sapiens" = org <- org.Hs.eg.db,
-            "Rattus norvegicus" = org <- org.Rn.eg.db,
-            "Xenopus laevis" = org <- org.Xl.eg.db,
-            "Drosophila melanogaster" = org <- org.Dm.eg.db,
-            "Caenorhabditis elegans" = org <- org.Ce.eg.db,
-            "Bos taurus" = org <- org.Bt.eg.db,
-            "Canis lupus familiaris" = org <- org.Cf.eg.db,
-            "Danio rerio" = org <- org.Dr.eg.db,
-            "Gallus gallus" = org <- org.Gg.eg.db,
-            "Macaca mulatta" = org <- org.Mmu.eg.db,
-            "Pan troglodytes" = org <- org.Pt.eg.db,
-            "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
-            "Arabidopsis thaliana" = org <- org.At.tair.db)
-    }else{
-    switch (Ortholog,
-            "Mus musculus" = org <- org.Mm.eg.db,
-            "Homo sapiens" = org <- org.Hs.eg.db,
-            "Rattus norvegicus" = org <- org.Rn.eg.db,
-            "Drosophila melanogaster" = org <- org.Dm.eg.db,
-            "Caenorhabditis elegans" = org <- org.Ce.eg.db,
-            "Bos taurus" = org <- org.Bt.eg.db,
-            "Canis lupus familiaris" = org <- org.Cf.eg.db,
-            "Danio rerio" = org <- org.Dr.eg.db,
-            "Gallus gallus" = org <- org.Gg.eg.db,
-            "Macaca mulatta" = org <- org.Mmu.eg.db,
-            "Pan troglodytes" = org <- org.Pt.eg.db,
-            "Saccharomyces cerevisiae" = org <- org.Sc.sgd.db,
-            "Arabidopsis thaliana" = org <- org.At.tair.db)
-    }
-    return(org)
-  }
+  if(Species == "not selected") return(NULL)
+  target_species <- if(sum(is.element(no_orgDb, Species)) == 0) Species else Ortholog
+  package_name <- unname(orgdb_package_by_species[target_species])
+  if(is.na(package_name) || !nzchar(package_name)) return(NULL)
+  load_orgdb_package(package_name)
 }
 org_code <- function(Species,Ortholog){
   Species <- normalize_species_input(Species)
@@ -2780,7 +2818,7 @@ enrich_keggGO_global <- function(formula_res, Gene_set){
       if(is.null(formula_res)){
         return(NULL)
       }else{
-            formula_res <- clusterProfiler.dplyr::filter(formula_res, !is.na(qvalue))
+            formula_res <- dplyr::filter(formula_res, !is.na(qvalue))
             p1 <- as.grob(enrichplot::dotplot(formula_res, color ="qvalue", font.size = 10))
           p <- plot_grid(p1)
           return(p)

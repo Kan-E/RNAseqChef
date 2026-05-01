@@ -2107,22 +2107,24 @@ build_cnetplot <- function(cnet, foldChange = NULL, showCategory = NULL,
   )
 
   candidates <- list(
-    list(pkg = "enrichplot", args = args_core),
-    list(pkg = "clusterProfiler", args = args_core),
-    list(pkg = "enrichplot", args = c(args_base, list(color.params = list(edge = color_edge)))),
-    list(pkg = "clusterProfiler", args = c(args_base, list(color.params = list(edge = color_edge)))),
-    list(pkg = "enrichplot", args = c(args_base, list(colorEdge = TRUE))),
-    list(pkg = "clusterProfiler", args = c(args_base, list(colorEdge = TRUE))),
-    list(pkg = "enrichplot", args = args_base),
-    list(pkg = "clusterProfiler", args = args_base),
-    list(pkg = "enrichplot", args = args_label),
-    list(pkg = "clusterProfiler", args = args_label),
     list(pkg = "enrichplot", args = c(args_base_label, list(color.params = list(edge = color_edge)))),
     list(pkg = "clusterProfiler", args = c(args_base_label, list(color.params = list(edge = color_edge)))),
     list(pkg = "enrichplot", args = c(args_base_label, list(colorEdge = TRUE))),
     list(pkg = "clusterProfiler", args = c(args_base_label, list(colorEdge = TRUE))),
     list(pkg = "enrichplot", args = args_base_label),
-    list(pkg = "clusterProfiler", args = args_base_label)
+    list(pkg = "clusterProfiler", args = args_base_label),
+    list(pkg = "enrichplot", args = c(args_base, list(color.params = list(edge = color_edge)))),
+    list(pkg = "clusterProfiler", args = c(args_base, list(color.params = list(edge = color_edge)))),
+    list(pkg = "enrichplot", args = c(args_base, list(colorEdge = TRUE))),
+    list(pkg = "clusterProfiler", args = c(args_base, list(colorEdge = TRUE))),
+    list(pkg = "enrichplot", args = args_core),
+    list(pkg = "clusterProfiler", args = args_core),
+    list(pkg = "enrichplot", args = args_base),
+    list(pkg = "clusterProfiler", args = args_base),
+    list(pkg = "enrichplot", args = args_label),
+    list(pkg = "clusterProfiler", args = args_label),
+    list(pkg = "enrichplot", args = args_base),
+    list(pkg = "clusterProfiler", args = args_base)
   )
 
   for (candidate in candidates) {

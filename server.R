@@ -869,24 +869,19 @@ shinyServer(function(input, output, session) {
                  x <- gsub("_", " ", x)
                  paste(strwrap(x, width = 15), collapse = "\n")
                }, character(1))
-               if(input$venn_type == "default" || is.null(input$eulerr_label)) {
-                 draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 0.8, sncs = 0.8,
-                                        fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
+               if(input$eulerr_label == "ON") {
+                 label <- list(cex = 0.8)
                } else {
-                 if(input$eulerr_label == "ON") {
-                   label <- list(cex = 0.8)
-                 } else {
-                   label <- NULL
-                 }
-                 print(plot(
-                   euler(gene_list, shape = "ellipse"),
-                   labels = label,
-                   quantities = list(type = "counts", cex = 0.8),
-                   edges = list(col = as.vector(seq(1, length(names(gene_list)))), lex = 0.8),
-                   fills = list(fill = rep("white", length(names(gene_list)))),
-                   legend = list(side = "right", cex = 0.8)
-                 ))
+                 label <- NULL
                }
+               print(plot(
+                 euler(gene_list, shape = "ellipse"),
+                 labels = label,
+                 quantities = list(type = "counts", cex = 0.8),
+                 edges = list(col = as.vector(seq(1, length(names(gene_list)))), lex = 0.8),
+                 fills = list(fill = rep("white", length(names(gene_list)))),
+                 legend = list(side = "right", cex = 0.8)
+               ))
              }
            ),
            venn_heat = list(
@@ -11918,7 +11913,7 @@ shinyServer(function(input, output, session) {
   }))
   
   output$eulerr_label <- renderUI({
-    if(input$venn_type == "eulerr") radioButtons("eulerr_label","label",c("ON"="ON","OFF"="OFF"),"ON")
+    radioButtons("eulerr_label","label",c("ON"="ON","OFF"="OFF"),"ON")
   })
   output$venn <- renderPlot({
     req(files_table())
@@ -11929,25 +11924,20 @@ shinyServer(function(input, output, session) {
       paste(strwrap(x, width = 15), collapse = "\n")
     }, character(1))
     
-    if (input$venn_type == "default" || is.null(input$eulerr_label)) {
-      draw_default_venn_plot(gene_list, ilabels = "counts", ilcs = 1.5, sncs = 1.5,
-                             fallback_label_cex = 2, fallback_legend_cex = 2)
+    if (input$eulerr_label == "ON") {
+      label <- list(cex = 2)
     } else {
-      if (input$eulerr_label == "ON") {
-        label <- list(cex = 2)
-      } else {
-        label <- NULL
-      }
-      
-      plot(
-        euler(gene_list, shape = "ellipse"),
-        labels = label,
-        quantities = list(type = "counts", cex = 2),
-        edges = list(col = as.vector(seq_along(names(gene_list))), lex = 2),
-        fills = list(fill = rep("white", length(names(gene_list)))),
-        legend = list(side = "right", cex = 2)
-      )
+      label <- NULL
     }
+    
+    plot(
+      euler(gene_list, shape = "ellipse"),
+      labels = label,
+      quantities = list(type = "counts", cex = 2),
+      edges = list(col = as.vector(seq_along(names(gene_list))), lex = 2),
+      fills = list(fill = rep("white", length(names(gene_list)))),
+      legend = list(side = "right", cex = 2)
+    )
   })
   
   overlap_list <- reactive({
@@ -11993,16 +11983,11 @@ shinyServer(function(input, output, session) {
             pdf_width <- 3
           }else pdf_width <- input$venn_pdf_width
           open_pdf_device(file, height = pdf_height, width = pdf_width)
-          if(input$venn_type == "default" || is.null(input$eulerr_label)) {
-            draw_default_venn_plot(gene_list, ilabels = TRUE, ilcs = 0.8, sncs = 0.8,
-                                   fallback_label_cex = 0.8, fallback_legend_cex = 0.8)
-          } else {
-            if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL
-            print(plot(euler(gene_list, shape = "ellipse"), 
-                 labels = label,quantities = list(type="counts",cex=0.8),
-                 edges = list(col=as.vector(seq(1,length(names(gene_list)))),lex = 0.8),
-                 fills = list(fill=rep("white",length(names(gene_list)))),legend = list(side = "right",cex=0.8)) )
-          }
+          if(input$eulerr_label =="ON") label=list(cex=0.8) else label=NULL
+          print(plot(euler(gene_list, shape = "ellipse"), 
+               labels = label,quantities = list(type="counts",cex=0.8),
+               edges = list(col=as.vector(seq(1,length(names(gene_list)))),lex = 0.8),
+               fills = list(fill=rep("white",length(names(gene_list)))),legend = list(side = "right",cex=0.8)) )
           dev.off()
           incProgress(1)
         })

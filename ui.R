@@ -1402,7 +1402,6 @@ shinyUI(
                                 column(4, actionButton("preview_venn_diagram", "Download venn diagram"))
                               ),
                               fluidRow(
-                                column(4,radioButtons("venn_type","venn_type",c("default"="default","eulerr package"="eulerr"),"eulerr")),
                                 column(4,htmlOutput("eulerr_label"))
                               ),
                               plotOutput("venn"),
